@@ -70,7 +70,7 @@ st.markdown("""
         margin: 20px 0;
     }
     
-    /* Компактные поля для мобильных */
+    /* Улучшаем отображение на мобильных */
     @media (max-width: 768px) {
         .main {
             padding: 16px;
@@ -82,23 +82,32 @@ st.markdown("""
         }
         
         .stNumberInput input, .stSelectbox select {
-            min-height: 42px;
-            font-size: 14px !important;
-            padding: 8px 12px;
+            min-height: 44px;
+            font-size: 16px !important;
+            padding: 10px 14px !important;
         }
         
-        /* Узкие поля для цифр */
+        /* Шире колонки для трехколоночного вида */
+        .stColumns > div {
+            min-width: 80px !important;
+            padding: 0 8px !important;
+        }
+        
+        /* Поля ввода пошире */
         .stNumberInput {
-            min-width: 60px;
+            min-width: 70px !important;
+        }
+        
+        /* Заголовки колонок */
+        .column-header {
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         section[data-testid="stSidebar"] {
             display: none;
-        }
-        
-        /* Трехколоночный вид на мобильных */
-        .stColumns > div {
-            padding: 0 4px;
         }
     }
     
@@ -109,6 +118,12 @@ st.markdown("""
         font-size: 14px;
         margin-bottom: 8px;
         color: #4a5568;
+    }
+    
+    /* Плейсхолдеры виднее */
+    ::placeholder {
+        color: #a0aec0;
+        opacity: 1;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -376,10 +391,11 @@ rows = st.session_state.group_rows
 for i in range(1, rows + 1):
     c0, c1, c2 = st.columns(3)
     
+    # ПРЕДУСТАНОВЛЕННЫЕ ЗНАЧЕНИЯ КАК В ОРИГИНАЛЕ
     if i <= 8:
-        default_n = i
+        default_n = i  # 1..8 עומד
     elif i <= 12:
-        default_n = i - 8
+        default_n = i - 8  # 1..4 שוכב
     else:
         default_n = 0
 
@@ -387,7 +403,7 @@ for i in range(1, rows + 1):
         "",
         0,
         50,
-        0,
+        0,  # Предустановка для групп
         key=f"g_g_{i}",
         label_visibility="collapsed",
     )
@@ -395,14 +411,14 @@ for i in range(1, rows + 1):
         "",
         0,
         100,
-        default_n,
+        default_n,  # Предустановка для панелей
         key=f"g_n_{i}",
         label_visibility="collapsed",
     )
     if i <= 8:
-        default_index = 0
+        default_index = 0  # עומד
     elif i <= 12:
-        default_index = 1
+        default_index = 1  # שוכב
     else:
         default_index = 0
     o = c2.selectbox(
@@ -462,11 +478,11 @@ calc_result = st.session_state.calc_result
 # ---------- MANUAL RAILS ----------
 st.markdown(right_header("קושרות (הוספה ידנית)"), unsafe_allow_html=True)
 
-# Заголовки колонок
+# Заголовки колонок как в оригинале
 mh = st.columns(3)
-mh[0].markdown('<div class="column-header">אורך (ס״מ)</div>', unsafe_allow_html=True)
-mh[1].markdown('<div class="column-header">כמות</div>', unsafe_allow_html=True)
-mh[2].markdown('<div style="text-align:right;">&nbsp;</div>', unsafe_allow_html=True)
+mh[0].markdown(right_label("אורך (ס״מ)"), unsafe_allow_html=True)
+mh[1].markdown(right_label("כמות"), unsafe_allow_html=True)
+mh[2].markdown(right_label("&nbsp;"), unsafe_allow_html=True)
 
 manual_rows = st.session_state.manual_rows
 for j in range(1, manual_rows + 1):
@@ -478,6 +494,7 @@ for j in range(1, manual_rows + 1):
         step=10,
         key=f"m_len_{st.session_state.manual_form_version}_{j}",
         label_visibility="collapsed",
+        placeholder="ס״מ"
     )
     qty = cols[1].number_input(
         "",
@@ -486,9 +503,10 @@ for j in range(1, manual_rows + 1):
         step=1,
         key=f"m_qty_{st.session_state.manual_form_version}_{j}",
         label_visibility="collapsed",
+        placeholder="מספר"
     )
     if j == 1:
-        cols[2].markdown('<div style="text-align:right; font-weight:500; padding-top:8px;">להוסיף קושרות</div>', unsafe_allow_html=True)
+        cols[2].markdown(right_label("להוסיף קושרות"), unsafe_allow_html=True)
 
 if st.button("להוסיף עוד קושרות", key="add_manual_rails"):
     st.session_state.manual_rows += 1
@@ -601,7 +619,7 @@ if calc_result is not None:
             m8_base = total_length_cm / 140.0
             m8_count = round_up_to_tens(m8_base)
         
-        # Используем LRM (\u200E) для правильного направления M8
+        # ИСПРАВЛЕННЫЙ ВАРИАНТ ДЛЯ M8 - пробуем разные подходы
         fasteners_base = [
             ("מהדק הארקה", ear),
             ("מהדק אמצע", mid),
@@ -609,8 +627,8 @@ if calc_result is not None:
             ("פקק לקושרות", edge),
             ("מחברי קושרות", conn),
             ("בורג איסכורית 3,5", screws_iso),
-            ("בורג\u200EM8\u200Eראש משושה", m8_count),  # LRM символы вокруг M8
-            ("אום\u200EM8\u200Eנירוסטה", m8_count),      # LRM символы вокруг M8
+            ("בורג M8 ראש משושה", m8_count),  # Просто M8 как есть
+            ("אום M8 נירוסטה", m8_count),      # Просто M8 как есть
         ]
         
         if st.session_state.get("fasteners_include") is None:
