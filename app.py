@@ -70,6 +70,7 @@ st.markdown("""
         margin: 20px 0;
     }
     
+    /* Компактные поля для мобильных */
     @media (max-width: 768px) {
         .main {
             padding: 16px;
@@ -81,13 +82,33 @@ st.markdown("""
         }
         
         .stNumberInput input, .stSelectbox select {
-            min-height: 48px;
-            font-size: 16px !important;
+            min-height: 42px;
+            font-size: 14px !important;
+            padding: 8px 12px;
+        }
+        
+        /* Узкие поля для цифр */
+        .stNumberInput {
+            min-width: 60px;
         }
         
         section[data-testid="stSidebar"] {
             display: none;
         }
+        
+        /* Трехколоночный вид на мобильных */
+        .stColumns > div {
+            padding: 0 4px;
+        }
+    }
+    
+    /* Заголовки колонок */
+    .column-header {
+        text-align: right;
+        font-weight: 500;
+        font-size: 14px;
+        margin-bottom: 8px;
+        color: #4a5568;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -344,6 +365,12 @@ st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 # ---------- UI: GROUPS ----------
 st.markdown(right_header("קבוצות פאנלים"), unsafe_allow_html=True)
 
+# Заголовки колонок
+col1, col2, col3 = st.columns(3)
+col1.markdown('<div class="column-header">שורות</div>', unsafe_allow_html=True)
+col2.markdown('<div class="column-header">פאנלים</div>', unsafe_allow_html=True)
+col3.markdown('<div class="column-header">כיוון</div>', unsafe_allow_html=True)
+
 groups = []
 rows = st.session_state.group_rows
 for i in range(1, rows + 1):
@@ -392,6 +419,8 @@ if st.button("להוסיף פאנלים"):
     st.session_state.group_rows += 1
     st.rerun()
 
+st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+
 # ---------- BUTTON: CALCULATE ----------
 st.markdown('<div class="primary-btn"></div>', unsafe_allow_html=True)
 if st.button("חשב", type="primary", use_container_width=True):
@@ -431,41 +460,76 @@ if st.session_state.get("just_calculated"):
 calc_result = st.session_state.calc_result
 
 # ---------- MANUAL RAILS ----------
-with st.expander("קושרות (הוספה ידנית)", expanded=False):
-    manual_rows = st.session_state.manual_rows
-    for j in range(1, manual_rows + 1):
-        cols = st.columns(3)
-        length = cols[0].number_input(
-            "",
-            min_value=0,
-            max_value=10000,
-            step=10,
-            key=f"m_len_{st.session_state.manual_form_version}_{j}",
-            label_visibility="collapsed",
-            placeholder="אורך"
-        )
-        qty = cols[1].number_input(
-            "",
-            min_value=0,
-            max_value=1000,
-            step=1,
-            key=f"m_qty_{st.session_state.manual_form_version}_{j}",
-            label_visibility="collapsed",
-            placeholder="כמות"
-        )
-    
-    if st.button("להוסיף עוד קושרות", key="add_manual"):
-        st.session_state.manual_rows += 1
-        st.rerun()
-    
-    manual_rails_dict = {}
-    for j in range(1, st.session_state.manual_rows + 1):
-        length = st.session_state.get(f"m_len_{st.session_state.manual_form_version}_{j}", 0)
-        qty = st.session_state.get(f"m_qty_{st.session_state.manual_form_version}_{j}", 0)
-        if length and qty:
-            manual_rails_dict[length] = manual_rails_dict.get(length, 0) + qty
-    
-    st.session_state.manual_rails = manual_rails_dict
+st.markdown(right_header("קושרות (הוספה ידנית)"), unsafe_allow_html=True)
+
+# Заголовки колонок
+mh = st.columns(3)
+mh[0].markdown('<div class="column-header">אורך (ס״מ)</div>', unsafe_allow_html=True)
+mh[1].markdown('<div class="column-header">כמות</div>', unsafe_allow_html=True)
+mh[2].markdown('<div style="text-align:right;">&nbsp;</div>', unsafe_allow_html=True)
+
+manual_rows = st.session_state.manual_rows
+for j in range(1, manual_rows + 1):
+    cols = st.columns(3)
+    length = cols[0].number_input(
+        "",
+        min_value=0,
+        max_value=10000,
+        step=10,
+        key=f"m_len_{st.session_state.manual_form_version}_{j}",
+        label_visibility="collapsed",
+    )
+    qty = cols[1].number_input(
+        "",
+        min_value=0,
+        max_value=1000,
+        step=1,
+        key=f"m_qty_{st.session_state.manual_form_version}_{j}",
+        label_visibility="collapsed",
+    )
+    if j == 1:
+        cols[2].markdown('<div style="text-align:right; font-weight:500; padding-top:8px;">להוסיף קושרות</div>', unsafe_allow_html=True)
+
+if st.button("להוסיף עוד קושרות", key="add_manual_rails"):
+    st.session_state.manual_rows += 1
+    st.rerun()
+
+# Собираем ручные рейки в словарь
+manual_rails_dict = {}
+for j in range(1, st.session_state.manual_rows + 1):
+    if j in st.session_state.manual_deleted_rows:
+        continue
+    length = st.session_state.get(f"m_len_{st.session_state.manual_form_version}_{j}", 0)
+    qty = st.session_state.get(f"m_qty_{st.session_state.manual_form_version}_{j}", 0)
+    if length and qty:
+        # ВАЖНО: суммируем, а не создаем новую запись
+        manual_rails_dict[length] = manual_rails_dict.get(length, 0) + qty
+
+st.session_state.manual_rails = manual_rails_dict
+
+# --- sync manual additions into the editable קושרות boxes (koshrot_qty) ---
+prev_manual = st.session_state.get("manual_rails_prev", {})
+curr_manual = st.session_state.manual_rails
+
+# only if the editable boxes are already initialized (i.e., after at least one חשב)
+if st.session_state.get("koshrot_qty") is not None:
+    # apply per-length delta: new_manual - prev_manual
+    for length in set(list(prev_manual.keys()) + list(curr_manual.keys())):
+        prev_q = int(prev_manual.get(length, 0) or 0)
+        curr_q = int(curr_manual.get(length, 0) or 0)
+        d = curr_q - prev_q
+        if d == 0:
+            continue
+        k = normalize_length_key(length)
+        new_val = max(int(st.session_state.koshrot_qty.get(k, 0) or 0) + d, 0)
+        # update both the backing dict and the widget state
+        st.session_state.koshrot_qty[k] = new_val
+        st.session_state[f"koshrot_qty_{st.session_state.koshrot_boxes_version}_{k}"] = new_val
+
+# update snapshot
+st.session_state.manual_rails_prev = dict(curr_manual)
+
+st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
 # ---------- SHOW CALC RESULT ----------
 if calc_result is not None:
@@ -486,6 +550,11 @@ if calc_result is not None:
         
         if st.session_state.koshrot_qty is None:
             st.session_state.koshrot_qty = dict(rails_base)
+        else:
+            # Добавляем новые длины
+            for length, qty in rails_base.items():
+                if length not in st.session_state.koshrot_qty:
+                    st.session_state.koshrot_qty[length] = qty
         
         if st.session_state.koshrot_qty:
             for length in sorted(st.session_state.koshrot_qty.keys(), key=length_sort_key, reverse=True):
@@ -532,6 +601,7 @@ if calc_result is not None:
             m8_base = total_length_cm / 140.0
             m8_count = round_up_to_tens(m8_base)
         
+        # Используем LRM (\u200E) для правильного направления M8
         fasteners_base = [
             ("מהדק הארקה", ear),
             ("מהדק אמצע", mid),
@@ -539,8 +609,8 @@ if calc_result is not None:
             ("פקק לקושרות", edge),
             ("מחברי קושרות", conn),
             ("בורג איסכורית 3,5", screws_iso),
-            ("בורג M8 ראש משושה", m8_count),
-            ("אום M8 נירוסטה", m8_count),
+            ("בורג\u200EM8\u200Eראש משושה", m8_count),  # LRM символы вокруг M8
+            ("אום\u200EM8\u200Eנירוסטה", m8_count),      # LRM символы вокруг M8
         ]
         
         if st.session_state.get("fasteners_include") is None:
@@ -617,7 +687,6 @@ if calc_result is not None:
             if q > 0:
                 channel_order[name] = {"qty": q, "unit": unit}
             elif name in st.session_state.channel_order:
-                # Сохраняем даже если 0
                 channel_order[name] = {"qty": 0.0, "unit": unit}
         
         st.session_state.channel_order = channel_order
