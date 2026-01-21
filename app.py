@@ -9,7 +9,7 @@ import os
 # ---------- PAGE CONFIG ----------
 st.set_page_config(
     page_title="סולארי - חישוב חומרים",
-    page_icon="📐",
+    page_icon="☀️⚙️🤴",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
@@ -71,25 +71,32 @@ st.markdown("""
     }
     
     /* КРИТИЧЕСКО ВАЖНО: Заставляем колонки всегда быть горизонтальными */
-    .stColumns > div {
-        flex: 1;
-        min-width: 0 !important; /* Позволяет сжиматься */
-        padding: 0 4px !important;
+    .horizontal-row {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 8px !important;
+        margin-bottom: 12px !important;
+        width: 100% !important;
     }
     
-    .mobile-column {
-        display: flex;
-        flex-direction: column;
-        min-height: 44px;
+    .horizontal-col {
+        flex: 1 !important;
+        min-width: 0 !important;
     }
     
-    /* Заголовки колонок в одну строку на мобильных */
+    /* Скрываем стандартные заголовки Streamlit */
+    .horizontal-col label {
+        display: none !important;
+    }
+    
+    /* Заголовки колонок в одну строку */
     .mobile-header-row {
         display: flex !important;
         flex-direction: row !important;
         text-align: center !important;
         margin-bottom: 8px !important;
         white-space: nowrap !important;
+        width: 100% !important;
     }
     
     .mobile-header-col {
@@ -120,39 +127,20 @@ st.markdown("""
             padding: 10px 12px !important;
             -webkit-appearance: none;
             appearance: none;
+            width: 100% !important;
         }
         
-        /* Принудительно делаем колонки горизонтальными */
-        .row-container {
-            display: flex !important;
-            flex-direction: row !important;
-            gap: 8px !important;
-            margin-bottom: 12px !important;
-        }
-        
-        .row-item {
-            flex: 1 !important;
-            min-width: 0 !important;
-        }
-        
-        /* Убираем растягивание на всю ширину */
+        /* Делаем поля ввода компактными */
         .stNumberInput, .stSelectbox {
             width: 100% !important;
         }
         
-        section[data-testid="stSidebar"] {
-            display: none;
+        .horizontal-row {
+            gap: 6px !important;
         }
         
-        /* Заголовки видны и компактны */
-        .column-header {
-            font-size: 13px;
-            white-space: nowrap;
-            overflow: visible !important;
-            text-overflow: clip !important;
-            text-align: center;
-            margin-bottom: 4px;
-            line-height: 1.2;
+        section[data-testid="stSidebar"] {
+            display: none;
         }
     }
     
@@ -444,9 +432,11 @@ st.markdown("""
 
 groups = []
 rows = st.session_state.group_rows
+
+# ВАЖНО: создаем контейнеры для каждой строки
 for i in range(1, rows + 1):
-    # Используем CSS-класс для принудительного горизонтального расположения
-    st.markdown('<div class="row-container">', unsafe_allow_html=True)
+    # Создаем горизонтальный ряд ДЛЯ ПОЛЕЙ ВВОДА
+    st.markdown('<div class="horizontal-row">', unsafe_allow_html=True)
     
     # ПРЕДУСТАНОВЛЕННЫЕ ЗНАЧЕНИЯ КАК В ОРИГИНАЛЕ
     if i <= 8:
@@ -456,35 +446,36 @@ for i in range(1, rows + 1):
     else:
         default_n = 0
 
-    # Колонка 1: שורות
+    # Колонка 1: שורות (ЛЕВЫЙ бокс)
     with st.container():
-        st.markdown('<div class="row-item">', unsafe_allow_html=True)
+        # ВАЖНО: Используем отдельный контейнер для каждого поля
+        st.markdown('<div class="horizontal-col">', unsafe_allow_html=True)
         g = st.number_input(
-            "שורות",
+            "שורות",  # Это для accessibility, но скроем через CSS
             0,
             50,
-            0,  # Предустановка для групп
+            0,
             key=f"g_g_{i}",
             label_visibility="collapsed",
         )
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Колонка 2: פאנלים
+    # Колонка 2: פאנלים (СРЕДНИЙ бокс)
     with st.container():
-        st.markdown('<div class="row-item">', unsafe_allow_html=True)
+        st.markdown('<div class="horizontal-col">', unsafe_allow_html=True)
         n = st.number_input(
             "פאנלים",
             0,
             100,
-            default_n,  # Предустановка для панелей
+            default_n,
             key=f"g_n_{i}",
             label_visibility="collapsed",
         )
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Колонка 3: כיוון
+    # Колонка 3: כיוון (ПРАВЫЙ бокс)
     with st.container():
-        st.markdown('<div class="row-item">', unsafe_allow_html=True)
+        st.markdown('<div class="horizontal-col">', unsafe_allow_html=True)
         if i <= 8:
             default_index = 0  # עומד
         elif i <= 12:
@@ -563,11 +554,11 @@ st.markdown("""
 
 manual_rows = st.session_state.manual_rows
 for j in range(1, manual_rows + 1):
-    st.markdown('<div class="row-container">', unsafe_allow_html=True)
+    st.markdown('<div class="horizontal-row">', unsafe_allow_html=True)
     
     # Колонка 1: אורך
     with st.container():
-        st.markdown('<div class="row-item">', unsafe_allow_html=True)
+        st.markdown('<div class="horizontal-col">', unsafe_allow_html=True)
         length = st.number_input(
             "אורך",
             min_value=0,
@@ -581,7 +572,7 @@ for j in range(1, manual_rows + 1):
     
     # Колонка 2: כמות
     with st.container():
-        st.markdown('<div class="row-item">', unsafe_allow_html=True)
+        st.markdown('<div class="horizontal-col">', unsafe_allow_html=True)
         qty = st.number_input(
             "כמות",
             min_value=0,
@@ -595,7 +586,7 @@ for j in range(1, manual_rows + 1):
     
     # Колонка 3: пустая или кнопка
     with st.container():
-        st.markdown('<div class="row-item">', unsafe_allow_html=True)
+        st.markdown('<div class="horizontal-col">', unsafe_allow_html=True)
         if j == 1:
             st.markdown(right_label("להוסיף קושרות"), unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
@@ -713,7 +704,7 @@ if calc_result is not None:
             m8_base = total_length_cm / 140.0
             m8_count = round_up_to_tens(m8_base)
         
-        # ИСПРАВЛЕННЫЙ ВАРИАНТ: правильный порядок для смешанного RTL/LTR
+        # ИСПРАВЛЕННЫЙ ВАРИАНТ: простые названия как просили
         fasteners_base = [
             ("מהדק הארקה", ear),
             ("מהדק אמצע", mid),
@@ -721,8 +712,8 @@ if calc_result is not None:
             ("פקק לקושרות", edge),
             ("מחברי קושרות", conn),
             ("בורג איסכורית 3,5", screws_iso),
-            ("ראש משושה M8 בורג", m8_count),      # ПРАВИЛЬНЫЙ ПОРЯДОК: ראש משושה → M8 → בורג
-            ("אום M8", m8_count),                   # Просто "אום M8" (без "נירוסטה" для краткости)
+            ("M8 בורג", m8_count),      # Просто "M8 בורג"
+            ("אום M8", m8_count),        # "אום M8" - как просили
         ]
         
         if st.session_state.get("fasteners_include") is None:
