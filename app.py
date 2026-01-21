@@ -70,71 +70,153 @@ st.markdown("""
         margin: 20px 0;
     }
     
-    /* КРИТИЧЕСКО ВАЖНО: Принудительно делаем колонки горизонтальными */
-    .horizontal-columns {
+    /* КОМПАКТНЫЕ КОЛОНКИ ДЛЯ ТЕЛЕФОНОВ */
+    .compact-row {
         display: flex !important;
         flex-direction: row !important;
         width: 100% !important;
-        gap: 8px !important;
-        margin-bottom: 12px !important;
+        gap: 6px !important;
+        margin-bottom: 10px !important;
+        align-items: center !important;
     }
     
-    .horizontal-column {
+    .compact-col-small {
         flex: 1 !important;
-        min-width: 0 !important;
+        min-width: 60px !important;
+        max-width: 80px !important;
+    }
+    
+    .compact-col-medium {
+        flex: 1.2 !important;
+        min-width: 70px !important;
+        max-width: 90px !important;
+    }
+    
+    .compact-col-large {
+        flex: 1.5 !important;
+        min-width: 80px !important;
+        max-width: 110px !important;
+    }
+    
+    /* ОЧЕНЬ КОМПАКТНЫЕ ПОЛЯ ВВОДА */
+    .compact-input input {
+        padding: 8px 10px !important;
+        font-size: 16px !important;
+        text-align: center !important;
+        width: 100% !important;
+        max-width: 70px !important;
+        min-height: 44px !important;
+    }
+    
+    .compact-selectbox div[data-baseweb="select"] > div {
+        padding: 8px 10px !important;
+        font-size: 14px !important;
+        min-height: 44px !important;
         width: 100% !important;
     }
     
     /* Скрываем стандартные label от Streamlit */
-    .horizontal-column label {
+    .compact-col-small label,
+    .compact-col-medium label,
+    .compact-col-large label {
         display: none !important;
     }
     
-    /* Заголовки колонок в одну строку - правильные */
+    /* Заголовки колонок */
     .column-headers {
         display: flex !important;
         flex-direction: row !important;
         width: 100% !important;
         margin-bottom: 8px !important;
+        text-align: center !important;
     }
     
-    .column-header {
-        flex: 1;
-        text-align: center;
+    .column-header-small {
+        flex: 1 !important;
         font-weight: 500;
-        font-size: 14px !important;
+        font-size: 13px !important;
         color: #4a5568;
         padding: 0 4px;
         white-space: nowrap !important;
-        overflow: visible !important;
+        text-align: center !important;
+    }
+    
+    .column-header-medium {
+        flex: 1.2 !important;
+        font-weight: 500;
+        font-size: 13px !important;
+        color: #4a5568;
+        padding: 0 4px;
+        white-space: nowrap !important;
+        text-align: center !important;
+    }
+    
+    .column-header-large {
+        flex: 1.5 !important;
+        font-weight: 500;
+        font-size: 13px !important;
+        color: #4a5568;
+        padding: 0 4px;
+        white-space: nowrap !important;
+        text-align: center !important;
+    }
+    
+    /* Сообщение об ошибке с юмором */
+    .funny-error {
+        background-color: #fff5f5;
+        border: 1px solid #fed7d7;
+        border-radius: 6px;
+        padding: 10px 12px;
+        margin: 8px 0;
+        text-align: right;
+        font-size: 14px;
+        color: #c53030;
+        animation: shake 0.5s ease-in-out;
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
     }
     
     /* Улучшаем отображение на мобильных */
     @media (max-width: 768px) {
         .main {
-            padding: 16px;
+            padding: 12px;
         }
         
         .stButton > button {
             padding: 16px;
-            margin: 12px 0;
+            margin: 10px 0;
         }
         
-        .stNumberInput input, .stSelectbox select {
-            min-height: 44px !important;
-            font-size: 16px !important;
-            padding: 10px 12px !important;
-            -webkit-appearance: none;
-            appearance: none;
+        .compact-row {
+            gap: 4px !important;
         }
         
-        /* Делаем поля ввода еще компактнее на очень узких экранах */
-        .horizontal-columns {
-            gap: 6px !important;
+        .compact-col-small {
+            min-width: 55px !important;
         }
         
-        .column-header {
-            font-size: 13px !important;
+        .compact-col-medium {
+            min-width: 65px !important;
+        }
+        
+        .compact-col-large {
+            min-width: 75px !important;
+        }
+        
+        .compact-input input {
+            padding: 6px 8px !important;
+            font-size: 15px !important;
+            max-width: 60px !important;
+        }
+        
+        .column-header-small,
+        .column-header-medium,
+        .column-header-large {
+            font-size: 12px !important;
         }
         
         section[data-testid="stSidebar"] {
@@ -195,6 +277,10 @@ if "koshrot_qty" not in st.session_state:
     st.session_state.koshrot_qty = None
 if "show_report" not in st.session_state:
     st.session_state.show_report = False
+if "show_funny_message" not in st.session_state:
+    st.session_state.show_funny_message = {"rows": False, "panels": False}
+if "funny_message_text" not in st.session_state:
+    st.session_state.funny_message_text = ""
 
 # ---------- LOAD DATABASES ----------
 @st.cache_data
@@ -261,6 +347,21 @@ def format_qty(q):
         return s
     except Exception:
         return str(q)
+
+def show_funny_message(field_type: str, value: int):
+    """Показывает забавное сообщение при вводе больших чисел"""
+    if value > 99:
+        if field_type == "rows":
+            message = f"אל תגזים אחי, איזה [{value}] שורות במערכת ביתית? 😅"
+        else:  # panels
+            message = f"וואי [{value}] פאנלים בשורה אחת? אולי תפצל לשתי שורות? 😄"
+        
+        st.session_state.show_funny_message[field_type] = True
+        st.session_state.funny_message_text = message
+        return True
+    else:
+        st.session_state.show_funny_message[field_type] = False
+        return False
 
 # ---------- ENGINE FUNCTIONS ----------
 def split_into_segments(total_length: int):
@@ -408,19 +509,23 @@ st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 # ---------- UI: GROUPS ----------
 st.markdown(right_header("קבוצות פאנלים"), unsafe_allow_html=True)
 
-# Заголовки колонок - ИСПРАВЛЕННАЯ ВЕРСИЯ
+# Заголовки колонок - СУПЕР КОМПАКТНЫЕ
 st.markdown("""
 <div class="column-headers">
-    <div class="column-header">שורות</div>
-    <div class="column-header">פאנלים</div>
-    <div class="column-header">כיוון</div>
+    <div class="column-header-small">שורות</div>
+    <div class="column-header-medium">פאנלים</div>
+    <div class="column-header-large">כיוון</div>
 </div>
 """, unsafe_allow_html=True)
 
 groups = []
 rows = st.session_state.group_rows
 
-# ВАЖНО: используем st.columns() для каждой строки - это РАБОТАЕТ в Streamlit
+# Забавное сообщение если нужно
+if st.session_state.show_funny_message.get("rows") or st.session_state.show_funny_message.get("panels"):
+    st.markdown(f'<div class="funny-error">{st.session_state.funny_message_text}</div>', unsafe_allow_html=True)
+
+# ВАЖНО: используем ОДНУ строку Streamlit с columns для КАЖДОЙ группы
 for i in range(1, rows + 1):
     # ПРЕДУСТАНОВЛЕННЫЕ ЗНАЧЕНИЯ КАК В ОРИГИНАЛЕ
     if i <= 8:
@@ -437,35 +542,43 @@ for i in range(1, rows + 1):
     else:
         default_orientation = 0
 
-    # СОЗДАЕМ 3 КОЛОНКИ ДЛЯ ЭТОЙ СТРОКИ - КЛЮЧЕВОЕ ИЗМЕНЕНИЕ!
-    col1, col2, col3 = st.columns(3)
+    # СОЗДАЕМ КОЛОНКИ ДЛЯ ЭТОЙ СТРОКИ
+    col1, col2, col3 = st.columns([1, 1.2, 1.5])
     
     with col1:
-        # ЛЕВЫЙ бокс: שורות
+        # ЛЕВЫЙ бокс: שורות (ОЧЕНЬ КОМПАКТНЫЙ)
         g = st.number_input(
             "שורות",
             0,
-            50,
+            99,  # Максимум 99!
             0,
             key=f"g_g_{i}",
             label_visibility="collapsed",
-            help="מספר השורות"
+            help="מספר השורות (עד 99)",
+            on_change=lambda val=i: show_funny_message("rows", st.session_state.get(f"g_g_{val}", 0))
         )
+        if st.session_state.get(f"g_g_{i}", 0) > 99:
+            # Автоматически сбрасываем до 99 если ввели больше
+            st.session_state[f"g_g_{i}"] = 99
     
     with col2:
-        # СРЕДНИЙ бокс: פאנלים
+        # СРЕДНИЙ бокс: פאנלים (КОМПАКТНЫЙ)
         n = st.number_input(
             "פאנלים",
             0,
-            100,
+            99,  # Максимум 99!
             default_n,
             key=f"g_n_{i}",
             label_visibility="collapsed",
-            help="מספר הפאנלים בשורה"
+            help="מספר הפאנלים בשורה (עד 99)",
+            on_change=lambda val=i: show_funny_message("panels", st.session_state.get(f"g_n_{val}", 0))
         )
+        if st.session_state.get(f"g_n_{i}", 0) > 99:
+            # Автоматически сбрасываем до 99 если ввели больше
+            st.session_state[f"g_n_{i}"] = 99
     
     with col3:
-        # ПРАВЫЙ бокс: כיוון
+        # ПРАВЫЙ бокс: כיוון (выбор)
         o = st.selectbox(
             "כיוון",
             ["עומד", "שוכב"],
@@ -525,19 +638,15 @@ calc_result = st.session_state.calc_result
 # ---------- MANUAL RAILS ----------
 st.markdown(right_header("קושרות (הוספה ידנית)"), unsafe_allow_html=True)
 
-# Заголовки колонок как в оригинале
-st.markdown("""
-<div class="column-headers">
-    <div class="column-header">אורך (ס״מ)</div>
-    <div class="column-header">כמות</div>
-    <div class="column-header">&nbsp;</div>
-</div>
-""", unsafe_allow_html=True)
+# Заголовки колонок
+col1, col2, col3 = st.columns([1, 1, 1.5])
+col1.markdown('<div class="column-header-small">אורך (ס״מ)</div>', unsafe_allow_html=True)
+col2.markdown('<div class="column-header-small">כמות</div>', unsafe_allow_html=True)
+col3.markdown('<div class="column-header-large">&nbsp;</div>', unsafe_allow_html=True)
 
 manual_rows = st.session_state.manual_rows
 for j in range(1, manual_rows + 1):
-    # Тоже используем st.columns для горизонтального расположения
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = st.columns([1, 1, 1.5])
     
     with col1:
         length = st.number_input(
