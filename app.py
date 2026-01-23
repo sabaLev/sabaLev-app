@@ -449,7 +449,7 @@ panel = panel_rows.iloc[0]
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
-# ---------- UI: GROUPS ----------
+# ---------- CUSTOM CHECKBOX COMPONENT ----------
 st.markdown(right_header("קבוצות פאנלים"), unsafe_allow_html=True)
 
 # Заголовки колонок
@@ -461,16 +461,17 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# Загружаем и отображаем кастомный компонент
+with open("components.html", "r", encoding="utf-8") as f:
+    components.html(f.read(), height=300)
+
 # Показываем веселое сообщение если нужно
 if st.session_state.show_funny_message.get("rows") or st.session_state.show_funny_message.get("panels"):
     st.markdown(f'<div class="funny-message">{st.session_state.funny_message_text}</div>', unsafe_allow_html=True)
 
+# ПРОСТОЙ ВАРИАНТ: Всегда используем st.columns(3) для оставшихся полей
 groups = []
 rows = st.session_state.group_rows
-
-# ПРОСТОЙ ВАРИАНТ: Всегда используем st.columns(3)
-# Это даст 3 колонки на десктопе, а на мобильных Streamlit сам перестроит
-# НО мы добавим компактные стили для мобильных
 
 for i in range(1, rows + 1):
     # ПРЕДУСТАНОВЛЕННЫЕ ЗНАЧЕНИЯ
@@ -488,7 +489,7 @@ for i in range(1, rows + 1):
     else:
         default_orientation = 0
 
-    # ВСЕГДА 3 КОЛОНКИ - Streamlit сам решит как их отображать
+    # ВСЕГДА 3 КОЛОНКИ
     col1, col2, col3 = st.columns(3)
     
     with col1:
@@ -497,18 +498,13 @@ for i in range(1, rows + 1):
         g = st.number_input(
             "שורות",
             0,
-            999,  # Большой лимит, но будем проверять
+            999,
             0,
             key=g_key,
             label_visibility="collapsed",
         )
         
-        # Проверяем после ввода
-        if "g_g_prev" not in st.session_state:
-            st.session_state.g_g_prev = {}
-        
         if st.session_state.get(g_key, 0) > 99:
-            # Показываем сообщение и сбрасываем
             check_and_show_funny_message(st.session_state[g_key], "rows")
             st.session_state[g_key] = 99
             st.rerun()
@@ -519,7 +515,7 @@ for i in range(1, rows + 1):
         n = st.number_input(
             "פאנלים",
             0,
-            999,  # Большой лимит, но будем проверять
+            999,
             default_n,
             key=n_key,
             label_visibility="collapsed",
@@ -552,7 +548,6 @@ st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 # ---------- BUTTON: CALCULATE ----------
 st.markdown('<div class="primary-btn"></div>', unsafe_allow_html=True)
 if st.button("חשב", type="primary", use_container_width=True):
-    # Reset all as in original
     st.session_state.koshrot_qty = None
     st.session_state.koshrot_boxes_version += 1
     st.session_state.manual_rows = 1
