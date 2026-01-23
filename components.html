@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        .checkbox-grid {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .checkbox-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 6px 4px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            min-height: 40px;
+        }
+        .checkbox-item input {
+            margin-left: 6px;
+        }
+        @media (max-width: 768px) {
+            .checkbox-grid {
+                flex-direction: row;
+                overflow-x: auto;
+            }
+            .checkbox-column {
+                min-width: 33%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="checkbox-container"></div>
+
+    <script>
+        function sendData() {
+            const checkboxes = document.querySelectorAll('.checkbox-item input');
+            const data = {};
+            checkboxes.forEach(cb => {
+                data[cb.id] = cb.checked;
+            });
+            window.parent.postMessage({
+                type: 'streamlit:setComponentValue',
+                value: data
+            }, '*');
+        }
+
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'streamlit:setComponentValue') {
+                const container = document.getElementById('checkbox-container');
+                container.innerHTML = '';
+                
+                const grid = document.createElement('div');
+                grid.className = 'checkbox-grid';
+                
+                const col1 = document.createElement('div');
+                col1.className = 'checkbox-column';
+                const col2 = document.createElement('div');
+                col2.className = 'checkbox-column';
+                const col3 = document.createElement('div');
+                col3.className = 'checkbox-column';
+                
+                const items = ['פריט 1', 'פריט 2', 'פריט 3', 'פריט 4', 'פריט 5', 'פריט 6', 'פריט 7', 'פריט 8', 'פריט 9'];
+                
+                items.forEach((item, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'checkbox-item';
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `item_${index}`;
+                    checkbox.onchange = sendData;
+                    
+                    const label = document.createElement('label');
+                    label.htmlFor = checkbox.id;
+                    label.textContent = item;
+                    
+                    div.appendChild(checkbox);
+                    div.appendChild(label);
+                    
+                    if (index % 3 === 0) col1.appendChild(div);
+                    else if (index % 3 === 1) col2.appendChild(div);
+                    else col3.appendChild(div);
+                });
+                
+                grid.appendChild(col1);
+                grid.appendChild(col2);
+                grid.appendChild(col3);
+                container.appendChild(grid);
+            }
+        });
+    </script>
+</body>
+</html>
