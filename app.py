@@ -58,98 +58,129 @@ st.markdown("""
         50% { transform: translateY(-5px); }
     }
     
-    /* Убираем стандартные сообщения об ошибке */
-    .stNumberInput [data-testid="InputInstructions"] {
-        display: none !important;
-    }
-    
-    /* Мобильный интерфейс - КОМПАКТНЫЙ */
-    .mobile-group-row {
+    /* СУПЕР-КОМПАКТНЫЕ ИНПУТЫ ДЛЯ ГРУПП */
+    .compact-row {
         display: flex !important;
         flex-direction: row !important;
         width: 100% !important;
-        gap: 6px !important;
-        margin-bottom: 10px !important;
+        gap: 4px !important;
+        margin-bottom: 8px !important;
         align-items: center !important;
     }
     
-    .mobile-group-item {
+    .compact-column {
         flex: 1 !important;
-        text-align: center !important;
-    }
-    
-    /* Узкие поля ввода для мобильных */
-    .mobile-number-input input {
-        text-align: center !important;
-        font-size: 16px !important;
-        padding: 10px 6px !important;
-        min-height: 44px !important;
-    }
-    
-    .mobile-selectbox div[data-baseweb="select"] > div {
-        padding: 10px 8px !important;
-        font-size: 14px !important;
-        min-height: 44px !important;
-    }
-    
-    /* Десктоп интерфейс - как раньше */
-    .desktop-group-row {
-        width: 100% !important;
-    }
-    
-    /* Скрываем заголовки полей */
-    .mobile-group-item label,
-    .desktop-group-row label {
-        display: none !important;
-    }
-    
-    /* Заголовки колонок */
-    .group-header {
+        min-width: 0 !important;
         display: flex !important;
-        flex-direction: row !important;
-        width: 100% !important;
-        margin-bottom: 8px !important;
-        text-align: center !important;
+        flex-direction: column !important;
     }
     
-    .group-header-item {
-        flex: 1 !important;
-        font-weight: 500;
-        font-size: 14px !important;
-        color: #4a5568;
-        padding: 0 8px;
-        white-space: nowrap !important;
-        text-align: center !important;
+    .compact-label {
+        font-size: 11px !important;
+        color: #666;
+        text-align: center;
+        margin-bottom: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
+    .compact-input-wrapper {
+        display: flex;
+        width: 100%;
+        min-width: 0;
+    }
+    
+    .compact-number-input {
+        display: flex;
+        width: 100%;
+        min-width: 0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: white;
+        overflow: hidden;
+    }
+    
+    .compact-input {
+        flex: 1;
+        min-width: 0;
+        width: 100%;
+        border: none;
+        text-align: center;
+        padding: 6px 2px;
+        font-size: 14px;
+        outline: none;
+        background: transparent;
+    }
+    
+    .compact-btn {
+        background: #f0f0f0;
+        border: none;
+        padding: 6px 8px;
+        cursor: pointer;
+        font-size: 12px;
+        color: #333;
+        min-width: 28px;
+        flex-shrink: 0;
+    }
+    
+    .compact-btn:hover {
+        background: #e0e0e0;
+    }
+    
+    .compact-btn:active {
+        background: #d0d0d0;
+    }
+    
+    /* Принудительное сохранение горизонтальной верстки на мобильных */
     @media (max-width: 768px) {
-        .group-header-item {
+        .compact-row {
+            gap: 3px !important;
+            margin-bottom: 6px !important;
+        }
+        
+        .compact-label {
+            font-size: 10px !important;
+        }
+        
+        .compact-input {
+            padding: 6px 1px !important;
             font-size: 13px !important;
-            padding: 0 4px;
+            min-width: 20px !important;
         }
         
-        .main {
-            padding: 12px;
+        .compact-btn {
+            padding: 6px 6px !important;
+            min-width: 24px !important;
+            font-size: 11px !important;
         }
         
-        /* Мобильные колонки */
-        .mobile-columns {
-            display: flex !important;
-            flex-direction: row !important;
-            width: 100% !important;
-            gap: 4px !important;
-            margin-bottom: 8px !important;
+        /* Убираем минимальную ширину у всех элементов Streamlit */
+        div[data-testid="column"] {
+            min-width: 0 !important;
+            width: auto !important;
         }
         
-        .mobile-column-item {
-            flex: 1 !important;
+        .stNumberInput > div {
             min-width: 0 !important;
         }
         
-        .mobile-column-item input {
-            width: 100% !important;
+        .stNumberInput input {
             min-width: 0 !important;
             max-width: 100% !important;
+        }
+    }
+    
+    /* Очень узкие экраны */
+    @media (max-width: 480px) {
+        .compact-input {
+            padding: 6px 0 !important;
+            font-size: 12px !important;
+        }
+        
+        .compact-btn {
+            padding: 6px 4px !important;
+            min-width: 22px !important;
         }
     }
     
@@ -175,20 +206,6 @@ st.markdown("""
         font-weight: 600;
         padding: 16px;
         margin: 20px 0;
-    }
-    
-    /* Стили для спойлеров */
-    .spoiler-header {
-        font-size: 18px;
-        font-weight: 600;
-        color: #2d3748;
-        margin: 16px 0 8px 0;
-        text-align: right;
-    }
-    
-    /* Компактные строки внутри спойлера */
-    .spoiler-row {
-        margin-bottom: 10px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -239,14 +256,22 @@ if "is_mobile" not in st.session_state:
 
 # Группы для стоячих и лежачих панелей
 if "standing_rows" not in st.session_state:
-    st.session_state.standing_rows = 8  # 8 строк по умолчанию для стоячих
+    st.session_state.standing_rows = 8
+    # Инициализируем значения для стоячих
+    for i in range(1, 9):
+        st.session_state[f"standing_n_{i}"] = i
+        st.session_state[f"standing_g_{i}"] = 0
+
 if "laying_rows" not in st.session_state:
-    st.session_state.laying_rows = 4    # 4 строки по умолчанию для лежачих
+    st.session_state.laying_rows = 4
+    # Инициализируем значения для лежачих
+    for i in range(1, 5):
+        st.session_state[f"laying_n_{i}"] = i
+        st.session_state[f"laying_g_{i}"] = 0
 
 # ---------- LOAD DATABASES ----------
 @st.cache_data
 def load_data():
-    # Auto-create CSV files if they don't exist
     if not os.path.exists("panels.csv"):
         with open("panels.csv", "w", encoding="utf-8") as f:
             f.write("name,width,height\nTadiran 595,113.4,227.8\nJinko 640,113.4,238.2")
@@ -310,11 +335,10 @@ def format_qty(q):
         return str(q)
 
 def check_and_show_funny_message(value: int, field_type: str):
-    """Проверяет значение и показывает веселое сообщение если нужно"""
     if value > 99:
         if field_type == "rows":
             message = f"אל תגזים אחי, איזה [{value}] שורות במערכת ביתית? 😅"
-        else:  # panels
+        else:
             message = f"וואי [{value}] פאנלים בשורה אחת? אולי תפצל לשתי שורות? 😄"
         
         st.session_state.show_funny_message[field_type] = True
@@ -427,21 +451,38 @@ def format_whatsapp_message(project_name, panel_name, groups, materials_text):
     
     return message
 
-# ---------- DETECT MOBILE ----------
-components.html("""
-<script>
-function checkIfMobile() {
-    const isMobile = window.innerWidth <= 768;
-    window.parent.postMessage({
-        type: 'streamlit:setComponentValue',
-        value: isMobile
-    }, '*');
-}
-
-checkIfMobile();
-window.addEventListener('resize', checkIfMobile);
-</script>
-""", height=0)
+# ---------- ФУНКЦИЯ ДЛЯ СОЗДАНИЯ КОМПАКТНОЙ СТРОКИ ----------
+def create_compact_row(panel_type, index, default_n=0, default_g=0):
+    """Создает компактную строку с двумя инпутами"""
+    
+    # Создаем HTML для строки
+    html = f'''
+    <div class="compact-row">
+        <div class="compact-column">
+            <div class="compact-label">פאנלים</div>
+            <div class="compact-input-wrapper">
+                <div class="compact-number-input">
+                    <button class="compact-btn" onclick="updateNumber('{panel_type}_n_{index}', -1)">-</button>
+                    <input type="number" id="{panel_type}_n_{index}" value="{default_n}" min="0" max="99" 
+                           class="compact-input" onchange="saveValue('{panel_type}_n_{index}', this.value)">
+                    <button class="compact-btn" onclick="updateNumber('{panel_type}_n_{index}', 1)">+</button>
+                </div>
+            </div>
+        </div>
+        <div class="compact-column">
+            <div class="compact-label">שורות</div>
+            <div class="compact-input-wrapper">
+                <div class="compact-number-input">
+                    <button class="compact-btn" onclick="updateNumber('{panel_type}_g_{index}', -1)">-</button>
+                    <input type="number" id="{panel_type}_g_{index}" value="{default_g}" min="0" max="99" 
+                           class="compact-input" onchange="saveValue('{panel_type}_g_{index}', this.value)">
+                    <button class="compact-btn" onclick="updateNumber('{panel_type}_g_{index}', 1)">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    '''
+    return html
 
 # ---------- UI: PROJECT NAME ----------
 st.markdown('<div class="section-header">שם פרויקט</div>', unsafe_allow_html=True)
@@ -484,156 +525,156 @@ st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 # ---------- GROUPS SECTION ----------
 st.markdown(right_header("קבוצות פאנלים"), unsafe_allow_html=True)
 
-# Показываем веселое сообщение если нужно
 if st.session_state.show_funny_message.get("rows") or st.session_state.show_funny_message.get("panels"):
     st.markdown(f'<div class="funny-message">{st.session_state.funny_message_text}</div>', unsafe_allow_html=True)
 
-# Собираем все группы
 all_groups = []
 
-# СПОЙЛЕР 1: СТОЯЧИЕ ПАНЕЛИ (עומד)
+# JavaScript для обработки компактных инпутов
+js_code = """
+<script>
+// Сохраняем значение в session_state
+function saveValue(fieldId, value) {
+    const Streamlit = window.parent;
+    Streamlit.postMessage({
+        type: 'streamlit:setComponentValue',
+        value: {
+            field: fieldId,
+            value: parseInt(value) || 0
+        }
+    }, '*');
+}
+
+// Обновление числа с кнопок +/-
+function updateNumber(fieldId, delta) {
+    const input = document.getElementById(fieldId);
+    let value = parseInt(input.value) || 0;
+    value += delta;
+    if (value < 0) value = 0;
+    if (value > 99) value = 99;
+    input.value = value;
+    saveValue(fieldId, value);
+}
+
+// Инициализация значений из session_state
+function initValues() {
+    // Значения будут установлены при создании HTML
+}
+
+// Запускаем при загрузке
+initValues();
+</script>
+"""
+
+# СПОЙЛЕР 1: СТОЯЧИЕ ПАНЕЛИ
 with st.expander("עומד", expanded=True):
-    st.markdown('<div class="group-header"><div class="group-header-item">פאנלים</div><div class="group-header-item">שורות</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="compact-row"><div class="compact-column"><div class="compact-label">פאנלים</div></div><div class="compact-column"><div class="compact-label">שורות</div></div></div>', unsafe_allow_html=True)
     
+    standing_html = ""
     standing_groups = []
+    
     for i in range(1, st.session_state.standing_rows + 1):
-        # На мобильных делаем компактный ряд, на десктопе - обычные колонки
-        if st.session_state.get("is_mobile", False):
-            col1, col2 = st.columns(2)
-            with col1:
-                # פאנלים - предустановленные значения 1-8
-                n = st.number_input(
-                    "פאנלים",
-                    0,
-                    99,
-                    i,  # 1, 2, 3... 8
-                    key=f"standing_n_{i}",
-                    label_visibility="collapsed",
-                )
-            with col2:
-                # שורות - 0 по умолчанию
-                g = st.number_input(
-                    "שורות",
-                    0,
-                    99,
-                    0,
-                    key=f"standing_g_{i}",
-                    label_visibility="collapsed",
-                )
-        else:
-            col1, col2 = st.columns(2)
-            with col1:
-                n = st.number_input(
-                    "פאנלים",
-                    0,
-                    99,
-                    i,
-                    key=f"standing_n_{i}",
-                    label_visibility="collapsed",
-                )
-            with col2:
-                g = st.number_input(
-                    "שורות",
-                    0,
-                    99,
-                    0,
-                    key=f"standing_g_{i}",
-                    label_visibility="collapsed",
-                )
+        n_val = st.session_state.get(f"standing_n_{i}", i)
+        g_val = st.session_state.get(f"standing_g_{i}", 0)
         
         # Проверяем лимиты
-        if g > 99:
-            check_and_show_funny_message(g, "rows")
+        if g_val > 99:
+            check_and_show_funny_message(g_val, "rows")
             st.session_state[f"standing_g_{i}"] = 99
+            g_val = 99
             st.rerun()
-        if n > 99:
-            check_and_show_funny_message(n, "panels")
+        if n_val > 99:
+            check_and_show_funny_message(n_val, "panels")
             st.session_state[f"standing_n_{i}"] = 99
+            n_val = 99
             st.rerun()
         
-        if n > 0 and g > 0:
-            standing_groups.append((n, g, "עומד"))
+        standing_html += create_compact_row("standing", i, n_val, g_val)
+        
+        if n_val > 0 and g_val > 0:
+            standing_groups.append((n_val, g_val, "עומד"))
     
-    # Кнопка добавить еще строку для стоячих
+    # Отображаем все строки
+    st.markdown(standing_html, unsafe_allow_html=True)
+    
+    # Кнопка добавить строку
     col1, col2 = st.columns([3, 1])
     with col2:
         if st.button("+ שורה", key="add_standing_row"):
             st.session_state.standing_rows += 1
+            st.session_state[f"standing_n_{st.session_state.standing_rows}"] = 0
+            st.session_state[f"standing_g_{st.session_state.standing_rows}"] = 0
             st.rerun()
     
     all_groups.extend(standing_groups)
 
-# СПОЙЛЕР 2: ЛЕЖАЧИЕ ПАНЕЛИ (שוכב)
+# СПОЙЛЕР 2: ЛЕЖАЧИЕ ПАНЕЛИ
 with st.expander("שוכב", expanded=False):
-    st.markdown('<div class="group-header"><div class="group-header-item">פאנלים</div><div class="group-header-item">שורות</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="compact-row"><div class="compact-column"><div class="compact-label">פאנלים</div></div><div class="compact-column"><div class="compact-label">שורות</div></div></div>', unsafe_allow_html=True)
     
+    laying_html = ""
     laying_groups = []
+    
     for i in range(1, st.session_state.laying_rows + 1):
-        # Предустановленные значения: 1, 2, 3, 4 для первых 4 строк
-        default_n = i if i <= 4 else 0
-        
-        if st.session_state.get("is_mobile", False):
-            col1, col2 = st.columns(2)
-            with col1:
-                n = st.number_input(
-                    "פאנלים",
-                    0,
-                    99,
-                    default_n,
-                    key=f"laying_n_{i}",
-                    label_visibility="collapsed",
-                )
-            with col2:
-                g = st.number_input(
-                    "שורות",
-                    0,
-                    99,
-                    0,
-                    key=f"laying_g_{i}",
-                    label_visibility="collapsed",
-                )
-        else:
-            col1, col2 = st.columns(2)
-            with col1:
-                n = st.number_input(
-                    "פאנלים",
-                    0,
-                    99,
-                    default_n,
-                    key=f"laying_n_{i}",
-                    label_visibility="collapsed",
-                )
-            with col2:
-                g = st.number_input(
-                    "שורות",
-                    0,
-                    99,
-                    0,
-                    key=f"laying_g_{i}",
-                    label_visibility="collapsed",
-                )
+        n_val = st.session_state.get(f"laying_n_{i}", i if i <= 4 else 0)
+        g_val = st.session_state.get(f"laying_g_{i}", 0)
         
         # Проверяем лимиты
-        if g > 99:
-            check_and_show_funny_message(g, "rows")
+        if g_val > 99:
+            check_and_show_funny_message(g_val, "rows")
             st.session_state[f"laying_g_{i}"] = 99
+            g_val = 99
             st.rerun()
-        if n > 99:
-            check_and_show_funny_message(n, "panels")
+        if n_val > 99:
+            check_and_show_funny_message(n_val, "panels")
             st.session_state[f"laying_n_{i}"] = 99
+            n_val = 99
             st.rerun()
         
-        if n > 0 and g > 0:
-            laying_groups.append((n, g, "שוכב"))
+        laying_html += create_compact_row("laying", i, n_val, g_val)
+        
+        if n_val > 0 and g_val > 0:
+            laying_groups.append((n_val, g_val, "שוכב"))
     
-    # Кнопка добавить еще строку для лежачих
+    # Отображаем все строки
+    st.markdown(laying_html, unsafe_allow_html=True)
+    
+    # Кнопка добавить строку
     col1, col2 = st.columns([3, 1])
     with col2:
         if st.button("+ שורה", key="add_laying_row"):
             st.session_state.laying_rows += 1
+            st.session_state[f"laying_n_{st.session_state.laying_rows}"] = 0
+            st.session_state[f"laying_g_{st.session_state.laying_rows}"] = 0
             st.rerun()
     
     all_groups.extend(laying_groups)
+
+# Добавляем JavaScript для обработки
+st.markdown(js_code, unsafe_allow_html=True)
+
+# Обработчик сообщений от JavaScript
+components.html("""
+<script>
+window.addEventListener('message', function(event) {
+    if (event.data.type === 'streamlit:setComponentValue') {
+        const data = event.data.value;
+        if (data && data.field) {
+            // Отправляем данные обратно в Streamlit
+            const Streamlit = window.parent;
+            Streamlit.postMessage({
+                type: 'streamlit:setComponentValue',
+                value: data
+            }, '*');
+        }
+    }
+});
+</script>
+""", height=0)
+
+# Получаем данные от JavaScript
+if 'component_messages' not in st.session_state:
+    st.session_state.component_messages = []
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
@@ -677,11 +718,10 @@ calc_result = st.session_state.calc_result
 # ---------- MANUAL RAILS ----------
 st.markdown(right_header("קושרות (הוספה ידנית)"), unsafe_allow_html=True)
 
-# Заголовки колонок
 col1, col2, col3 = st.columns(3)
-col1.markdown('<div class="group-header-item">אורך (ס״מ)</div>', unsafe_allow_html=True)
-col2.markdown('<div class="group-header-item">כמות</div>', unsafe_allow_html=True)
-col3.markdown('<div class="group-header-item">&nbsp;</div>', unsafe_allow_html=True)
+col1.markdown('<div style="font-size: 12px; text-align: center;">אורך (ס״מ)</div>', unsafe_allow_html=True)
+col2.markdown('<div style="font-size: 12px; text-align: center;">כמות</div>', unsafe_allow_html=True)
+col3.markdown('<div style="font-size: 12px; text-align: center;">&nbsp;</div>', unsafe_allow_html=True)
 
 manual_rows = st.session_state.manual_rows
 for j in range(1, manual_rows + 1):
@@ -711,13 +751,13 @@ for j in range(1, manual_rows + 1):
     
     with col3:
         if j == 1:
-            st.markdown(right_label("להוסיף קושרות"), unsafe_allow_html=True)
+            st.markdown('<div style="font-size: 12px; text-align: right;">להוסיף קושרות</div>', unsafe_allow_html=True)
 
 if st.button("להוסיף עוד קושרות", key="add_manual_rails"):
     st.session_state.manual_rows += 1
     st.rerun()
 
-# Собираем ручные рейки в словарь
+# Собираем ручные рейки
 manual_rails_dict = {}
 for j in range(1, st.session_state.manual_rows + 1):
     if j in st.session_state.manual_deleted_rows:
@@ -729,7 +769,6 @@ for j in range(1, st.session_state.manual_rows + 1):
 
 st.session_state.manual_rails = manual_rails_dict
 
-# --- sync manual additions into the editable קושרות boxes (koshrot_qty) ---
 prev_manual = st.session_state.get("manual_rails_prev", {})
 curr_manual = st.session_state.manual_rails
 
@@ -859,7 +898,7 @@ if calc_result is not None:
                 )
             
             with c_name:
-                st.markdown(f'<div class="fix-mixed-rtl"><strong>{lbl}</strong></div>', unsafe_allow_html=True)
+                st.markdown(f'<div style="text-align: right; font-weight: 500;"><strong>{lbl}</strong></div>', unsafe_allow_html=True)
             
             st.session_state["fasteners"][lbl] = int(v)
     
@@ -956,10 +995,8 @@ if calc_result is not None:
     
     with col2:
         if st.button("שלח דו״ח", type="primary", use_container_width=True):
-            # Prepare materials text
             materials_text = ""
             
-            # Rails
             if st.session_state.koshrot_qty:
                 materials_text += "קושרות:\n"
                 for length in sorted(st.session_state.koshrot_qty.keys(), key=length_sort_key, reverse=True):
@@ -967,7 +1004,6 @@ if calc_result is not None:
                     if qty > 0:
                         materials_text += f"• {qty} × {length} ס״מ\n"
             
-            # Fasteners
             fasteners_list = []
             if st.session_state.get("fasteners"):
                 for lbl, val in st.session_state["fasteners"].items():
@@ -979,7 +1015,6 @@ if calc_result is not None:
                 for lbl, val in fasteners_list:
                     materials_text += f"• {lbl}: {val}\n"
             
-            # Channels
             if st.session_state.channel_order:
                 materials_text += "\nתעלות:\n"
                 for name, data in st.session_state.channel_order.items():
@@ -993,7 +1028,6 @@ if calc_result is not None:
                     if qty > 0:
                         materials_text += f"• {name}: {format_qty(qty)} {unit}\n"
             
-            # Extra parts
             if st.session_state.extra_parts:
                 materials_text += "\nפריטים נוספים:\n"
                 for p in st.session_state.extra_parts:
@@ -1004,7 +1038,6 @@ if calc_result is not None:
                     
                     materials_text += f"• {p['name']}: {p['qty']} {unit}\n"
             
-            # Format WhatsApp message
             valid_groups = [(n, g, o) for n, g, o in all_groups if n > 0 and g > 0]
             whatsapp_msg = format_whatsapp_message(
                 project_name=project_name,
@@ -1013,11 +1046,9 @@ if calc_result is not None:
                 materials_text=materials_text
             )
             
-            # Encode for URL
             encoded_msg = urllib.parse.quote(whatsapp_msg)
             whatsapp_url = f"https://wa.me/?text={encoded_msg}"
             
-            # Show WhatsApp button
             st.markdown(f"""
             <div style='background:#f0f9ff; padding:16px; border-radius:8px; border:1px solid #e0f2fe; margin:12px 0;'>
                 <div style='text-align:right; font-weight:500; margin-bottom:12px;'>הדו״ח מוכן לשליחה</div>
@@ -1053,7 +1084,6 @@ if calc_result is not None:
             </div>
             """, unsafe_allow_html=True)
             
-            # Auto-open on mobile
             components.html(f"""
             <script>
             if (window.innerWidth <= 768) {{
