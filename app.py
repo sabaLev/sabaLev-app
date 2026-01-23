@@ -131,6 +131,26 @@ st.markdown("""
         .main {
             padding: 12px;
         }
+        
+        /* Мобильные колонки */
+        .mobile-columns {
+            display: flex !important;
+            flex-direction: row !important;
+            width: 100% !important;
+            gap: 4px !important;
+            margin-bottom: 8px !important;
+        }
+        
+        .mobile-column-item {
+            flex: 1 !important;
+            min-width: 0 !important;
+        }
+        
+        .mobile-column-item input {
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+        }
     }
     
     /* Остальные стили... */
@@ -155,6 +175,20 @@ st.markdown("""
         font-weight: 600;
         padding: 16px;
         margin: 20px 0;
+    }
+    
+    /* Стили для спойлеров */
+    .spoiler-header {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2d3748;
+        margin: 16px 0 8px 0;
+        text-align: right;
+    }
+    
+    /* Компактные строки внутри спойлера */
+    .spoiler-row {
+        margin-bottom: 10px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -202,10 +236,12 @@ if "funny_message_text" not in st.session_state:
     st.session_state.funny_message_text = ""
 if "is_mobile" not in st.session_state:
     st.session_state.is_mobile = False
-if "component_data" not in st.session_state:
-    st.session_state.component_data = []
-if "groups_from_component" not in st.session_state:
-    st.session_state.groups_from_component = []
+
+# Группы для стоячих и лежачих панелей
+if "standing_rows" not in st.session_state:
+    st.session_state.standing_rows = 8  # 8 строк по умолчанию для стоячих
+if "laying_rows" not in st.session_state:
+    st.session_state.laying_rows = 4    # 4 строки по умолчанию для лежачих
 
 # ---------- LOAD DATABASES ----------
 @st.cache_data
@@ -445,78 +481,159 @@ panel = panel_rows.iloc[0]
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
-# ---------- CUSTOM COMPONENT FOR GROUPS ----------
+# ---------- GROUPS SECTION ----------
 st.markdown(right_header("קבוצות פאנלים"), unsafe_allow_html=True)
-
-# Заголовки колонок
-st.markdown("""
-<div class="group-header">
-    <div class="group-header-item">שורות</div>
-    <div class="group-header-item">פאנלים</div>
-    <div class="group-header-item">כיוון</div>
-</div>
-""", unsafe_allow_html=True)
 
 # Показываем веселое сообщение если нужно
 if st.session_state.show_funny_message.get("rows") or st.session_state.show_funny_message.get("panels"):
     st.markdown(f'<div class="funny-message">{st.session_state.funny_message_text}</div>', unsafe_allow_html=True)
 
-# Загружаем и отображаем кастомный компонент
-with open("components.html", "r", encoding="utf-8") as f:
-    html_content = f.read()
+# Собираем все группы
+all_groups = []
 
-# Отображаем компонент
-components.html(html_content, height=400)
+# СПОЙЛЕР 1: СТОЯЧИЕ ПАНЕЛИ (עומד)
+with st.expander("עומד", expanded=True):
+    st.markdown('<div class="group-header"><div class="group-header-item">פאנלים</div><div class="group-header-item">שורות</div></div>', unsafe_allow_html=True)
+    
+    standing_groups = []
+    for i in range(1, st.session_state.standing_rows + 1):
+        # На мобильных делаем компактный ряд, на десктопе - обычные колонки
+        if st.session_state.get("is_mobile", False):
+            col1, col2 = st.columns(2)
+            with col1:
+                # פאנלים - предустановленные значения 1-8
+                n = st.number_input(
+                    "פאנלים",
+                    0,
+                    99,
+                    i,  # 1, 2, 3... 8
+                    key=f"standing_n_{i}",
+                    label_visibility="collapsed",
+                )
+            with col2:
+                # שורות - 0 по умолчанию
+                g = st.number_input(
+                    "שורות",
+                    0,
+                    99,
+                    0,
+                    key=f"standing_g_{i}",
+                    label_visibility="collapsed",
+                )
+        else:
+            col1, col2 = st.columns(2)
+            with col1:
+                n = st.number_input(
+                    "פאנלים",
+                    0,
+                    99,
+                    i,
+                    key=f"standing_n_{i}",
+                    label_visibility="collapsed",
+                )
+            with col2:
+                g = st.number_input(
+                    "שורות",
+                    0,
+                    99,
+                    0,
+                    key=f"standing_g_{i}",
+                    label_visibility="collapsed",
+                )
+        
+        # Проверяем лимиты
+        if g > 99:
+            check_and_show_funny_message(g, "rows")
+            st.session_state[f"standing_g_{i}"] = 99
+            st.rerun()
+        if n > 99:
+            check_and_show_funny_message(n, "panels")
+            st.session_state[f"standing_n_{i}"] = 99
+            st.rerun()
+        
+        if n > 0 and g > 0:
+            standing_groups.append((n, g, "עומד"))
+    
+    # Кнопка добавить еще строку для стоячих
+    col1, col2 = st.columns([3, 1])
+    with col2:
+        if st.button("+ שורה", key="add_standing_row"):
+            st.session_state.standing_rows += 1
+            st.rerun()
+    
+    all_groups.extend(standing_groups)
 
-# JavaScript для получения данных от компонента
-components.html("""
-<script>
-// Слушаем сообщения от компонента
-window.addEventListener('message', function(event) {
-    if (event.data.type === 'streamlit:setComponentValue') {
-        // Сохраняем данные в session_state
-        const Streamlit = window.parent;
-        Streamlit.postMessage({
-            type: 'streamlit:setComponentValue',
-            value: {
-                component_data: event.data.value
-            }
-        }, '*');
-    }
-});
-</script>
-""", height=0)
-
-# Получаем данные из компонента через события Streamlit
-if 'component_data' in st.session_state:
-    groups_data = st.session_state.component_data
-    groups = []
-    if isinstance(groups_data, list):
-        for item in groups_data:
-            if isinstance(item, dict):
-                n = item.get('n', 0)
-                g = item.get('g', 0)
-                o = item.get('o', 'עומד')
-                if n > 0 and g > 0:
-                    groups.append((n, g, o))
-    st.session_state.groups_from_component = groups
-
-# Используем группы из компонента
-current_groups = st.session_state.get('groups_from_component', [])
-
-# Кнопка добавления строки
-if st.button("להוסיף פאנלים"):
-    # Отправляем команду компоненту
-    components.html("""
-    <script>
-    // Отправляем команду на добавление строки
-    window.parent.postMessage({
-        type: 'streamlit:setComponentValue',
-        action: 'addRow'
-    }, '*');
-    </script>
-    """, height=0)
-    st.rerun()
+# СПОЙЛЕР 2: ЛЕЖАЧИЕ ПАНЕЛИ (שוכב)
+with st.expander("שוכב", expanded=False):
+    st.markdown('<div class="group-header"><div class="group-header-item">פאנלים</div><div class="group-header-item">שורות</div></div>', unsafe_allow_html=True)
+    
+    laying_groups = []
+    for i in range(1, st.session_state.laying_rows + 1):
+        # Предустановленные значения: 1, 2, 3, 4 для первых 4 строк
+        default_n = i if i <= 4 else 0
+        
+        if st.session_state.get("is_mobile", False):
+            col1, col2 = st.columns(2)
+            with col1:
+                n = st.number_input(
+                    "פאנלים",
+                    0,
+                    99,
+                    default_n,
+                    key=f"laying_n_{i}",
+                    label_visibility="collapsed",
+                )
+            with col2:
+                g = st.number_input(
+                    "שורות",
+                    0,
+                    99,
+                    0,
+                    key=f"laying_g_{i}",
+                    label_visibility="collapsed",
+                )
+        else:
+            col1, col2 = st.columns(2)
+            with col1:
+                n = st.number_input(
+                    "פאנלים",
+                    0,
+                    99,
+                    default_n,
+                    key=f"laying_n_{i}",
+                    label_visibility="collapsed",
+                )
+            with col2:
+                g = st.number_input(
+                    "שורות",
+                    0,
+                    99,
+                    0,
+                    key=f"laying_g_{i}",
+                    label_visibility="collapsed",
+                )
+        
+        # Проверяем лимиты
+        if g > 99:
+            check_and_show_funny_message(g, "rows")
+            st.session_state[f"laying_g_{i}"] = 99
+            st.rerun()
+        if n > 99:
+            check_and_show_funny_message(n, "panels")
+            st.session_state[f"laying_n_{i}"] = 99
+            st.rerun()
+        
+        if n > 0 and g > 0:
+            laying_groups.append((n, g, "שוכב"))
+    
+    # Кнопка добавить еще строку для лежачих
+    col1, col2 = st.columns([3, 1])
+    with col2:
+        if st.button("+ שורה", key="add_laying_row"):
+            st.session_state.laying_rows += 1
+            st.rerun()
+    
+    all_groups.extend(laying_groups)
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
@@ -531,9 +648,8 @@ if st.button("חשב", type="primary", use_container_width=True):
     st.session_state.manual_rails_prev = {}
     st.session_state.manual_form_version += 1
     
-    # Используем группы из компонента
-    if current_groups:
-        st.session_state.calc_result = do_calculation(panel, current_groups)
+    if all_groups:
+        st.session_state.calc_result = do_calculation(panel, all_groups)
     else:
         st.session_state.calc_result = {
             "auto_rails": {},
@@ -889,7 +1005,7 @@ if calc_result is not None:
                     materials_text += f"• {p['name']}: {p['qty']} {unit}\n"
             
             # Format WhatsApp message
-            valid_groups = [(n, g, o) for n, g, o in current_groups if n > 0 and g > 0]
+            valid_groups = [(n, g, o) for n, g, o in all_groups if n > 0 and g > 0]
             whatsapp_msg = format_whatsapp_message(
                 project_name=project_name,
                 panel_name=panel_name,
