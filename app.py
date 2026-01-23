@@ -160,13 +160,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------- SESSION STATE INIT ----------
-# [ВСЕ ПЕРЕМЕННЫЕ ОСТАЮТСЯ ТАКИМИ ЖЕ КАК В ПРЕДЫДУЩЕЙ ВЕРСИИ]
 if "calc_result" not in st.session_state:
     st.session_state.calc_result = None
 if "just_calculated" not in st.session_state:
     st.session_state.just_calculated = False
-if "group_rows" not in st.session_state:
-    st.session_state.group_rows = 12
 if "channel_order" not in st.session_state:
     st.session_state.channel_order = {}
 if "extra_parts" not in st.session_state:
@@ -205,6 +202,10 @@ if "funny_message_text" not in st.session_state:
     st.session_state.funny_message_text = ""
 if "is_mobile" not in st.session_state:
     st.session_state.is_mobile = False
+if "component_data" not in st.session_state:
+    st.session_state.component_data = []
+if "groups_from_component" not in st.session_state:
+    st.session_state.groups_from_component = []
 
 # ---------- LOAD DATABASES ----------
 @st.cache_data
@@ -391,7 +392,6 @@ def format_whatsapp_message(project_name, panel_name, groups, materials_text):
     return message
 
 # ---------- DETECT MOBILE ----------
-# Используем JavaScript для определения мобильного устройства
 components.html("""
 <script>
 function checkIfMobile() {
@@ -402,14 +402,10 @@ function checkIfMobile() {
     }, '*');
 }
 
-// Проверяем при загрузке и при изменении размера
 checkIfMobile();
 window.addEventListener('resize', checkIfMobile);
 </script>
 """, height=0)
-
-# Получаем значение из JavaScript (это упрощенный пример)
-# В реальности нужно использовать st.experimental_get_query_params или другой метод
 
 # ---------- UI: PROJECT NAME ----------
 st.markdown('<div class="section-header">שם פרויקט</div>', unsafe_allow_html=True)
@@ -449,7 +445,7 @@ panel = panel_rows.iloc[0]
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
-# ---------- CUSTOM CHECKBOX COMPONENT ----------
+# ---------- CUSTOM COMPONENT FOR GROUPS ----------
 st.markdown(right_header("קבוצות פאנלים"), unsafe_allow_html=True)
 
 # Заголовки колонок
@@ -461,86 +457,65 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Загружаем и отображаем кастомный компонент
-with open("components.html", "r", encoding="utf-8") as f:
-    components.html(f.read(), height=300)
-
 # Показываем веселое сообщение если нужно
 if st.session_state.show_funny_message.get("rows") or st.session_state.show_funny_message.get("panels"):
     st.markdown(f'<div class="funny-message">{st.session_state.funny_message_text}</div>', unsafe_allow_html=True)
 
-# ПРОСТОЙ ВАРИАНТ: Всегда используем st.columns(3) для оставшихся полей
-groups = []
-rows = st.session_state.group_rows
+# Загружаем и отображаем кастомный компонент
+with open("components.html", "r", encoding="utf-8") as f:
+    html_content = f.read()
 
-for i in range(1, rows + 1):
-    # ПРЕДУСТАНОВЛЕННЫЕ ЗНАЧЕНИЯ
-    if i <= 8:
-        default_n = i  # 1..8 עומד
-    elif i <= 12:
-        default_n = i - 8  # 1..4 שוכב
-    else:
-        default_n = 0
-    
-    if i <= 8:
-        default_orientation = 0  # עומד
-    elif i <= 12:
-        default_orientation = 1  # שוכב
-    else:
-        default_orientation = 0
+# Отображаем компонент
+components.html(html_content, height=400)
 
-    # ВСЕГДА 3 КОЛОНКИ
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        # שורות
-        g_key = f"g_g_{i}"
-        g = st.number_input(
-            "שורות",
-            0,
-            999,
-            0,
-            key=g_key,
-            label_visibility="collapsed",
-        )
-        
-        if st.session_state.get(g_key, 0) > 99:
-            check_and_show_funny_message(st.session_state[g_key], "rows")
-            st.session_state[g_key] = 99
-            st.rerun()
-    
-    with col2:
-        # פאנלים
-        n_key = f"g_n_{i}"
-        n = st.number_input(
-            "פאנלים",
-            0,
-            999,
-            default_n,
-            key=n_key,
-            label_visibility="collapsed",
-        )
-        
-        if st.session_state.get(n_key, 0) > 99:
-            check_and_show_funny_message(st.session_state[n_key], "panels")
-            st.session_state[n_key] = 99
-            st.rerun()
-    
-    with col3:
-        # כיוון
-        o = st.selectbox(
-            "כיוון",
-            ["עומד", "שוכב"],
-            index=default_orientation,
-            key=f"g_o_{i}",
-            label_visibility="collapsed",
-        )
-    
-    if n > 0 and g > 0:
-        groups.append((n, g, o))
+# JavaScript для получения данных от компонента
+components.html("""
+<script>
+// Слушаем сообщения от компонента
+window.addEventListener('message', function(event) {
+    if (event.data.type === 'streamlit:setComponentValue') {
+        // Сохраняем данные в session_state
+        const Streamlit = window.parent;
+        Streamlit.postMessage({
+            type: 'streamlit:setComponentValue',
+            value: {
+                component_data: event.data.value
+            }
+        }, '*');
+    }
+});
+</script>
+""", height=0)
 
+# Получаем данные из компонента через события Streamlit
+if 'component_data' in st.session_state:
+    groups_data = st.session_state.component_data
+    groups = []
+    if isinstance(groups_data, list):
+        for item in groups_data:
+            if isinstance(item, dict):
+                n = item.get('n', 0)
+                g = item.get('g', 0)
+                o = item.get('o', 'עומד')
+                if n > 0 and g > 0:
+                    groups.append((n, g, o))
+    st.session_state.groups_from_component = groups
+
+# Используем группы из компонента
+current_groups = st.session_state.get('groups_from_component', [])
+
+# Кнопка добавления строки
 if st.button("להוסיף פאנלים"):
-    st.session_state.group_rows += 1
+    # Отправляем команду компоненту
+    components.html("""
+    <script>
+    // Отправляем команду на добавление строки
+    window.parent.postMessage({
+        type: 'streamlit:setComponentValue',
+        action: 'addRow'
+    }, '*');
+    </script>
+    """, height=0)
     st.rerun()
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
@@ -556,8 +531,9 @@ if st.button("חשב", type="primary", use_container_width=True):
     st.session_state.manual_rails_prev = {}
     st.session_state.manual_form_version += 1
     
-    if groups:
-        st.session_state.calc_result = do_calculation(panel, groups)
+    # Используем группы из компонента
+    if current_groups:
+        st.session_state.calc_result = do_calculation(panel, current_groups)
     else:
         st.session_state.calc_result = {
             "auto_rails": {},
@@ -913,7 +889,7 @@ if calc_result is not None:
                     materials_text += f"• {p['name']}: {p['qty']} {unit}\n"
             
             # Format WhatsApp message
-            valid_groups = [(n, g, o) for n, g, o in groups if n > 0 and g > 0]
+            valid_groups = [(n, g, o) for n, g, o in current_groups if n > 0 and g > 0]
             whatsapp_msg = format_whatsapp_message(
                 project_name=project_name,
                 panel_name=panel_name,
@@ -971,7 +947,6 @@ if calc_result is not None:
             """, height=0)
 
 # ---------- AUTO CREATE FILES ----------
-# Create manifest.json for PWA
 if not os.path.exists("manifest.json"):
     with open("manifest.json", "w", encoding="utf-8") as f:
         f.write("""{
@@ -1001,7 +976,6 @@ if not os.path.exists("manifest.json"):
   ]
 }""")
 
-# Add PWA meta tags
 components.html("""
 <link rel="manifest" href="/manifest.json">
 <meta name="viewport" content="width=device-width, initial-scale=1">
