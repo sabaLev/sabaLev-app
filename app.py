@@ -645,7 +645,7 @@ def build_html_report(calc_result, project_name, panel_name, channel_order, extr
             html += (
                 "<tr style='border:none;'>"
                 f"<td style='text-align:right; white-space:nowrap; border:none;'>{name}</td>"
-                f"<td style='text-align:left; white-space:nowrap; border:none;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{qty_text}</td>"
+                f"<td style='text-align:left; white-space:nowrap; border=none;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{qty_text}</td>"
                 "</tr>"
             )
         html += "</tbody></table>"
@@ -669,9 +669,11 @@ if st.button("חשב", type="primary", use_container_width=True):
     # bump version to force Streamlit to create fresh widgets with default values
     st.session_state.manual_form_version += 1
 
-    st.session_state['m_len_1'] = 0
-    st.session_state['m_qty_1'] = 0
-
+    # clear widget keys for previous rows
+    for j in range(1, 51):
+        st.session_state.pop(f"m_len_{st.session_state.manual_form_version}_{j}", None)
+        st.session_state.pop(f"m_qty_{st.session_state.manual_form_version}_{j}", None)
+    
     if groups:
         st.session_state.calc_result = do_calculation(panel, groups)
     else:
@@ -690,16 +692,6 @@ if st.button("חשב", type="primary", use_container_width=True):
     st.session_state["fasteners"] = None
     st.session_state["fasteners_include"] = None
 
-    # reset קושרות (הוספה ידנית) section completely
-    # (rows, deleted rows, stored widget values, aggregated dict, snapshot)
-    st.session_state.manual_rows = 1
-    st.session_state.manual_deleted_rows = set()
-    st.session_state.manual_rails = {}
-    st.session_state.manual_rails_prev = {}
-    # clear widget keys for previous rows
-    for j in range(1, 51):
-        st.session_state.pop(f"m_len_{st.session_state.manual_form_version}_{j}", None)
-        st.session_state.pop(f"m_qty_{st.session_state.manual_form_version}_{j}", None)
     st.session_state.just_calculated = True
     st.rerun()
 
@@ -712,16 +704,15 @@ if st.session_state.get("just_calculated"):
 
 calc_result = st.session_state.calc_result
 
-# ---------- SHOW CALC RESULT ----------
+# ---------- MANUAL RAILS ----------
+# Секция ручного добавления рельс - ПЕРЕМЕЩЕНА, теперь будет показываться только после расчета
 if calc_result is not None:
-    auto_rails = calc_result["auto_rails"]
-    manual_rails = st.session_state.manual_rails
-
-    st.write(f"סה\"כ פאנלים: {calc_result['total_panels']}")
-
     # ----- קושרות -----
     with st.expander("**קושרות**", expanded=True):
-        # базовые количества = авто + ручные (ручные не теряются при пересчёте)
+        auto_rails = calc_result["auto_rails"]
+        manual_rails = st.session_state.manual_rails
+        
+        # базовые количества = авто + ручные
         rails_base = {}
         for length, qty in auto_rails.items():
             klen = normalize_length_key(length)
@@ -770,20 +761,20 @@ if calc_result is not None:
     # Теперь этот раздел только после расчета, между קושרות и פרזול
     with st.expander("**קושרות (הוספה ידנית)**", expanded=True):
         # Добавляем заголовки колонок внутри спойлера
-        mh = st.columns(2)  # теперь только 2 колонки
+        mh = st.columns(2)
         mh[0].markdown(right_label("אורך (ס״מ)"), unsafe_allow_html=True)
         mh[1].markdown(right_label("כמות"), unsafe_allow_html=True)
         
         manual_rows = st.session_state.manual_rows
 
         for j in range(1, manual_rows + 1):
-            cols = st.columns(2)  # только 2 колонки
+            cols = st.columns(2)
             length = cols[0].number_input(
                 "",
                 min_value=0,
                 max_value=10000,
                 step=10,
-                value=0,  # По умолчанию 0
+                value=0,
                 key=f"m_len_{st.session_state.manual_form_version}_{j}",
                 label_visibility="collapsed",
             )
@@ -792,18 +783,17 @@ if calc_result is not None:
                 min_value=0,
                 max_value=1000,
                 step=1,
-                value=0,  # По умолчанию 0
+                value=0,
                 key=f"m_qty_{st.session_state.manual_form_version}_{j}",
                 label_visibility="collapsed",
             )
 
         # Кнопка для добавления строк в конце секции
-        # Используем form_submit_button чтобы предотвратить закрытие спойлера
         if st.button("להוסיף עוד קושרות", key="add_manual_rails"):
             st.session_state.manual_rows += 1
             st.rerun()
-
-    # Обработка данных ручного добавления (остается в том же месте, но теперь внутри условия calc_result is not None)
+    
+    # Обработка данных ручного добавления
     manual_rails_dict = {}
     for j in range(1, st.session_state.manual_rows + 1):
         if j in st.session_state.manual_deleted_rows:
@@ -812,30 +802,9 @@ if calc_result is not None:
         qty = st.session_state.get(f"m_qty_{st.session_state.manual_form_version}_{j}", 0)
         if length and qty:
             manual_rails_dict[length] = manual_rails_dict.get(length, 0) + qty
+    
+    # Обновляем manual_rails в session state
     st.session_state.manual_rails = manual_rails_dict
-
-    # --- sync manual additions into the editable קושרות boxes (koshrot_qty) ---
-    prev_manual = st.session_state.get("manual_rails_prev", {})
-    curr_manual = st.session_state.manual_rails
-
-    # only if the editable boxes are already initialized (i.e., after at least one חשב)
-    if st.session_state.get("koshrot_qty") is not None:
-        # apply per-length delta: new_manual - prev_manual
-        # keys in manual rails are numbers; we use string keys in koshrot_qty
-        for length in set(list(prev_manual.keys()) + list(curr_manual.keys())):
-            prev_q = int(prev_manual.get(length, 0) or 0)
-            curr_q = int(curr_manual.get(length, 0) or 0)
-            d = curr_q - prev_q
-            if d == 0:
-                continue
-            k = normalize_length_key(length)
-            new_val = max(int(st.session_state.koshrot_qty.get(k, 0) or 0) + d, 0)
-            # update both the backing dict and the widget state (otherwise Streamlit keeps old widget value)
-            st.session_state.koshrot_qty[k] = new_val
-            st.session_state[f"koshrot_qty_{st.session_state.koshrot_boxes_version}_{k}"] = new_val
-
-    # update snapshot
-    st.session_state.manual_rails_prev = dict(curr_manual)
 
     # ----- פרזול -----
     with st.expander("**פרזול**", expanded=True):
@@ -916,6 +885,8 @@ if calc_result is not None:
             new_fasteners[lbl] = int(v)
 
         st.session_state["fasteners"] = new_fasteners
+
+    st.write(f"סה\"כ פאנלים: {calc_result['total_panels']}")
 
 # ---------- CHANNELS ----------
 with st.expander("**תעלות עם מכסים (מטר)**", expanded=True):
