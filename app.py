@@ -14,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ---------- CUSTOM STYLES (ОБНОВЛЕННЫЕ) ----------
+# ---------- CUSTOM STYLES ----------
 st.markdown("""
 <style>
     .main {
@@ -58,187 +58,107 @@ st.markdown("""
         50% { transform: translateY(-5px); }
     }
     
-    /* НОВЫЙ СТИЛЬ: ДВУХКОЛОНОЧНЫЙ МАКЕТ ДЛЯ ГРУПП */
-    .groups-container {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        margin-bottom: 16px;
-    }
-    
-    .group-row {
+    /* СУПЕР-КОМПАКТНЫЕ ИНПУТЫ ДЛЯ ГРУПП */
+    .compact-row {
         display: flex !important;
+        flex-direction: row !important;
         width: 100% !important;
-        gap: 12px !important;
-        align-items: center !important;
+        gap: 8px !important;
+        margin-bottom: 12px !important;
+        align-items: stretch !important;
     }
     
-    .group-col {
+    .compact-column {
         flex: 1 !important;
         min-width: 0 !important;
-    }
-    
-    /* Скрываем заголовки у инпутов */
-    .group-col div[data-testid="stNumberInput"] > div > label {
-        display: none !important;
-    }
-    
-    /* Стиль для Material Design Stepper (кнопки слева и справа) */
-    .md-stepper-input {
-        background: #F0F2F6 !important;
-        border-radius: 8px !important;
-        border: none !important;
-        min-width: 0 !important;
-        height: 42px !important;
         display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        overflow: hidden !important;
+        flex-direction: column !important;
     }
     
-    .md-stepper-input > div[data-baseweb="input"] {
-        background: transparent !important;
-        border: none !important;
-        width: 100% !important;
-        height: 100% !important;
+    .compact-input-wrapper {
+        display: flex;
+        width: 100%;
+        min-width: 0;
+        position: relative;
+        background: #F0F2F6;
+        border-radius: 0.25rem;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
     }
     
-    .md-stepper-input > div[data-baseweb="input"] > div {
-        background: transparent !important;
-        border: none !important;
-        padding: 0 !important;
-        height: 100% !important;
+    /* ИНПУТ В СТИЛЕ STREAMLIT */
+    .streamlit-like-input {
+        flex: 1;
+        min-width: 0;
+        width: 100%;
+        border: none;
+        background: transparent;
+        font-family: var(--font);
+        font-size: 0.875rem;
+        color: var(--text-color);
+        padding: 0.375rem 0.75rem;
+        height: 38px;
+        box-sizing: border-box;
+        text-align: center;
+        outline: none;
     }
     
-    /* Кнопки +/- с обеих сторон */
-    .md-stepper-input button {
-        background: #F0F2F6 !important;
-        border: none !important;
-        width: 42px !important;
-        height: 100% !important;
-        color: var(--text-color) !important;
-        font-size: 20px !important;
-        font-weight: 300 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        cursor: pointer !important;
-        transition: all 0.2s ease !important;
-        flex-shrink: 0 !important;
+    .streamlit-like-input:focus {
+        outline: none;
     }
     
-    .md-stepper-input button:hover {
+    /* КНОПКИ +- В СТИЛЕ STREAMLIT - ИСПРАВЛЕННЫЕ */
+    .streamlit-btn-group {
+        display: flex;
+        height: 100%;
+        border-left: 1px solid var(--border-color);
+    }
+    
+    .streamlit-btn {
+        width: 32px;
+        height: 100%;
+        background: #F0F2F6;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: bold;
+        user-select: none;
+        transition: background-color 0.2s;
+    }
+    
+    .streamlit-btn:hover {
         background: #EC5953 !important;
         color: white !important;
     }
     
-    /* Левая кнопка (минус) */
-    .md-stepper-input button:first-child {
-        border-top-left-radius: 8px !important;
-        border-bottom-left-radius: 8px !important;
-        border-right: 1px solid rgba(0,0,0,0.1) !important;
+    .streamlit-btn:active {
+        background: #D94E48 !important;
+        color: white !important;
     }
     
-    /* Правая кнопка (плюс) */
-    .md-stepper-input button:last-child {
-        border-top-right-radius: 8px !important;
-        border-bottom-right-radius: 8px !important;
-        border-left: 1px solid rgba(0,0,0,0.1) !important;
-    }
-    
-    /* Поле ввода в центре */
-    .md-stepper-input input {
-        background: transparent !important;
-        text-align: center !important;
-        padding: 10px 4px !important;
-        font-size: 16px !important;
-        font-weight: 500 !important;
-        border: none !important;
-        min-width: 0 !important;
-        color: var(--text-color) !important;
-        width: 100% !important;
-        height: 100% !important;
+    /* Граница между кнопками */
+    .streamlit-btn:first-child {
+        border-right: 1px solid var(--border-color);
     }
     
     /* Убираем стрелочки у number input */
-    .md-stepper-input input::-webkit-inner-spin-button,
-    .md-stepper-input input::-webkit-outer-spin-button {
+    .compact-input-wrapper input[type="number"]::-webkit-inner-spin-button,
+    .compact-input-wrapper input[type="number"]::-webkit-outer-spin-button {
         -webkit-appearance: none;
         margin: 0;
     }
     
-    .md-stepper-input input[type="number"] {
+    .compact-input-wrapper input[type="number"] {
         -moz-appearance: textfield;
+        appearance: textfield;
     }
     
-    /* Заголовки колонок */
-    .columns-header {
-        display: flex !important;
-        width: 100% !important;
-        margin-bottom: 8px !important;
-        font-size: 14px !important;
-        font-weight: 500 !important;
-        color: var(--text-color) !important;
-    }
-    
-    .column-label {
-        flex: 1 !important;
-        text-align: center !important;
-        padding: 0 4px !important;
-    }
-    
-    /* Адаптация для мобильных */
-    @media (max-width: 768px) {
-        .group-row {
-            gap: 8px !important;
-        }
-        
-        .md-stepper-input {
-            height: 38px !important;
-        }
-        
-        .md-stepper-input button {
-            width: 36px !important;
-            font-size: 18px !important;
-        }
-        
-        .md-stepper-input input {
-            font-size: 15px !important;
-            padding: 8px 2px !important;
-        }
-    }
-    
-    @media (max-width: 480px) {
-        .group-row {
-            gap: 6px !important;
-        }
-        
-        .md-stepper-input {
-            height: 36px !important;
-        }
-        
-        .md-stepper-input button {
-            width: 34px !important;
-            font-size: 16px !important;
-        }
-        
-        .md-stepper-input input {
-            font-size: 14px !important;
-        }
-    }
-    
-    /* Темная тема */
-    .stApp[data-theme="dark"] .md-stepper-input,
-    .stApp[data-theme="dark"] .md-stepper-input > div[data-baseweb="input"],
-    .stApp[data-theme="dark"] .md-stepper-input button {
-        background: #1E293B !important;
-    }
-    
-    .stApp[data-theme="dark"] .md-stepper-input button:hover {
-        background: #EC5953 !important;
-    }
-    
-    /* CSS переменные */
+    /* CSS переменные для тем */
     :root {
         --background-color: #ffffff;
         --text-color: #31333F;
@@ -246,11 +166,97 @@ st.markdown("""
         --secondary-background-color: #F0F2F6;
         --primary-color: #FF4B4B;
         --hover-color: #EC5953;
+        --active-color: #D94E48;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --background-color: #0E1117;
+            --text-color: #FAFAFA;
+            --border-color: #2D3748;
+            --secondary-background-color: #1E293B;
+            --primary-color: #FF4B4B;
+            --hover-color: #EC5953;
+            --active-color: #D94E48;
+        }
+        
+        .compact-input-wrapper {
+            background: #1E293B;
+            border-color: #2D3748;
+        }
+        
+        .streamlit-btn {
+            background: #1E293B;
+        }
+        
+        .streamlit-btn:hover {
+            background: #EC5953 !important;
+        }
+    }
+    
+    /* Принудительное сохранение горизонтальной верстки на мобильных */
+    @media (max-width: 768px) {
+        .compact-row {
+            gap: 4px !important;
+            margin-bottom: 8px !important;
+        }
+        
+        .streamlit-like-input {
+            padding: 0.375rem 0.5rem;
+            font-size: 0.8125rem;
+            height: 36px;
+        }
+        
+        .streamlit-btn {
+            width: 28px;
+        }
+    }
+    
+    /* Очень узкие экраны */
+    @media (max-width: 480px) {
+        .compact-row {
+            gap: 3px !important;
+        }
+        
+        .streamlit-like-input {
+            padding: 0.375rem 0.375rem;
+            font-size: 0.75rem;
+            height: 34px;
+        }
+        
+        .streamlit-btn {
+            width: 26px;
+            font-size: 14px;
+        }
+    }
+    
+    /* Остальные стили... */
+    .stButton > button {
+        background-color: #4b75c9;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 14px 24px;
+        font-size: 16px;
+        font-weight: 500;
+        width: 100%;
+    }
+    
+    .stButton > button:hover {
+        background-color: #3a62b5;
+    }
+    
+    .primary-btn > button {
+        background-color: #4b75c9;
+        font-size: 17px;
+        font-weight: 600;
+        padding: 16px;
+        margin: 20px 0;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- SESSION STATE INIT (ИЗ ВЕРСИИ 1) ----------
+# ---------- SESSION STATE INIT ----------
 if "calc_result" not in st.session_state:
     st.session_state.calc_result = None
 if "just_calculated" not in st.session_state:
@@ -291,27 +297,23 @@ if "show_funny_message" not in st.session_state:
     st.session_state.show_funny_message = {"rows": False, "panels": False}
 if "funny_message_text" not in st.session_state:
     st.session_state.funny_message_text = ""
-if "standing_groups_data" not in st.session_state:
-    st.session_state.standing_groups_data = {}
-if "laying_groups_data" not in st.session_state:
-    st.session_state.laying_groups_data = {}
 
-# Группы для стоячих и лежачих панелей (ИЗ ВЕРСИИ 1)
+# Группы для стоячих и лежачих панелей
 if "standing_rows" not in st.session_state:
     st.session_state.standing_rows = 8
     # Инициализируем значения для стоячих
     for i in range(1, 9):
-        st.session_state.standing_groups_data[f"n_{i}"] = i  # פאנלים: 1, 2, 3... 8
-        st.session_state.standing_groups_data[f"g_{i}"] = 0  # שורות: 0
+        st.session_state[f"standing_n_{i}"] = i  # פאנלים: 1, 2, 3... 8
+        st.session_state[f"standing_g_{i}"] = 0  # שורות: 0
 
 if "laying_rows" not in st.session_state:
     st.session_state.laying_rows = 4
     # Инициализируем значения для лежачих
     for i in range(1, 5):
-        st.session_state.laying_groups_data[f"n_{i}"] = i  # פאנלים: 1, 2, 3, 4
-        st.session_state.laying_groups_data[f"g_{i}"] = 0  # שורות: 0
+        st.session_state[f"laying_n_{i}"] = i  # פאנלים: 1, 2, 3, 4
+        st.session_state[f"laying_g_{i}"] = 0  # שורות: 0
 
-# ---------- LOAD DATABASES (ИЗ ВЕРСИИ 1) ----------
+# ---------- LOAD DATABASES ----------
 @st.cache_data
 def load_data():
     if not os.path.exists("panels.csv"):
@@ -334,7 +336,7 @@ def load_data():
 
 panels, channels_df, parts = load_data()
 
-# ---------- HELPER FUNCTIONS (ИЗ ВЕРСИИ 1) ----------
+# ---------- HELPER FUNCTIONS ----------
 def right_label(text: str) -> str:
     return f'<div style="text-align:right; font-weight:500; margin-bottom:8px;">{text}</div>'
 
@@ -388,7 +390,7 @@ def check_and_show_funny_message(value: int, field_type: str):
         return True
     return False
 
-# ---------- ENGINE FUNCTIONS (ИЗ ВЕРСИИ 1) ----------
+# ---------- ENGINE FUNCTIONS ----------
 def split_into_segments(total_length: int):
     if total_length <= 0:
         return []
@@ -493,7 +495,47 @@ def format_whatsapp_message(project_name, panel_name, groups, materials_text):
     
     return message
 
-# ---------- UI: PROJECT NAME (ИЗ ВЕРСИИ 1) ----------
+# ---------- ФУНКЦИЯ ДЛЯ СОЗДАНИЯ КОМПАКТНОЙ СТРОКИ ----------
+def create_compact_row(panel_type, index, default_n=0, default_g=0):
+    """Создает компактную строку с двумя инпутами в стиле Streamlit"""
+    
+    html = f'''
+    <div class="compact-row" id="row_{panel_type}_{index}">
+        <div class="compact-column">
+            <div class="compact-input-wrapper">
+                <input type="number" 
+                       id="{panel_type}_n_{index}" 
+                       value="{default_n}" 
+                       min="0" 
+                       max="99" 
+                       class="streamlit-like-input"
+                       oninput="handleInputChange('{panel_type}_n_{index}', this.value)">
+                <div class="streamlit-btn-group">
+                    <button class="streamlit-btn" onclick="updateNumber('{panel_type}_n_{index}', -1)">−</button>
+                    <button class="streamlit-btn" onclick="updateNumber('{panel_type}_n_{index}', 1)">+</button>
+                </div>
+            </div>
+        </div>
+        <div class="compact-column">
+            <div class="compact-input-wrapper">
+                <input type="number" 
+                       id="{panel_type}_g_{index}" 
+                       value="{default_g}" 
+                       min="0" 
+                       max="99" 
+                       class="streamlit-like-input"
+                       oninput="handleInputChange('{panel_type}_g_{index}', this.value)">
+                <div class="streamlit-btn-group">
+                    <button class="streamlit-btn" onclick="updateNumber('{panel_type}_g_{index}', -1)">−</button>
+                    <button class="streamlit-btn" onclick="updateNumber('{panel_type}_g_{index}', 1)">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    '''
+    return html
+
+# ---------- UI: PROJECT NAME ----------
 st.markdown('<div class="section-header">שם פרויקט</div>', unsafe_allow_html=True)
 project_name = st.text_input(
     "",
@@ -506,7 +548,7 @@ st.session_state.project_name = project_name
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
-# ---------- UI: PANEL SELECTION (ИЗ ВЕРСИИ 1) ----------
+# ---------- UI: PANEL SELECTION ----------
 st.markdown('<div class="section-header">סוג פאנל</div>', unsafe_allow_html=True)
 
 panel_options = sorted(panels["name"].unique().tolist())
@@ -531,236 +573,234 @@ panel = panel_rows.iloc[0]
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
-# ---------- GROUPS SECTION (ОБНОВЛЕННЫЙ МАКЕТ) ----------
+# ---------- GROUPS SECTION ----------
 st.markdown(right_header("קבוצות פאנלים"), unsafe_allow_html=True)
 
 if st.session_state.show_funny_message.get("rows") or st.session_state.show_funny_message.get("panels"):
     st.markdown(f'<div class="funny-message">{st.session_state.funny_message_text}</div>', unsafe_allow_html=True)
 
+# JavaScript для обработки инпутов - ИСПРАВЛЕННЫЙ
+js_code = '''
+<script>
+// Сохраняем значение в Streamlit
+function saveToStreamlit(fieldId, value) {
+    const numValue = parseInt(value) || 0;
+    
+    // Проверяем лимиты
+    if (numValue > 99) {
+        const input = document.getElementById(fieldId);
+        input.value = 99;
+        alert("וואי! יותר מ-99? אולי תפצל לשתי שורות? 😄");
+        return 99;
+    }
+    
+    // Отправляем в Streamlit через window.parent
+    if (window.parent) {
+        window.parent.postMessage({
+            type: "streamlit:setComponentValue",
+            value: {
+                field: fieldId,
+                value: numValue
+            }
+        }, "*");
+    }
+    
+    return numValue;
+}
+
+// Обработчик ручного ввода
+function handleInputChange(fieldId, value) {
+    // Даем небольшую задержку для дебаунса
+    clearTimeout(window[fieldId + '_timer']);
+    window[fieldId + '_timer'] = setTimeout(() => {
+        saveToStreamlit(fieldId, value);
+    }, 300);
+}
+
+// Обновление числа с кнопок +/-
+function updateNumber(fieldId, delta) {
+    const input = document.getElementById(fieldId);
+    let value = parseInt(input.value) || 0;
+    value += delta;
+    if (value < 0) value = 0;
+    
+    input.value = value;
+    saveToStreamlit(fieldId, value);
+}
+
+// Инициализация при загрузке
+document.addEventListener("DOMContentLoaded", function() {
+    // Устанавливаем обработчики для всех инпутов
+    const inputs = document.querySelectorAll('.streamlit-like-input');
+    inputs.forEach(input => {
+        const fieldId = input.id;
+        // Устанавливаем начальное значение из атрибута value
+        if (input.value) {
+            saveToStreamlit(fieldId, input.value);
+        }
+    });
+});
+</script>
+'''
+
 # СПОЙЛЕР 1: СТОЯЧИЕ ПАНЕЛИ
 with st.expander("עומד", expanded=True):
-    # Заголовки колонок (две колонки как в версии 2)
+    # Заголовки колонок один раз сверху
     st.markdown('''
-    <div class="columns-header">
-        <div class="column-label">פאנלים</div>
-        <div class="column-label">שורות</div>
+    <div class="compact-row" style="margin-bottom: 4px; font-size: 14px; font-weight: 500;">
+        <div class="compact-column" style="text-align: center;">פאנלים</div>
+        <div class="compact-column" style="text-align: center;">שורות</div>
     </div>
     ''', unsafe_allow_html=True)
     
-    st.markdown('<div class="groups-container">', unsafe_allow_html=True)
-    
-    all_groups = []
-    standing_groups = []
+    standing_html = ""
     
     for i in range(1, st.session_state.standing_rows + 1):
-        # Создаем строку с двумя колонками
-        st.markdown('<div class="group-row">', unsafe_allow_html=True)
+        n_val = st.session_state.get(f"standing_n_{i}", i)
+        g_val = st.session_state.get(f"standing_g_{i}", 0)
         
-        # КОЛОНКА 1: פאנלים
-        col1 = st.container()
-        with col1:
-            # פאנלים - предустановленные значения 1-8
-            default_n = i
-            current_n = st.session_state.standing_groups_data.get(f"n_{i}", default_n)
-            
-            # Создаем уникальный ключ для виджета
-            widget_key = f"standing_n_widget_{i}"
-            
-            # Добавляем CSS класс для Material Design стиля
-            st.markdown('<div class="md-stepper-input">', unsafe_allow_html=True)
-            
-            n = st.number_input(
-                "פאנלים",
-                0,
-                99,
-                value=current_n,
-                key=widget_key,
-                label_visibility="collapsed"
-            )
-            
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            # Сохраняем значение в session_state
-            st.session_state.standing_groups_data[f"n_{i}"] = n
-            
-            # Проверяем лимиты
-            if n > 99:
-                check_and_show_funny_message(n, "panels")
-                st.session_state.standing_groups_data[f"n_{i}"] = 99
-                st.rerun()
-        
-        # КОЛОНКА 2: שורות
-        col2 = st.container()
-        with col2:
-            # שורות - 0 по умолчанию
-            default_g = 0
-            current_g = st.session_state.standing_groups_data.get(f"g_{i}", default_g)
-            
-            # Создаем уникальный ключ для виджета
-            widget_key = f"standing_g_widget_{i}"
-            
-            # Добавляем CSS класс для Material Design стиля
-            st.markdown('<div class="md-stepper-input">', unsafe_allow_html=True)
-            
-            g = st.number_input(
-                "שורות",
-                0,
-                99,
-                value=current_g,
-                key=widget_key,
-                label_visibility="collapsed"
-            )
-            
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            # Сохраняем значение в session_state
-            st.session_state.standing_groups_data[f"g_{i}"] = g
-            
-            # Проверяем лимиты
-            if g > 99:
-                check_and_show_funny_message(g, "rows")
-                st.session_state.standing_groups_data[f"g_{i}"] = 99
-                st.rerun()
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        if n > 0 and g > 0:
-            standing_groups.append((n, g, "עומד"))
+        standing_html += create_compact_row("standing", i, n_val, g_val)
     
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Отображаем все строки
+    st.markdown(standing_html, unsafe_allow_html=True)
     
     # Кнопка добавить строку
     if st.button("עוד שורה", key="add_standing_row"):
         st.session_state.standing_rows += 1
-        # Инициализируем новые значения
-        i = st.session_state.standing_rows
-        st.session_state.standing_groups_data[f"n_{i}"] = 0
-        st.session_state.standing_groups_data[f"g_{i}"] = 0
+        st.session_state[f"standing_n_{st.session_state.standing_rows}"] = 0
+        st.session_state[f"standing_g_{st.session_state.standing_rows}"] = 0
         st.rerun()
-    
-    all_groups.extend(standing_groups)
 
 # СПОЙЛЕР 2: ЛЕЖАЧИЕ ПАНЕЛИ
 with st.expander("שוכב", expanded=False):
-    # Заголовки колонок (две колонки как в версии 2)
+    # Заголовки колонок один раз сверху
     st.markdown('''
-    <div class="columns-header">
-        <div class="column-label">פאנלים</div>
-        <div class="column-label">שורות</div>
+    <div class="compact-row" style="margin-bottom: 4px; font-size: 14px; font-weight: 500;">
+        <div class="compact-column" style="text-align: center;">פאנלים</div>
+        <div class="compact-column" style="text-align: center;">שורות</div>
     </div>
     ''', unsafe_allow_html=True)
     
-    st.markdown('<div class="groups-container">', unsafe_allow_html=True)
-    
-    laying_groups = []
+    laying_html = ""
     
     for i in range(1, st.session_state.laying_rows + 1):
-        # Создаем строку с двумя колонками
-        st.markdown('<div class="group-row">', unsafe_allow_html=True)
+        n_val = st.session_state.get(f"laying_n_{i}", i if i <= 4 else 0)
+        g_val = st.session_state.get(f"laying_g_{i}", 0)
         
-        # КОЛОНКА 1: פאנלים
-        col1 = st.container()
-        with col1:
-            # פאנלים - предустановленные значения 1-4
-            default_n = i if i <= 4 else 0
-            current_n = st.session_state.laying_groups_data.get(f"n_{i}", default_n)
-            
-            # Создаем уникальный ключ для виджета
-            widget_key = f"laying_n_widget_{i}"
-            
-            # Добавляем CSS класс для Material Design стиля
-            st.markdown('<div class="md-stepper-input">', unsafe_allow_html=True)
-            
-            n = st.number_input(
-                "פאנלים",
-                0,
-                99,
-                value=current_n,
-                key=widget_key,
-                label_visibility="collapsed"
-            )
-            
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            # Сохраняем значение в session_state
-            st.session_state.laying_groups_data[f"n_{i}"] = n
-            
-            # Проверяем лимиты
-            if n > 99:
-                check_and_show_funny_message(n, "panels")
-                st.session_state.laying_groups_data[f"n_{i}"] = 99
-                st.rerun()
-        
-        # КОЛОНКА 2: שורות
-        col2 = st.container()
-        with col2:
-            # שורות - 0 по умолчанию
-            default_g = 0
-            current_g = st.session_state.laying_groups_data.get(f"g_{i}", default_g)
-            
-            # Создаем уникальный ключ для виджета
-            widget_key = f"laying_g_widget_{i}"
-            
-            # Добавляем CSS класс для Material Design стиля
-            st.markdown('<div class="md-stepper-input">', unsafe_allow_html=True)
-            
-            g = st.number_input(
-                "שורות",
-                0,
-                99,
-                value=current_g,
-                key=widget_key,
-                label_visibility="collapsed"
-            )
-            
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            # Сохраняем значение в session_state
-            st.session_state.laying_groups_data[f"g_{i}"] = g
-            
-            # Проверяем лимиты
-            if g > 99:
-                check_and_show_funny_message(g, "rows")
-                st.session_state.laying_groups_data[f"g_{i}"] = 99
-                st.rerun()
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        if n > 0 and g > 0:
-            laying_groups.append((n, g, "שוכב"))
+        laying_html += create_compact_row("laying", i, n_val, g_val)
     
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Отображаем все строки
+    st.markdown(laying_html, unsafe_allow_html=True)
     
     # Кнопка добавить строку
     if st.button("עוד שורה", key="add_laying_row"):
         st.session_state.laying_rows += 1
-        # Инициализируем новые значения
-        i = st.session_state.laying_rows
-        st.session_state.laying_groups_data[f"n_{i}"] = 0
-        st.session_state.laying_groups_data[f"g_{i}"] = 0
+        st.session_state[f"laying_n_{st.session_state.laying_rows}"] = 0
+        st.session_state[f"laying_g_{st.session_state.laying_rows}"] = 0
         st.rerun()
+
+# Добавляем JavaScript для обработки
+st.markdown(js_code, unsafe_allow_html=True)
+
+# Компонент для получения данных из JavaScript
+components.html("""
+<script>
+// Обработчик сообщений от iframe (наша HTML форма)
+window.addEventListener('message', function(event) {
+    if (event.data.type === 'streamlit:setComponentValue') {
+        const data = event.data.value;
+        if (data && data.field && data.value !== undefined) {
+            // Отправляем данные в Streamlit через родительское окно
+            window.parent.postMessage({
+                type: 'streamlit:setComponentValue',
+                value: data
+            }, '*');
+        }
+    }
+});
+
+// Отправляем сообщение что компонент загружен
+window.parent.postMessage({
+    type: 'streamlit:componentReady',
+    value: true
+}, '*');
+</script>
+""", height=0)
+
+# Обработчик сообщений для обновления session_state
+if 'component_messages' not in st.session_state:
+    st.session_state.component_messages = []
+
+# Создаем обработчик сообщений через Streamlit
+class MessageHandler:
+    def __init__(self):
+        self.messages = []
     
-    all_groups.extend(laying_groups)
+    def handle_message(self, message):
+        if isinstance(message, dict) and 'field' in message and 'value' in message:
+            field = message['field']
+            value = message['value']
+            
+            # Проверяем лимиты
+            if value > 99:
+                if '_g_' in field:
+                    check_and_show_funny_message(value, "rows")
+                elif '_n_' in field:
+                    check_and_show_funny_message(value, "panels")
+                value = 99
+            
+            # Сохраняем в session_state
+            st.session_state[field] = value
+            self.messages.append(message)
+
+# Создаем экземпляр обработчика
+if 'message_handler' not in st.session_state:
+    st.session_state.message_handler = MessageHandler()
+
+# Пытаемся получить сообщения через экспериментальный API
+try:
+    # Получаем сообщения от компонента
+    messages = st.session_state.get('component_messages', [])
+    for msg in messages:
+        if isinstance(msg, dict) and 'field' in msg and 'value' in msg:
+            field = msg['field']
+            value = msg['value']
+            
+            # Проверяем лимиты
+            if value > 99:
+                if '_g_' in field:
+                    check_and_show_funny_message(value, "rows")
+                elif '_n_' in field:
+                    check_and_show_funny_message(value, "panels")
+                value = 99
+            
+            # Сохраняем в session_state
+            st.session_state[field] = value
+except:
+    pass
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
-# ---------- BUTTON: CALCULATE (ИЗ ВЕРСИИ 1) ----------
+# ---------- BUTTON: CALCULATE ----------
+st.markdown('<div class="primary-btn"></div>', unsafe_allow_html=True)
 if st.button("חשב", type="primary", use_container_width=True):
-    # Собираем текущие группы
+    # Сначала обновляем группы из текущих значений
     current_standing_groups = []
     current_laying_groups = []
     
+    # Собираем стоячие группы
     for i in range(1, st.session_state.standing_rows + 1):
-        n = st.session_state.standing_groups_data.get(f"n_{i}", i)
-        g = st.session_state.standing_groups_data.get(f"g_{i}", 0)
-        if n > 0 and g > 0:
-            current_standing_groups.append((n, g, "עומד"))
+        n_val = st.session_state.get(f"standing_n_{i}", i)
+        g_val = st.session_state.get(f"standing_g_{i}", 0)
+        if n_val > 0 and g_val > 0:
+            current_standing_groups.append((n_val, g_val, "עומד"))
     
+    # Собираем лежачие группы
     for i in range(1, st.session_state.laying_rows + 1):
-        n = st.session_state.laying_groups_data.get(f"n_{i}", i if i <= 4 else 0)
-        g = st.session_state.laying_groups_data.get(f"g_{i}", 0)
-        if n > 0 and g > 0:
-            current_laying_groups.append((n, g, "שוכב"))
+        n_val = st.session_state.get(f"laying_n_{i}", i if i <= 4 else 0)
+        g_val = st.session_state.get(f"laying_g_{i}", 0)
+        if n_val > 0 and g_val > 0:
+            current_laying_groups.append((n_val, g_val, "שוכב"))
     
     all_groups = current_standing_groups + current_laying_groups
     
@@ -799,7 +839,7 @@ if st.session_state.get("just_calculated"):
 
 calc_result = st.session_state.calc_result
 
-# ---------- MANUAL RAILS (ИЗ ВЕРСИИ 1) ----------
+# ---------- MANUAL RAILS ----------
 st.markdown(right_header("קושרות (הוספה ידנית)"), unsafe_allow_html=True)
 
 col1, col2, col3 = st.columns(3)
@@ -872,7 +912,7 @@ st.session_state.manual_rails_prev = dict(curr_manual)
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
-# ---------- SHOW CALC RESULT (ИЗ ВЕРСИИ 1) ----------
+# ---------- SHOW CALC RESULT ----------
 if calc_result is not None:
     auto_rails = calc_result["auto_rails"]
     manual_rails = st.session_state.manual_rails
@@ -1067,7 +1107,7 @@ if calc_result is not None:
                 {"name": n, "qty": q} for n, q in agg.items()
             ]
     
-    # ---------- EXPORT (ИЗ ВЕРСИИ 1) ----------
+    # ---------- EXPORT ----------
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
     st.markdown(right_header('ייצוא דו״ח'), unsafe_allow_html=True)
     
@@ -1127,16 +1167,16 @@ if calc_result is not None:
             current_laying_groups = []
             
             for i in range(1, st.session_state.standing_rows + 1):
-                n = st.session_state.standing_groups_data.get(f"n_{i}", i)
-                g = st.session_state.standing_groups_data.get(f"g_{i}", 0)
-                if n > 0 and g > 0:
-                    current_standing_groups.append((n, g, "עומד"))
+                n_val = st.session_state.get(f"standing_n_{i}", i)
+                g_val = st.session_state.get(f"standing_g_{i}", 0)
+                if n_val > 0 and g_val > 0:
+                    current_standing_groups.append((n_val, g_val, "עומד"))
             
             for i in range(1, st.session_state.laying_rows + 1):
-                n = st.session_state.laying_groups_data.get(f"n_{i}", i if i <= 4 else 0)
-                g = st.session_state.laying_groups_data.get(f"g_{i}", 0)
-                if n > 0 and g > 0:
-                    current_laying_groups.append((n, g, "שוכב"))
+                n_val = st.session_state.get(f"laying_n_{i}", i if i <= 4 else 0)
+                g_val = st.session_state.get(f"laying_g_{i}", 0)
+                if n_val > 0 and g_val > 0:
+                    current_laying_groups.append((n_val, g_val, "שוכב"))
             
             current_all_groups = current_standing_groups + current_laying_groups
             
@@ -1194,7 +1234,7 @@ if calc_result is not None:
             </script>
             """, height=0)
 
-# ---------- AUTO CREATE FILES (ИЗ ВЕРСИИ 1) ----------
+# ---------- AUTO CREATE FILES ----------
 if not os.path.exists("manifest.json"):
     with open("manifest.json", "w", encoding="utf-8") as f:
         f.write("""{
@@ -1204,7 +1244,7 @@ if not os.path.exists("manifest.json"):
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": #4b75c9",
+  "theme_color": "#4b75c9",
   "icons": [
     {
       "src": "https://img.icons8.com/color/96/000000/sun--v1.png",
@@ -1230,7 +1270,7 @@ components.html("""
 <meta name="theme-color" content="#4b75c9">
 """, height=0)
 
-# ---------- FOOTER (ИЗ ВЕРСИИ 1) ----------
+# ---------- FOOTER ----------
 st.markdown("""
 <div style='
     margin-top: 40px;
