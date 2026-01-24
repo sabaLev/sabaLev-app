@@ -2,13 +2,11 @@ import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
 import math
-import json
 
+
+import json
 # ---------- SESSION STATE INIT (required) ----------
 st.session_state.setdefault("fasteners", None)
-# Инициализация для групп панелей
-st.session_state.setdefault("vertical_rows", 8)  # Для вертикальных панелей
-st.session_state.setdefault("horizontal_rows", 4)  # Для горизонтальных панелей
 
 # ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
 
@@ -75,15 +73,12 @@ panels["name"] = panels["name"].astype(str)
 if "calc_result" not in st.session_state:
     st.session_state.calc_result = None
 
+
 if "just_calculated" not in st.session_state:
     st.session_state.just_calculated = False
 
-# Эти ключи уже инициализированы выше с помощью setdefault
-# if "vertical_rows" not in st.session_state:
-#     st.session_state.vertical_rows = 8
-# 
-# if "horizontal_rows" not in st.session_state:
-#     st.session_state.horizontal_rows = 4
+if "group_rows" not in st.session_state:
+    st.session_state.group_rows = 12  # 1–8 עומד, 9–12 שוכב
 
 if "channel_order" not in st.session_state:
     st.session_state.channel_order = {}
@@ -94,9 +89,11 @@ if "extra_parts" not in st.session_state:
 if "manual_rows" not in st.session_state:
     st.session_state.manual_rows = 1
 
+
 # bump this to force manual rails widgets to reset
 if "manual_form_version" not in st.session_state:
     st.session_state.manual_form_version = 0
+
 
 # bump this to force קושרות quantity boxes to reset
 if "koshrot_boxes_version" not in st.session_state:
@@ -116,6 +113,7 @@ if "project_name" not in st.session_state:
 
 if "manual_deleted_rows" not in st.session_state:
     st.session_state.manual_deleted_rows = set()
+
 
 # snapshot of manual rails to compute deltas
 if "manual_rails_prev" not in st.session_state:
@@ -312,120 +310,68 @@ panel = panel_rows.iloc[0]
 
 
 # ---------- GROUPS ----------
-# Удаляем основной заголовок, так как теперь секции будут в спойлерах
-# st.markdown(right_header("קבוצות פאנלים"), unsafe_allow_html=True)
+st.markdown(right_header("קבוצות פאנלים"), unsafe_allow_html=True)
+
+gh = st.columns(3)
+gh[0].markdown(right_label("שורות"), unsafe_allow_html=True)
+gh[1].markdown(right_label("פאנלים"), unsafe_allow_html=True)
+gh[2].markdown(right_label("כיוון"), unsafe_allow_html=True)
 
 groups = []
+rows = st.session_state.group_rows
 
-# CSS для стрелок спойлера (добавляем глобально)
-st.markdown("""
-    <style>
-    /* Стрелки для expander: закрыт - вниз, открыт - влево */
-    .streamlit-expanderHeader svg {
-        transform: rotate(0deg);
-        transition: transform 0.3s;
-    }
-    .streamlit-expanderHeader[aria-expanded="true"] svg {
-        transform: rotate(-90deg);
-    }
-    /* Выравнивание заголовка по правому краю */
-    .streamlit-expanderHeader {
-        text-align: right;
-        direction: rtl;
-    }
-    </style>
-""", unsafe_allow_html=True)
+for i in range(1, rows + 1):
+    c0, c1, c2 = st.columns(3)
 
-# Секция вертикальных панелей (первые 8 строк) - עומדים
-with st.expander("**עומדים**", expanded=True):
-    
-    # Добавляем заголовки колонок внутри спойлера
-    vh = st.columns(2)
-    vh[0].markdown(right_label("שורות"), unsafe_allow_html=True)
-    vh[1].markdown(right_label("פאנלים"), unsafe_allow_html=True)
-    
-    vertical_rows = st.session_state.vertical_rows
-    for i in range(1, vertical_rows + 1):
-        c0, c1 = st.columns(2)
-        
-        # Определяем предустановленные значения
-        if i <= 8:
-            default_g = 1
-            default_n = i
-        else:
-            default_g = 0
-            default_n = 0
-        
-        g = c0.number_input(
-            "",
-            0,
-            50,
-            default_g,
-            key=f"g_g_vertical_{i}",
-            label_visibility="collapsed",
-        )
+    # предустановленные значения для ПАНЕЛЕЙ
+    if i <= 8:
+        default_n = i          # 1..8 עומד
+    elif i <= 12:
+        default_n = i - 8      # 1..4 שוכב
+    else:
+        default_n = 0
 
-        n = c1.number_input(
-            "",
-            0,
-            100,
-            default_n,
-            key=f"g_n_vertical_{i}",
-            label_visibility="collapsed",
-        )
+    g = c0.number_input(
+        "",
+        0,
+        50,
+        0,
+        key=f"g_g_{i}",
+        label_visibility="collapsed",
+    )
 
-        if n > 0 and g > 0:
-            groups.append((n, g, "עומד"))  # ориентация фиксирована
+    n = c1.number_input(
+        "",
+        0,
+        100,
+        default_n,
+        key=f"g_n_{i}",
+        label_visibility="collapsed",
+    )
 
-    # Кнопка "להוסיף פאנלים" в конце секции вертикальных панелей
-    if st.button("להוסיף פאנלים", key="add_panels_vertical"):
-        st.session_state.vertical_rows += 1
-        st.rerun()
+    if i <= 8:
+        default_index = 0  # עומד
+    elif i <= 12:
+        default_index = 1  # שוכב
+    else:
+        default_index = 0
 
-# Секция горизонтальных панелей (последние 4 строки) - שוכבים
-with st.expander("**שוכבים**", expanded=True):
-    # Добавляем заголовки колонок внутри спойлера
-    hh = st.columns(2)
-    hh[0].markdown(right_label("שורות"), unsafe_allow_html=True)
-    hh[1].markdown(right_label("פאנלים"), unsafe_allow_html=True)
-    
-    horizontal_rows = st.session_state.horizontal_rows
-    for i in range(1, horizontal_rows + 1):
-        c0, c1 = st.columns(2)
-        
-        # Определяем предустановленные значения
-        if i <= 4:
-            default_g = 1
-            default_n = i
-        else:
-            default_g = 0
-            default_n = 0
-        
-        g = c0.number_input(
-            "",
-            0,
-            50,
-            default_g,
-            key=f"g_g_horizontal_{i}",
-            label_visibility="collapsed",
-        )
+    o = c2.selectbox(
+        "",
+        ["עומד", "שוכב"],
+        index=default_index,
+        key=f"g_o_{i}",
+        label_visibility="collapsed",
+    )
 
-        n = c1.number_input(
-            "",
-            0,
-            100,
-            default_n,
-            key=f"g_n_horizontal_{i}",
-            label_visibility="collapsed",
-        )
+    if n > 0 and g > 0:
+        groups.append((n, g, o))
 
-        if n > 0 and g > 0:
-            groups.append((n, g, "שוכב"))  # ориентация фиксирована
+if st.button("להוסיף פאנלים"):
+    st.session_state.group_rows += 1
+    st.rerun()
 
-    # Кнопка "להוסיף פאנלים" в конце секции горизонтальных панелей
-    if st.button("להוסיף פאנלים", key="add_panels_horizontal"):
-        st.session_state.horizontal_rows += 1
-        st.rerun()
+
 
 # ---------- ENGINE ----------
 
@@ -592,7 +538,7 @@ def build_html_report(calc_result, project_name, panel_name, channel_order, extr
         for length in sorted(rails_total.keys(), key=length_sort_key, reverse=True):
             html += f"<p dir='rtl' style='text-align:right;'>{rails_total[length]} × {length}</p>"
 
-    # --- פרזול בסקירה ---
+    # --- פרזול в отчёте ---
     fasteners = [
         ("מהדק הארקה", ear),
         ("מהדק אמצע", mid),
@@ -600,8 +546,8 @@ def build_html_report(calc_result, project_name, panel_name, channel_order, extr
         ("פקק לקושרות", edge),
         ("מחברי קושרות", conn),
         ("בורג איסכורית 3,5", screws_iso),
-        ("בורג M8", m8_count),
-        ("אום M8", m8_count),
+        ("בורג M8 ראש משושה", m8_count),
+        ("אום M8 נירוסטה", m8_count),
     ]
     # apply user overrides from UI (if any)
     overrides = None
@@ -663,7 +609,6 @@ def build_html_report(calc_result, project_name, panel_name, channel_order, extr
 
 
 # ---------- BUTTON: CALCULATE ----------
-# Кнопка расчета вне спойлера
 if st.button("חשב", type="primary"):
     # reset editable קושרות boxes to automatic values on each calculation
     st.session_state.koshrot_qty = None
@@ -721,41 +666,42 @@ if st.session_state.get("just_calculated"):
 calc_result = st.session_state.calc_result
 
 # ---------- MANUAL RAILS ----------
-# Секция ручного добавления рельс в спойлере
-with st.expander("**קושרות (הוספה ידנית)**", expanded=True):
-    # Добавляем заголовки колонок внутри спойлера
-    mh = st.columns(2)  # теперь только 2 колонки
-    mh[0].markdown(right_label("אורך (ס״מ)"), unsafe_allow_html=True)
-    mh[1].markdown(right_label("כמות"), unsafe_allow_html=True)
-    
-    manual_rows = st.session_state.manual_rows
+st.markdown(right_header("קושרות (הוספה ידנית)"), unsafe_allow_html=True)
 
-    for j in range(1, manual_rows + 1):
-        cols = st.columns(2)  # только 2 колонки
-        length = cols[0].number_input(
-            "",
-            min_value=0,
-            max_value=10000,
-            step=10,
-            key=f"m_len_{st.session_state.manual_form_version}_{j}",
-            label_visibility="collapsed",
-        )
-        qty = cols[1].number_input(
-            "",
-            min_value=0,
-            max_value=1000,
-            step=1,
-            key=f"m_qty_{st.session_state.manual_form_version}_{j}",
-            label_visibility="collapsed",
-        )
+mh = st.columns(3)
+mh[0].markdown(right_label("אורך (ס״מ)"), unsafe_allow_html=True)
+mh[1].markdown(right_label("כמות"), unsafe_allow_html=True)
+mh[2].markdown("&nbsp;", unsafe_allow_html=True)
 
-    # Кнопка для добавления строк в конце секции
-    # Используем form_submit_button чтобы предотвратить закрытие спойлера
-    if st.button("להוסיף עוד קושרות", key="add_manual_rails"):
-        st.session_state.manual_rows += 1
-        st.rerun()
+manual_rows = st.session_state.manual_rows
 
-# Обработка данных ручного добавления (остается вне спойлера)
+for j in range(1, manual_rows + 1):
+    cols = st.columns(3)
+    length = cols[0].number_input(
+        "",
+        min_value=0,
+        max_value=10000,
+        step=10,
+        key=f"m_len_{st.session_state.manual_form_version}_{j}",
+        label_visibility="collapsed",
+    )
+    qty = cols[1].number_input(
+        "",
+        min_value=0,
+        max_value=1000,
+        step=1,
+        key=f"m_qty_{st.session_state.manual_form_version}_{j}",
+        label_visibility="collapsed",
+    )
+    if j == 1:
+        cols[2].markdown(right_label("להוסיף קושרות"), unsafe_allow_html=True)
+    else:
+        cols[2].markdown("&nbsp;", unsafe_allow_html=True)
+
+if st.button("להוסיף עוד קושרות"):
+    st.session_state.manual_rows += 1
+    st.rerun()
+
 manual_rails_dict = {}
 for j in range(1, st.session_state.manual_rows + 1):
     if j in st.session_state.manual_deleted_rows:
@@ -799,238 +745,245 @@ if calc_result is not None:
     st.write(f"סה\"כ פאנלים: {calc_result['total_panels']}")
 
     # ----- קושרות -----
-    with st.expander("**קושרות**", expanded=True):
-        # базовые количества = авто + ручные (ручные не теряются при пересчёте)
-        rails_base = {}
-        for length, qty in auto_rails.items():
-            klen = normalize_length_key(length)
-            rails_base[klen] = rails_base.get(klen, 0) + int(qty)
-        for length, qty in manual_rails.items():
-            klen = normalize_length_key(length)
-            rails_base[klen] = rails_base.get(klen, 0) + int(qty)
+    st.markdown(right_header("קושרות"), unsafe_allow_html=True)
 
-        # инициализация/синхронизация пользовательских правок:
-        # сохраняем уже введённые значения, добавляем новые длины, убираем исчезнувшие
-        if st.session_state.koshrot_qty is None:
-            st.session_state.koshrot_qty = dict(rails_base)
-        else:
-            # добавить новые длины
-            for length, qty in rails_base.items():
-                if length not in st.session_state.koshrot_qty:
-                    st.session_state.koshrot_qty[length] = qty
-            # убрать длины, которых больше нет в базе
-            for length in list(st.session_state.koshrot_qty.keys()):
-                if length not in rails_base:
-                    del st.session_state.koshrot_qty[length]
+    # базовые количества = авто + ручные (ручные не теряются при пересчёте)
+    rails_base = {}
+    for length, qty in auto_rails.items():
+        klen = normalize_length_key(length)
+        rails_base[klen] = rails_base.get(klen, 0) + int(qty)
+    for length, qty in manual_rails.items():
+        klen = normalize_length_key(length)
+        rails_base[klen] = rails_base.get(klen, 0) + int(qty)
 
-        if st.session_state.koshrot_qty:
-            # Визуально как תעלות/פרזול: название (жирно, справа), под ним бокс количества
-            for length in sorted(st.session_state.koshrot_qty.keys(), key=length_sort_key, reverse=True):
-                st.markdown(right_label(f"אורך: {length} ס״מ"), unsafe_allow_html=True)
+    # инициализация/синхронизация пользовательских правок:
+    # сохраняем уже введённые значения, добавляем новые длины, убираем исчезнувшие
+    if st.session_state.koshrot_qty is None:
+        st.session_state.koshrot_qty = dict(rails_base)
+    else:
+        # добавить новые длины
+        for length, qty in rails_base.items():
+            if length not in st.session_state.koshrot_qty:
+                st.session_state.koshrot_qty[length] = qty
+        # убрать длины, которых больше нет в базе
+        for length in list(st.session_state.koshrot_qty.keys()):
+            if length not in rails_base:
+                del st.session_state.koshrot_qty[length]
 
-                qty_key = f"koshrot_qty_{st.session_state.koshrot_boxes_version}_{length}"
-                default_val = int(st.session_state.koshrot_qty.get(length, 0))
+    if st.session_state.koshrot_qty:
+        # Визуально как תעלות/פרזול: название (жирно, справа), под ним бокс количества
+        for length in sorted(st.session_state.koshrot_qty.keys(), key=length_sort_key, reverse=True):
+            st.markdown(right_label(length), unsafe_allow_html=True)
 
-                qty_val = st.number_input(
-                    "",
-                    min_value=0,
-                    value=default_val,
-                    step=1,
-                    key=qty_key,
-                    label_visibility="collapsed",
-                )
+            qty_key = f"koshrot_qty_{st.session_state.koshrot_boxes_version}_{length}"
+            default_val = int(st.session_state.koshrot_qty.get(length, 0))
 
-                # сохраняем обратно в общий словарь, чтобы отчёт брал актуальное
-                st.session_state.koshrot_qty[length] = int(qty_val)
-        else:
-            st.write("אין קושרות מחושבות")
+            qty_val = st.number_input(
+                "",
+                min_value=0,
+                value=default_val,
+                step=1,
+                key=qty_key,
+                label_visibility="collapsed",
+            )
+
+            # сохраняем обратно в общий словарь, чтобы отчёт брал актуальное
+            st.session_state.koshrot_qty[length] = int(qty_val)
+    else:
+        st.write("אין קושרות מחושבות")
 
     # ----- פרזול -----
-    with st.expander("**פרזול**", expanded=True):
-        ear = calc_result["ear"]
-        mid = calc_result["mid"]
-        edge = calc_result["edge"]
-        conn = calc_result["conn"]
-        total_panels = calc_result["total_panels"]
+    st.markdown(right_header("פרזול"), unsafe_allow_html=True)
 
-        # --- расчёт M8 и прочего зависит от суммарной длины קושרות ---
-        rails_total = {}
-        for length, qty in auto_rails.items():
-            rails_total[length] = rails_total.get(length, 0) + qty
-        for length, qty in manual_rails.items():
-            rails_total[length] = rails_total.get(length, 0) + qty
+    ear = calc_result["ear"]
+    mid = calc_result["mid"]
+    edge = calc_result["edge"]
+    conn = calc_result["conn"]
+    total_panels = calc_result["total_panels"]
 
-        total_length_cm = 0
-        for length, qty in rails_total.items():
-            try:
-                total_length_cm += float(length) * qty
-            except Exception:
-                pass
+    # --- расчёт M8 и прочего зависит от суммарной длины קושרות ---
+    rails_total = {}
+    for length, qty in auto_rails.items():
+        rails_total[length] = rails_total.get(length, 0) + qty
+    for length, qty in manual_rails.items():
+        rails_total[length] = rails_total.get(length, 0) + qty
 
-        screws_iso = round_up_to_tens(conn * 4 + total_panels)
-        m8_count = 0
-        if total_length_cm > 0:
-            m8_base = total_length_cm / 140.0
-            m8_count = round_up_to_tens(m8_base)
+    total_length_cm = 0
+    for length, qty in rails_total.items():
+        try:
+            total_length_cm += float(length) * qty
+        except Exception:
+            pass
 
-        # Базовые (авто) значения
-        fasteners_base = [
-            ("מהדק הארקה", ear),
-            ("מהדק אמצע", mid),
-            ("מהדק קצה", edge),
-            ("פקק לקושרות", edge),
-            ("מחברי קושרות", conn),
-            ("בורג איסכורית 3,5", screws_iso),
-            ("M8 בורג", m8_count),
-            ("M8 אום", m8_count),
-        ]
-        # init include flags for report (default: all True)
-        if st.session_state.get("fasteners_include") is None:
-            st.session_state["fasteners_include"] = {name: True for name, _ in fasteners_base}
-        else:
-            for name, _ in fasteners_base:
-                if name not in st.session_state["fasteners_include"]:
-                    st.session_state["fasteners_include"][name] = True
+    screws_iso = round_up_to_tens(conn * 4 + total_panels)
+    m8_count = 0
+    if total_length_cm > 0:
+        m8_base = total_length_cm / 140.0
+        m8_count = round_up_to_tens(m8_base)
 
-        # Инициализация значений (после нового расчёта fasteners сбрасывается в None)
-        if st.session_state.get("fasteners") is None:
-            st.session_state["fasteners"] = {lbl: int(val) for (lbl, val) in fasteners_base}
+    # Базовые (авто) значения
+    fasteners_base = [
+        ("מהדק הארקה", ear),
+        ("מהדק אמצע", mid),
+        ("מהדק קצה", edge),
+        ("פקק לקושרות", edge),
+        ("מחברי קושרות", conn),
+        ("בורג איסכורית 3,5", screws_iso),
+        ("בורג M8 ראש משושה", m8_count),
+        ("אום M8 נירוסטה", m8_count),
+    ]
+    # init include flags for report (default: all True)
+    if st.session_state.get("fasteners_include") is None:
+        st.session_state["fasteners_include"] = {name: True for name, _ in fasteners_base}
+    else:
+        for name, _ in fasteners_base:
+            if name not in st.session_state["fasteners_include"]:
+                st.session_state["fasteners_include"][name] = True
 
-        # UI как в "תעלות עם מכסים (מטר)": название + input со встроенными − / +
-        new_fasteners = {}
-        for i, (lbl, base_val) in enumerate(fasteners_base):
-            current_val = int(st.session_state["fasteners"].get(lbl, base_val) or 0)
 
-            # не показываем позиции, которые по умолчанию 0 и остались 0
-            if int(base_val) == 0 and current_val == 0:
-                continue
-            c_chk, c_val, c_name = st.columns([0.8, 1.6, 5])
-            with c_chk:
-                inc_key = f"fast_inc_{lbl}"
-                inc_default = bool(st.session_state["fasteners_include"].get(lbl, True))
-                inc_val = st.checkbox("", value=inc_default, key=inc_key, label_visibility="collapsed")
-                st.session_state["fasteners_include"][lbl] = bool(inc_val)
-            with c_val:
-                v = st.number_input(
-                    "",
-                    min_value=0,
-                    value=int(current_val),
-                    step=1,
-                    key=f"fastener_qty_{i}_{lbl}",
-                    label_visibility="collapsed",
-                )
-            with c_name:
-                st.markdown(right_label(lbl), unsafe_allow_html=True)
-            new_fasteners[lbl] = int(v)
 
-        st.session_state["fasteners"] = new_fasteners
+
+    # Инициализация значений (после нового расчёта fasteners сбрасывается в None)
+    if st.session_state.get("fasteners") is None:
+        st.session_state["fasteners"] = {lbl: int(val) for (lbl, val) in fasteners_base}
+
+    # UI как в "תעלות עם מכסים (מטר)": название + input со встроенными − / +
+    new_fasteners = {}
+    for i, (lbl, base_val) in enumerate(fasteners_base):
+        current_val = int(st.session_state["fasteners"].get(lbl, base_val) or 0)
+
+        # не показываем позиции, которые по умолчанию 0 и остались 0
+        if int(base_val) == 0 and current_val == 0:
+            continue
+        c_chk, c_val, c_name = st.columns([0.8, 1.6, 5])
+        with c_chk:
+            inc_key = f"fast_inc_{lbl}"
+            inc_default = bool(st.session_state["fasteners_include"].get(lbl, True))
+            inc_val = st.checkbox("", value=inc_default, key=inc_key, label_visibility="collapsed")
+            st.session_state["fasteners_include"][lbl] = bool(inc_val)
+        with c_val:
+            v = st.number_input(
+                "",
+                min_value=0,
+                value=int(current_val),
+                step=1,
+                key=f"fastener_qty_{i}_{lbl}",
+                label_visibility="collapsed",
+            )
+        with c_name:
+            st.markdown(right_label(lbl), unsafe_allow_html=True)
+        new_fasteners[lbl] = int(v)
+
+    st.session_state["fasteners"] = new_fasteners
 
 # ---------- CHANNELS ----------
-with st.expander("**תעלות עם מכסים (מטר)**", expanded=True):
-    channel_order = {}
-    for i, r in channels.iterrows():
-        name = r["name"]
-        if "רשת" in name:
-            step_value = 3.0
-        elif "פח" in name:
-            step_value = 2.5
-        else:
-            step_value = 1.0
+st.markdown(right_header("תעלות עם מכסים (מטר)"), unsafe_allow_html=True)
+channel_order = {}
+for i, r in channels.iterrows():
+    name = r["name"]
+    if "רשת" in name:
+        step_value = 3.0
+    elif "פח" in name:
+        step_value = 2.5
+    else:
+        step_value = 1.0
 
-        st.markdown(right_label(name), unsafe_allow_html=True)
-        q = st.number_input(
-            "",
-            min_value=0.0,
-            value=0.0,
-            step=step_value,
-            format="%g",
-            key=f"channel_{i}",
-            label_visibility="collapsed",
-        )
-        if q > 0:
-            channel_order[name] = q
-    st.session_state.channel_order = channel_order
+    st.markdown(right_label(name), unsafe_allow_html=True)
+    q = st.number_input(
+        "",
+        min_value=0.0,
+        value=0.0,
+        step=step_value,
+        format="%g",
+        key=f"channel_{i}",
+        label_visibility="collapsed",
+    )
+    if q > 0:
+        channel_order[name] = q
+st.session_state.channel_order = channel_order
 
 
 # ---------- EXTRA PARTS ----------
-with st.expander("**הוסף פריט**", expanded=True):
-    if not parts.empty:
-        extra_rows = st.session_state.extra_rows
-        chosen_entries = []
-        names_list = parts["name"].tolist()
+st.markdown(right_header("הוסף פריט"), unsafe_allow_html=True)
 
-        for i in range(1, extra_rows + 1):
-            st.markdown(right_label("פריט"), unsafe_allow_html=True)
-            part = st.selectbox(
-                "",
-                names_list,
-                key=f"extra_name_{i}",
-                label_visibility="collapsed",
-            )
-            st.markdown(right_label("כמות"), unsafe_allow_html=True)
-            qty = st.number_input(
-                "",
-                min_value=0,
-                step=1,
-                key=f"extra_qty_{i}",
-                label_visibility="collapsed",
-            )
-            if qty > 0:
-                chosen_entries.append((part, qty))
+if not parts.empty:
+    extra_rows = st.session_state.extra_rows
+    chosen_entries = []
+    names_list = parts["name"].tolist()
 
-        if st.button("להוסיף עוד פריט"):
-            st.session_state.extra_rows += 1
-            st.rerun()
+    for i in range(1, extra_rows + 1):
+        st.markdown(right_label("פריט"), unsafe_allow_html=True)
+        part = st.selectbox(
+            "",
+            names_list,
+            key=f"extra_name_{i}",
+            label_visibility="collapsed",
+        )
+        st.markdown(right_label("כמות"), unsafe_allow_html=True)
+        qty = st.number_input(
+            "",
+            min_value=0,
+            step=1,
+            key=f"extra_qty_{i}",
+            label_visibility="collapsed",
+        )
+        if qty > 0:
+            chosen_entries.append((part, qty))
 
-        agg = {}
-        for name, qty in chosen_entries:
-            agg[name] = agg.get(name, 0) + qty
-        st.session_state.extra_parts = [
-            {"name": n, "qty": q} for n, q in agg.items()
-        ]
-    else:
-        info_box("אין פריטים בקובץ parts.csv – נא להוסיף פריט חדש בצד שמאל")
+    if st.button("להוסיף עוד פריט"):
+        st.session_state.extra_rows += 1
+        st.rerun()
+
+    agg = {}
+    for name, qty in chosen_entries:
+        agg[name] = agg.get(name, 0) + qty
+    st.session_state.extra_parts = [
+        {"name": n, "qty": q} for n, q in agg.items()
+    ]
+else:
+    info_box("אין פריטים בקובץ parts.csv – נא להוסיף פריט חדש בצד שמאל")
 
 success_box("מוכן לייצוא (HTML → PDF דרך הדפסה)")
 
 
 # ---------- EXPORT ----------
-with st.expander("**ייצוא (HTML להדפסה ל-PDF)**", expanded=True):
-    # сохраняем состояние показа отчёта, чтобы после rerun он оставался видимым
-    if "show_report" not in st.session_state:
-        st.session_state.show_report = False
+st.markdown(right_header('ייצוא (HTML להדפסה ל-PDF)'), unsafe_allow_html=True)
 
-    calc_result = st.session_state.calc_result
-    if calc_result is not None:
-        html_report = build_html_report(
-            calc_result=calc_result,
-            project_name=st.session_state.project_name,
-            panel_name=panel_name,
-            channel_order=st.session_state.channel_order,
-            extra_parts=st.session_state.extra_parts,
-            manual_rails=st.session_state.manual_rails,
-        )
+# сохраняем состояние показа отчёта, чтобы после rerun он оставался видимым
+if "show_report" not in st.session_state:
+    st.session_state.show_report = False
 
-        c_left, c_right = st.columns(2)
-        with c_left:
-            if st.button('לייצא דו"ח', use_container_width=True):
-                st.session_state.show_report = True
+calc_result = st.session_state.calc_result
+if calc_result is not None:
+    html_report = build_html_report(
+        calc_result=calc_result,
+        project_name=st.session_state.project_name,
+        panel_name=panel_name,
+        channel_order=st.session_state.channel_order,
+        extra_parts=st.session_state.extra_parts,
+        manual_rails=st.session_state.manual_rails,
+    )
 
-        with c_right:
-            if st.button("פתח בטאב חדש", use_container_width=True):
-                js = f"""<script>
-                const w = window.open('', '_blank');
-                if (w) {{
-                    w.document.open();
-                    w.document.write({json.dumps(html_report)});
-                    w.document.close();
-                }}
-                </script>"""
-                components.html(js, height=0)
+    c_left, c_right = st.columns(2)
+    with c_left:
+        if st.button('לייצא דו"ח', use_container_width=True):
+            st.session_state.show_report = True
 
-        if st.session_state.show_report:
-            st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
-            components.html(html_report, height=950, scrolling=True)
+    with c_right:
+        if st.button("פתח בטאב חדש", use_container_width=True):
+            js = f"""<script>
+            const w = window.open('', '_blank');
+            if (w) {{
+                w.document.open();
+                w.document.write({json.dumps(html_report)});
+                w.document.close();
+            }}
+            </script>"""
+            components.html(js, height=0)
 
-    else:
-        info_box('קודם יש לחשב, ואז ניתן לייצא דו"ח')
+    if st.session_state.show_report:
+        st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
+        components.html(html_report, height=950, scrolling=True)
+
+else:
+    info_box('קודם יש לחשב, ואז ניתן לייצא דו"ח')
