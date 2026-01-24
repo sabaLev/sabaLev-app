@@ -58,107 +58,135 @@ st.markdown("""
         50% { transform: translateY(-5px); }
     }
     
-    /* СУПЕР-КОМПАКТНЫЕ ИНПУТЫ ДЛЯ ГРУПП */
+    /* СТИЛИ ДЛЯ КОМПАКТНЫХ ИНПУТОВ STREAMLIT */
+    .compact-group-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    
     .compact-row {
         display: flex !important;
         flex-direction: row !important;
         width: 100% !important;
         gap: 8px !important;
-        margin-bottom: 12px !important;
-        align-items: stretch !important;
+        align-items: center !important;
     }
     
-    .compact-column {
-        flex: 1 !important;
+    /* Скрываем заголовки у всех инпутов в группах */
+    .compact-row div[data-testid="stNumberInput"] label,
+    .compact-row div[data-testid="column"] label {
+        display: none !important;
+    }
+    
+    /* Компактные инпуты */
+    .compact-row div[data-testid="stNumberInput"] > div {
+        width: 100% !important;
         min-width: 0 !important;
-        display: flex !important;
-        flex-direction: column !important;
     }
     
-    .compact-input-wrapper {
-        display: flex;
-        width: 100%;
-        min-width: 0;
-        position: relative;
-        background: #F0F2F6;
-        border-radius: 0.25rem;
-        border: 1px solid var(--border-color);
-        overflow: hidden;
+    .compact-row div[data-baseweb="input"] {
+        background: #F0F2F6 !important;
+        border-radius: 8px !important;
+        border: none !important;
+        min-width: 0 !important;
     }
     
-    /* ИНПУТ В СТИЛЕ STREAMLIT */
-    .streamlit-like-input {
-        flex: 1;
-        min-width: 0;
-        width: 100%;
-        border: none;
-        background: transparent;
-        font-family: var(--font);
-        font-size: 0.875rem;
-        color: var(--text-color);
-        padding: 0.375rem 0.75rem;
-        height: 38px;
-        box-sizing: border-box;
-        text-align: center;
-        outline: none;
+    .compact-row input {
+        background: transparent !important;
+        text-align: center !important;
+        padding: 8px 12px !important;
+        font-size: 14px !important;
+        border: none !important;
+        min-width: 0 !important;
     }
     
-    .streamlit-like-input:focus {
-        outline: none;
+    /* Кнопки +/- в стиле Streamlit */
+    .compact-row div[data-baseweb="input"] button {
+        background: #F0F2F6 !important;
+        border: none !important;
+        width: 32px !important;
+        height: 100% !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
     }
     
-    /* КНОПКИ +- В СТИЛЕ STREAMLIT - ИСПРАВЛЕННЫЕ */
-    .streamlit-btn-group {
-        display: flex;
-        height: 100%;
-        border-left: 1px solid var(--border-color);
-    }
-    
-    .streamlit-btn {
-        width: 32px;
-        height: 100%;
-        background: #F0F2F6;
-        border: none;
-        padding: 0;
-        cursor: pointer;
-        color: var(--text-color);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        font-weight: bold;
-        user-select: none;
-        transition: background-color 0.2s;
-    }
-    
-    .streamlit-btn:hover {
+    .compact-row div[data-baseweb="input"] button:hover {
         background: #EC5953 !important;
-        color: white !important;
     }
     
-    .streamlit-btn:active {
-        background: #D94E48 !important;
-        color: white !important;
+    .compact-row div[data-baseweb="input"] button:first-child {
+        border-top-right-radius: 8px !important;
+        border-bottom-right-radius: 8px !important;
     }
     
-    /* Граница между кнопками */
-    .streamlit-btn:first-child {
-        border-right: 1px solid var(--border-color);
+    .compact-row div[data-baseweb="input"] button:last-child {
+        border-top-left-radius: 8px !important;
+        border-bottom-left-radius: 8px !important;
     }
     
-    /* Убираем стрелочки у number input */
-    .compact-input-wrapper input[type="number"]::-webkit-inner-spin-button,
-    .compact-input-wrapper input[type="number"]::-webkit-outer-spin-button {
+    /* Убираем границу между кнопками и полем ввода */
+    .compact-row div[data-baseweb="input"] > div {
+        border: none !important;
+        background: #F0F2F6 !important;
+        border-radius: 8px !important;
+    }
+    
+    /* Убираем стрелочки */
+    .compact-row input::-webkit-inner-spin-button,
+    .compact-row input::-webkit-outer-spin-button {
         -webkit-appearance: none;
         margin: 0;
     }
     
-    .compact-input-wrapper input[type="number"] {
+    .compact-row input[type="number"] {
         -moz-appearance: textfield;
-        appearance: textfield;
     }
     
-    /* CSS переменные для тем */
+    /* Адаптация для мобильных */
+    @media (max-width: 768px) {
+        .compact-row {
+            gap: 4px !important;
+        }
+        
+        .compact-row input {
+            padding: 8px 6px !important;
+            font-size: 13px !important;
+        }
+        
+        .compact-row div[data-baseweb="input"] button {
+            width: 28px !important;
+        }
+    }
+    
+    /* Темная тема */
+    @media (prefers-color-scheme: dark) {
+        .compact-row div[data-baseweb="input"] {
+            background: #1E293B !important;
+        }
+        
+        .compact-row div[data-baseweb="input"] > div {
+            background: #1E293B !important;
+        }
+        
+        .compact-row div[data-baseweb="input"] button {
+            background: #1E293B !important;
+        }
+        
+        .compact-row input {
+            color: white !important;
+        }
+    }
+    
+    /* Кнопка "עוד שורה" */
+    .add-row-btn {
+        margin-top: 12px !important;
+        width: auto !important;
+        align-self: flex-start !important;
+    }
+    
+    /* CSS переменные */
     :root {
         --background-color: #ffffff;
         --text-color: #31333F;
@@ -166,92 +194,6 @@ st.markdown("""
         --secondary-background-color: #F0F2F6;
         --primary-color: #FF4B4B;
         --hover-color: #EC5953;
-        --active-color: #D94E48;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        :root {
-            --background-color: #0E1117;
-            --text-color: #FAFAFA;
-            --border-color: #2D3748;
-            --secondary-background-color: #1E293B;
-            --primary-color: #FF4B4B;
-            --hover-color: #EC5953;
-            --active-color: #D94E48;
-        }
-        
-        .compact-input-wrapper {
-            background: #1E293B;
-            border-color: #2D3748;
-        }
-        
-        .streamlit-btn {
-            background: #1E293B;
-        }
-        
-        .streamlit-btn:hover {
-            background: #EC5953 !important;
-        }
-    }
-    
-    /* Принудительное сохранение горизонтальной верстки на мобильных */
-    @media (max-width: 768px) {
-        .compact-row {
-            gap: 4px !important;
-            margin-bottom: 8px !important;
-        }
-        
-        .streamlit-like-input {
-            padding: 0.375rem 0.5rem;
-            font-size: 0.8125rem;
-            height: 36px;
-        }
-        
-        .streamlit-btn {
-            width: 28px;
-        }
-    }
-    
-    /* Очень узкие экраны */
-    @media (max-width: 480px) {
-        .compact-row {
-            gap: 3px !important;
-        }
-        
-        .streamlit-like-input {
-            padding: 0.375rem 0.375rem;
-            font-size: 0.75rem;
-            height: 34px;
-        }
-        
-        .streamlit-btn {
-            width: 26px;
-            font-size: 14px;
-        }
-    }
-    
-    /* Остальные стили... */
-    .stButton > button {
-        background-color: #4b75c9;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        padding: 14px 24px;
-        font-size: 16px;
-        font-weight: 500;
-        width: 100%;
-    }
-    
-    .stButton > button:hover {
-        background-color: #3a62b5;
-    }
-    
-    .primary-btn > button {
-        background-color: #4b75c9;
-        font-size: 17px;
-        font-weight: 600;
-        padding: 16px;
-        margin: 20px 0;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -301,17 +243,9 @@ if "funny_message_text" not in st.session_state:
 # Группы для стоячих и лежачих панелей
 if "standing_rows" not in st.session_state:
     st.session_state.standing_rows = 8
-    # Инициализируем значения для стоячих
-    for i in range(1, 9):
-        st.session_state[f"standing_n_{i}"] = i  # פאנלים: 1, 2, 3... 8
-        st.session_state[f"standing_g_{i}"] = 0  # שורות: 0
 
 if "laying_rows" not in st.session_state:
     st.session_state.laying_rows = 4
-    # Инициализируем значения для лежачих
-    for i in range(1, 5):
-        st.session_state[f"laying_n_{i}"] = i  # פאנלים: 1, 2, 3, 4
-        st.session_state[f"laying_g_{i}"] = 0  # שורות: 0
 
 # ---------- LOAD DATABASES ----------
 @st.cache_data
@@ -495,46 +429,6 @@ def format_whatsapp_message(project_name, panel_name, groups, materials_text):
     
     return message
 
-# ---------- ФУНКЦИЯ ДЛЯ СОЗДАНИЯ КОМПАКТНОЙ СТРОКИ ----------
-def create_compact_row(panel_type, index, default_n=0, default_g=0):
-    """Создает компактную строку с двумя инпутами в стиле Streamlit"""
-    
-    html = f'''
-    <div class="compact-row" id="row_{panel_type}_{index}">
-        <div class="compact-column">
-            <div class="compact-input-wrapper">
-                <input type="number" 
-                       id="{panel_type}_n_{index}" 
-                       value="{default_n}" 
-                       min="0" 
-                       max="99" 
-                       class="streamlit-like-input"
-                       oninput="handleInputChange('{panel_type}_n_{index}', this.value)">
-                <div class="streamlit-btn-group">
-                    <button class="streamlit-btn" onclick="updateNumber('{panel_type}_n_{index}', -1)">−</button>
-                    <button class="streamlit-btn" onclick="updateNumber('{panel_type}_n_{index}', 1)">+</button>
-                </div>
-            </div>
-        </div>
-        <div class="compact-column">
-            <div class="compact-input-wrapper">
-                <input type="number" 
-                       id="{panel_type}_g_{index}" 
-                       value="{default_g}" 
-                       min="0" 
-                       max="99" 
-                       class="streamlit-like-input"
-                       oninput="handleInputChange('{panel_type}_g_{index}', this.value)">
-                <div class="streamlit-btn-group">
-                    <button class="streamlit-btn" onclick="updateNumber('{panel_type}_g_{index}', -1)">−</button>
-                    <button class="streamlit-btn" onclick="updateNumber('{panel_type}_g_{index}', 1)">+</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    '''
-    return html
-
 # ---------- UI: PROJECT NAME ----------
 st.markdown('<div class="section-header">שם פרויקט</div>', unsafe_allow_html=True)
 project_name = st.text_input(
@@ -579,228 +473,161 @@ st.markdown(right_header("קבוצות פאנלים"), unsafe_allow_html=True)
 if st.session_state.show_funny_message.get("rows") or st.session_state.show_funny_message.get("panels"):
     st.markdown(f'<div class="funny-message">{st.session_state.funny_message_text}</div>', unsafe_allow_html=True)
 
-# JavaScript для обработки инпутов - ИСПРАВЛЕННЫЙ
-js_code = '''
-<script>
-// Сохраняем значение в Streamlit
-function saveToStreamlit(fieldId, value) {
-    const numValue = parseInt(value) || 0;
-    
-    // Проверяем лимиты
-    if (numValue > 99) {
-        const input = document.getElementById(fieldId);
-        input.value = 99;
-        alert("וואי! יותר מ-99? אולי תפצל לשתי שורות? 😄");
-        return 99;
-    }
-    
-    // Отправляем в Streamlit через window.parent
-    if (window.parent) {
-        window.parent.postMessage({
-            type: "streamlit:setComponentValue",
-            value: {
-                field: fieldId,
-                value: numValue
-            }
-        }, "*");
-    }
-    
-    return numValue;
-}
-
-// Обработчик ручного ввода
-function handleInputChange(fieldId, value) {
-    // Даем небольшую задержку для дебаунса
-    clearTimeout(window[fieldId + '_timer']);
-    window[fieldId + '_timer'] = setTimeout(() => {
-        saveToStreamlit(fieldId, value);
-    }, 300);
-}
-
-// Обновление числа с кнопок +/-
-function updateNumber(fieldId, delta) {
-    const input = document.getElementById(fieldId);
-    let value = parseInt(input.value) || 0;
-    value += delta;
-    if (value < 0) value = 0;
-    
-    input.value = value;
-    saveToStreamlit(fieldId, value);
-}
-
-// Инициализация при загрузке
-document.addEventListener("DOMContentLoaded", function() {
-    // Устанавливаем обработчики для всех инпутов
-    const inputs = document.querySelectorAll('.streamlit-like-input');
-    inputs.forEach(input => {
-        const fieldId = input.id;
-        // Устанавливаем начальное значение из атрибута value
-        if (input.value) {
-            saveToStreamlit(fieldId, input.value);
-        }
-    });
-});
-</script>
-'''
+# Начинаем контейнер для компактных инпутов
+st.markdown('<div class="compact-group-container">', unsafe_allow_html=True)
 
 # СПОЙЛЕР 1: СТОЯЧИЕ ПАНЕЛИ
 with st.expander("עומד", expanded=True):
-    # Заголовки колонок один раз сверху
+    # Заголовки колонок
     st.markdown('''
-    <div class="compact-row" style="margin-bottom: 4px; font-size: 14px; font-weight: 500;">
-        <div class="compact-column" style="text-align: center;">פאנלים</div>
-        <div class="compact-column" style="text-align: center;">שורות</div>
+    <div class="compact-row" style="margin-bottom: 8px; font-size: 14px; font-weight: 500;">
+        <div style="flex: 1; text-align: center;">פאנלים</div>
+        <div style="flex: 1; text-align: center;">שורות</div>
     </div>
     ''', unsafe_allow_html=True)
     
-    standing_html = ""
+    all_groups = []
+    standing_groups = []
     
     for i in range(1, st.session_state.standing_rows + 1):
-        n_val = st.session_state.get(f"standing_n_{i}", i)
-        g_val = st.session_state.get(f"standing_g_{i}", 0)
+        # Создаем строку с двумя колонками
+        col1, col2 = st.columns(2)
         
-        standing_html += create_compact_row("standing", i, n_val, g_val)
-    
-    # Отображаем все строки
-    st.markdown(standing_html, unsafe_allow_html=True)
+        with col1:
+            # פאנלים - предустановленные значения 1-8
+            default_n = i
+            n_key = f"standing_n_{i}"
+            n = st.number_input(
+                "פאנלים",
+                0,
+                99,
+                value=st.session_state.get(n_key, default_n),
+                key=n_key,
+                label_visibility="collapsed"
+            )
+            st.session_state[n_key] = n
+            
+            if n > 99:
+                check_and_show_funny_message(n, "panels")
+                st.session_state[n_key] = 99
+                st.rerun()
+        
+        with col2:
+            # שורות - 0 по умолчанию
+            default_g = 0
+            g_key = f"standing_g_{i}"
+            g = st.number_input(
+                "שורות",
+                0,
+                99,
+                value=st.session_state.get(g_key, default_g),
+                key=g_key,
+                label_visibility="collapsed"
+            )
+            st.session_state[g_key] = g
+            
+            if g > 99:
+                check_and_show_funny_message(g, "rows")
+                st.session_state[g_key] = 99
+                st.rerun()
+        
+        if n > 0 and g > 0:
+            standing_groups.append((n, g, "עומד"))
     
     # Кнопка добавить строку
     if st.button("עוד שורה", key="add_standing_row"):
         st.session_state.standing_rows += 1
-        st.session_state[f"standing_n_{st.session_state.standing_rows}"] = 0
-        st.session_state[f"standing_g_{st.session_state.standing_rows}"] = 0
         st.rerun()
+    
+    all_groups.extend(standing_groups)
 
 # СПОЙЛЕР 2: ЛЕЖАЧИЕ ПАНЕЛИ
 with st.expander("שוכב", expanded=False):
-    # Заголовки колонок один раз сверху
+    # Заголовки колонок
     st.markdown('''
-    <div class="compact-row" style="margin-bottom: 4px; font-size: 14px; font-weight: 500;">
-        <div class="compact-column" style="text-align: center;">פאנלים</div>
-        <div class="compact-column" style="text-align: center;">שורות</div>
+    <div class="compact-row" style="margin-bottom: 8px; font-size: 14px; font-weight: 500;">
+        <div style="flex: 1; text-align: center;">פאנלים</div>
+        <div style="flex: 1; text-align: center;">שורות</div>
     </div>
     ''', unsafe_allow_html=True)
     
-    laying_html = ""
+    laying_groups = []
     
     for i in range(1, st.session_state.laying_rows + 1):
-        n_val = st.session_state.get(f"laying_n_{i}", i if i <= 4 else 0)
-        g_val = st.session_state.get(f"laying_g_{i}", 0)
+        # Создаем строку с двумя колонками
+        col1, col2 = st.columns(2)
         
-        laying_html += create_compact_row("laying", i, n_val, g_val)
-    
-    # Отображаем все строки
-    st.markdown(laying_html, unsafe_allow_html=True)
+        with col1:
+            # פאנלים - предустановленные значения 1-4
+            default_n = i if i <= 4 else 0
+            n_key = f"laying_n_{i}"
+            n = st.number_input(
+                "פאנלים",
+                0,
+                99,
+                value=st.session_state.get(n_key, default_n),
+                key=n_key,
+                label_visibility="collapsed"
+            )
+            st.session_state[n_key] = n
+            
+            if n > 99:
+                check_and_show_funny_message(n, "panels")
+                st.session_state[n_key] = 99
+                st.rerun()
+        
+        with col2:
+            # שורות - 0 по умолчанию
+            default_g = 0
+            g_key = f"laying_g_{i}"
+            g = st.number_input(
+                "שורות",
+                0,
+                99,
+                value=st.session_state.get(g_key, default_g),
+                key=g_key,
+                label_visibility="collapsed"
+            )
+            st.session_state[g_key] = g
+            
+            if g > 99:
+                check_and_show_funny_message(g, "rows")
+                st.session_state[g_key] = 99
+                st.rerun()
+        
+        if n > 0 and g > 0:
+            laying_groups.append((n, g, "שוכב"))
     
     # Кнопка добавить строку
     if st.button("עוד שורה", key="add_laying_row"):
         st.session_state.laying_rows += 1
-        st.session_state[f"laying_n_{st.session_state.laying_rows}"] = 0
-        st.session_state[f"laying_g_{st.session_state.laying_rows}"] = 0
         st.rerun()
-
-# Добавляем JavaScript для обработки
-st.markdown(js_code, unsafe_allow_html=True)
-
-# Компонент для получения данных из JavaScript
-components.html("""
-<script>
-// Обработчик сообщений от iframe (наша HTML форма)
-window.addEventListener('message', function(event) {
-    if (event.data.type === 'streamlit:setComponentValue') {
-        const data = event.data.value;
-        if (data && data.field && data.value !== undefined) {
-            // Отправляем данные в Streamlit через родительское окно
-            window.parent.postMessage({
-                type: 'streamlit:setComponentValue',
-                value: data
-            }, '*');
-        }
-    }
-});
-
-// Отправляем сообщение что компонент загружен
-window.parent.postMessage({
-    type: 'streamlit:componentReady',
-    value: true
-}, '*');
-</script>
-""", height=0)
-
-# Обработчик сообщений для обновления session_state
-if 'component_messages' not in st.session_state:
-    st.session_state.component_messages = []
-
-# Создаем обработчик сообщений через Streamlit
-class MessageHandler:
-    def __init__(self):
-        self.messages = []
     
-    def handle_message(self, message):
-        if isinstance(message, dict) and 'field' in message and 'value' in message:
-            field = message['field']
-            value = message['value']
-            
-            # Проверяем лимиты
-            if value > 99:
-                if '_g_' in field:
-                    check_and_show_funny_message(value, "rows")
-                elif '_n_' in field:
-                    check_and_show_funny_message(value, "panels")
-                value = 99
-            
-            # Сохраняем в session_state
-            st.session_state[field] = value
-            self.messages.append(message)
+    all_groups.extend(laying_groups)
 
-# Создаем экземпляр обработчика
-if 'message_handler' not in st.session_state:
-    st.session_state.message_handler = MessageHandler()
-
-# Пытаемся получить сообщения через экспериментальный API
-try:
-    # Получаем сообщения от компонента
-    messages = st.session_state.get('component_messages', [])
-    for msg in messages:
-        if isinstance(msg, dict) and 'field' in msg and 'value' in msg:
-            field = msg['field']
-            value = msg['value']
-            
-            # Проверяем лимиты
-            if value > 99:
-                if '_g_' in field:
-                    check_and_show_funny_message(value, "rows")
-                elif '_n_' in field:
-                    check_and_show_funny_message(value, "panels")
-                value = 99
-            
-            # Сохраняем в session_state
-            st.session_state[field] = value
-except:
-    pass
+# Закрываем контейнер
+st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
 # ---------- BUTTON: CALCULATE ----------
 st.markdown('<div class="primary-btn"></div>', unsafe_allow_html=True)
 if st.button("חשב", type="primary", use_container_width=True):
-    # Сначала обновляем группы из текущих значений
+    # Собираем текущие группы
     current_standing_groups = []
     current_laying_groups = []
     
-    # Собираем стоячие группы
     for i in range(1, st.session_state.standing_rows + 1):
-        n_val = st.session_state.get(f"standing_n_{i}", i)
-        g_val = st.session_state.get(f"standing_g_{i}", 0)
-        if n_val > 0 and g_val > 0:
-            current_standing_groups.append((n_val, g_val, "עומד"))
+        n = st.session_state.get(f"standing_n_{i}", i)
+        g = st.session_state.get(f"standing_g_{i}", 0)
+        if n > 0 and g > 0:
+            current_standing_groups.append((n, g, "עומד"))
     
-    # Собираем лежачие группы
     for i in range(1, st.session_state.laying_rows + 1):
-        n_val = st.session_state.get(f"laying_n_{i}", i if i <= 4 else 0)
-        g_val = st.session_state.get(f"laying_g_{i}", 0)
-        if n_val > 0 and g_val > 0:
-            current_laying_groups.append((n_val, g_val, "שוכב"))
+        n = st.session_state.get(f"laying_n_{i}", i if i <= 4 else 0)
+        g = st.session_state.get(f"laying_g_{i}", 0)
+        if n > 0 and g > 0:
+            current_laying_groups.append((n, g, "שוכב"))
     
     all_groups = current_standing_groups + current_laying_groups
     
@@ -1167,16 +994,16 @@ if calc_result is not None:
             current_laying_groups = []
             
             for i in range(1, st.session_state.standing_rows + 1):
-                n_val = st.session_state.get(f"standing_n_{i}", i)
-                g_val = st.session_state.get(f"standing_g_{i}", 0)
-                if n_val > 0 and g_val > 0:
-                    current_standing_groups.append((n_val, g_val, "עומד"))
+                n = st.session_state.get(f"standing_n_{i}", i)
+                g = st.session_state.get(f"standing_g_{i}", 0)
+                if n > 0 and g > 0:
+                    current_standing_groups.append((n, g, "עומד"))
             
             for i in range(1, st.session_state.laying_rows + 1):
-                n_val = st.session_state.get(f"laying_n_{i}", i if i <= 4 else 0)
-                g_val = st.session_state.get(f"laying_g_{i}", 0)
-                if n_val > 0 and g_val > 0:
-                    current_laying_groups.append((n_val, g_val, "שוכב"))
+                n = st.session_state.get(f"laying_n_{i}", i if i <= 4 else 0)
+                g = st.session_state.get(f"laying_g_{i}", 0)
+                if n > 0 and g > 0:
+                    current_laying_groups.append((n, g, "שוכב"))
             
             current_all_groups = current_standing_groups + current_laying_groups
             
