@@ -881,8 +881,8 @@ if calc_result is not None:
             ("פקק לקושרות", edge),
             ("מחברי קושרות", conn),
             ("בורג איסכורית 3,5", screws_iso),
-            ("בורג M8", m8_count),
-            ("אום M8", m8_count),
+            ("M8 בורג", m8_count),
+            ("M8 אום", m8_count),
         ]
         # init include flags for report (default: all True)
         if st.session_state.get("fasteners_include") is None:
