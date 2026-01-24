@@ -120,14 +120,8 @@ if "show_funny_message" not in st.session_state:
     st.session_state.show_funny_message = {"rows": False, "panels": False}
 if "funny_message_text" not in st.session_state:
     st.session_state.funny_message_text = ""
-
-# Инициализация для компоненты групп
-if 'current_groups_data' not in st.session_state:
-    st.session_state.current_groups_data = []
-if 'standing_rows' not in st.session_state:
-    st.session_state.standing_rows = 8
-if 'laying_rows' not in st.session_state:
-    st.session_state.laying_rows = 4
+if "groups_data" not in st.session_state:
+    st.session_state.groups_data = []
 
 # ---------- LOAD DATABASES ----------
 @st.cache_data
@@ -312,8 +306,8 @@ def format_whatsapp_message(project_name, panel_name, groups, materials_text):
     return message
 
 # ---------- КОМПОНЕНТА ГРУПП ----------
-def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
-    """Создает компоненту для ввода групп"""
+def create_groups_component():
+    """Создает компоненту для ввода групп - УПРОЩЕННАЯ ВЕРСИЯ"""
     
     html = f'''
     <!DOCTYPE html>
@@ -329,32 +323,9 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
                 font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             }}
             
-            /* Темная тема - исправленная */
-            @media (prefers-color-scheme: dark) {{
-                :root {{
-                    --bg-color: #0E1117;
-                    --section-bg: #1E293B;
-                    --border-color: #2D3748;
-                    --text-color: #FAFAFA;
-                    --input-bg: #1E293B;
-                    --button-bg: #1E293B;
-                }}
-            }}
-            
-            @media (prefers-color-scheme: light) {{
-                :root {{
-                    --bg-color: #ffffff;
-                    --section-bg: #F0F2F6;
-                    --border-color: #DCDCDC;
-                    --text-color: #31333F;
-                    --input-bg: #ffffff;
-                    --button-bg: #F0F2F6;
-                }}
-            }}
-            
             body {{
-                background: var(--bg-color);
-                color: var(--text-color);
+                background: transparent;
+                color: #31333F;
                 padding: 10px;
             }}
             
@@ -376,8 +347,8 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
             }}
             
             .spoiler-content {{
-                background: var(--section-bg);
-                border: 1px solid var(--border-color);
+                background: #F0F2F6;
+                border: 1px solid #DCDCDC;
                 border-radius: 0 0 8px 8px;
                 padding: 15px;
                 margin-top: -5px;
@@ -390,7 +361,7 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
                 margin-bottom: 10px;
                 font-size: 14px;
                 font-weight: 500;
-                color: var(--text-color);
+                color: #31333F;
             }}
             
             .column-label {{
@@ -412,9 +383,9 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
             
             .input-group {{
                 display: flex;
-                background: var(--input-bg);
+                background: white;
                 border-radius: 8px;
-                border: 1px solid var(--border-color);
+                border: 1px solid #DCDCDC;
                 overflow: hidden;
                 height: 42px;
             }}
@@ -426,9 +397,9 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
             
             .btn {{
                 width: 40px;
-                background: var(--button-bg);
+                background: #F0F2F6;
                 border: none;
-                color: var(--text-color);
+                color: #31333F;
                 font-size: 20px;
                 font-weight: 300;
                 cursor: pointer;
@@ -449,11 +420,11 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
                 text-align: center;
                 font-size: 16px;
                 font-weight: 500;
-                color: var(--text-color);
+                color: #31333F;
                 padding: 0;
                 outline: none;
                 min-width: 0;
-                background: var(--input-bg);
+                background: white;
             }}
             
             input::-webkit-outer-spin-button,
@@ -485,45 +456,6 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
             
             .add-btn:hover {{
                 background: #3a62b5;
-            }}
-            
-            /* Для мобильных */
-            @media (max-width: 768px) {{
-                .row {{
-                    gap: 8px;
-                }}
-                
-                .input-group {{
-                    height: 38px;
-                }}
-                
-                .btn {{
-                    width: 36px;
-                    font-size: 18px;
-                }}
-                
-                .input {{
-                    font-size: 15px;
-                }}
-            }}
-            
-            @media (max-width: 480px) {{
-                .row {{
-                    gap: 6px;
-                }}
-                
-                .input-group {{
-                    height: 36px;
-                }}
-                
-                .btn {{
-                    width: 34px;
-                    font-size: 16px;
-                }}
-                
-                .input {{
-                    font-size: 14px;
-                }}
             }}
         </style>
     </head>
@@ -562,8 +494,8 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
         
         <script>
         // Данные
-        let standingRows = {standing_rows};
-        let layingRows = {laying_rows};
+        let standingRows = 8;
+        let layingRows = 4;
         let data = {{
             standing: {{}},
             laying: {{}}
@@ -585,19 +517,38 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
         
         // Инициализация
         function init() {{
-            // Стоячие: 1-8 פאנלים, 0 שורות
-            for (let i = 1; i <= standingRows; i++) {{
-                data.standing[`n_${{i}}`] = i;
-                data.standing[`g_${{i}}`] = 0;
+            // Загружаем сохраненные данные
+            const savedData = localStorage.getItem('solar_groups_data');
+            if (savedData) {{
+                try {{
+                    data = JSON.parse(savedData);
+                    // Восстанавливаем количество строк
+                    standingRows = Object.keys(data.standing).filter(k => k.startsWith('n_')).length / 2;
+                    layingRows = Object.keys(data.laying).filter(k => k.startsWith('n_')).length / 2;
+                }} catch(e) {{
+                    console.log('Error loading saved data:', e);
+                }}
             }}
             
-            // Лежачие: 1-4 פאנלים, 0 שורות
-            for (let i = 1; i <= layingRows; i++) {{
-                data.laying[`n_${{i}}`] = i <= 4 ? i : 0;
-                data.laying[`g_${{i}}`] = 0;
+            // Если нет данных, создаем дефолтные
+            if (!data.standing || Object.keys(data.standing).length === 0) {{
+                // Стоячие: 1-8 פאנלים, 0 שורות
+                for (let i = 1; i <= standingRows; i++) {{
+                    data.standing[`n_${{i}}`] = i;
+                    data.standing[`g_${{i}}`] = 0;
+                }}
+            }}
+            
+            if (!data.laying || Object.keys(data.laying).length === 0) {{
+                // Лежачие: 1-4 פאנלים, 0 שורות
+                for (let i = 1; i <= layingRows; i++) {{
+                    data.laying[`n_${{i}}`] = i <= 4 ? i : 0;
+                    data.laying[`g_${{i}}`] = 0;
+                }}
             }}
             
             renderAll();
+            saveData(); // Сохраняем начальные данные
         }}
         
         // Создание строки
@@ -643,8 +594,49 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
             }}
             document.getElementById('laying-rows').innerHTML = layingHtml;
             
-            // Отправляем данные
-            sendDataToStreamlit();
+            // Сохраняем данные
+            saveData();
+        }}
+        
+        // Сохранение данных
+        function saveData() {{
+            // Сохраняем в localStorage
+            localStorage.setItem('solar_groups_data', JSON.stringify(data));
+            
+            // Также создаем скрытый input с данными для Streamlit
+            const groupsForCalculation = getGroupsForCalculation();
+            const hiddenInput = document.getElementById('solar-groups-hidden');
+            if (hiddenInput) {{
+                hiddenInput.value = JSON.stringify(groupsForCalculation);
+                // Триггерим событие
+                const event = new Event('input', {{ bubbles: true }});
+                hiddenInput.dispatchEvent(event);
+            }}
+        }}
+        
+        // Получение данных для расчета
+        function getGroupsForCalculation() {{
+            const groups = [];
+            
+            // Стоячие
+            for (let i = 1; i <= standingRows; i++) {{
+                const n = data.standing[`n_${{i}}`] || 0;
+                const g = data.standing[`g_${{i}}`] || 0;
+                if (n > 0 && g > 0) {{
+                    groups.push([n, g, 'עומד']);
+                }}
+            }}
+            
+            // Лежачие
+            for (let i = 1; i <= layingRows; i++) {{
+                const n = data.laying[`n_${{i}}`] || 0;
+                const g = data.laying[`g_${{i}}`] || 0;
+                if (n > 0 && g > 0) {{
+                    groups.push([n, g, 'שוכב']);
+                }}
+            }}
+            
+            return groups;
         }}
         
         // Изменение значения кнопками
@@ -662,7 +654,7 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
             const input = document.getElementById(`${{type}}_${{field}}_${{index}}`);
             if (input) input.value = value;
             
-            sendDataToStreamlit();
+            saveData();
         }}
         
         // Обновление ручного ввода
@@ -682,7 +674,7 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
                 if (input) input.value = finalValue;
             }}
             
-            sendDataToStreamlit();
+            saveData();
         }}
         
         // Добавление строки
@@ -700,40 +692,6 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
             renderAll();
         }}
         
-        // Отправка данных в Streamlit
-        function sendDataToStreamlit() {{
-            // Преобразуем в формат для расчета
-            const groupsForCalculation = [];
-            
-            // Стоячие
-            for (let i = 1; i <= standingRows; i++) {{
-                const n = data.standing[`n_${{i}}`] || 0;
-                const g = data.standing[`g_${{i}}`] || 0;
-                if (n > 0 && g > 0) {{
-                    groupsForCalculation.push([n, g, 'עומד']);
-                }}
-            }}
-            
-            // Лежачие
-            for (let i = 1; i <= layingRows; i++) {{
-                const n = data.laying[`n_${{i}}`] || 0;
-                const g = data.laying[`g_${{i}}`] || 0;
-                if (n > 0 && g > 0) {{
-                    groupsForCalculation.push([n, g, 'שוכב']);
-                }}
-            }}
-            
-            // Сохраняем для передачи
-            window.currentGroupsData = groupsForCalculation;
-            
-            // Отправляем сообщение родителю
-            window.parent.postMessage({{
-                type: 'solar_groups_update',
-                groups: groupsForCalculation,
-                rawData: data
-            }}, '*');
-        }}
-        
         // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {{
             init();
@@ -742,12 +700,15 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
             document.getElementById('laying-content').style.display = 'block';
         }});
         </script>
+        
+        <!-- Скрытое поле для передачи данных в Streamlit -->
+        <input type="hidden" id="solar-groups-hidden" name="solar_groups">
     </body>
     </html>
     '''
     
     # Отображаем компоненту
-    component = components.html(html, height=800, scrolling=True)
+    component = components.html(html, height=600, scrolling=True)
     
     return component
 
@@ -795,211 +756,162 @@ st.markdown(right_header("קבוצות פאנלים"), unsafe_allow_html=True)
 if st.session_state.show_funny_message.get("rows") or st.session_state.show_funny_message.get("panels"):
     st.markdown(f'<div class="funny-message">{st.session_state.funny_message_text}</div>', unsafe_allow_html=True)
 
-# Инициализация для передачи данных
-if 'groups_data_received' not in st.session_state:
-    st.session_state.groups_data_received = []
+# Создаем компоненту
+create_groups_component()
 
-# Отображаем кастомную компоненту
-component = create_groups_component(
-    standing_rows=st.session_state.standing_rows,
-    laying_rows=st.session_state.laying_rows,
-    key="groups_input"
+# Скрытое поле для получения данных (через JavaScript)
+components.html("""
+<input type="hidden" id="solar-groups-data" name="groups_data">
+<script>
+// Слушаем изменения в скрытом поле компоненты
+document.addEventListener('DOMContentLoaded', function() {
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
+                const value = document.getElementById('solar-groups-hidden')?.value;
+                if (value) {
+                    // Копируем в наше поле
+                    const dataField = document.getElementById('solar-groups-data');
+                    if (dataField) {
+                        dataField.value = value;
+                        // Триггерим событие
+                        const event = new Event('input', { bubbles: true });
+                        dataField.dispatchEvent(event);
+                    }
+                }
+            }
+        });
+    });
+    
+    // Начинаем наблюдение
+    const hiddenInput = document.getElementById('solar-groups-hidden');
+    if (hiddenInput) {
+        observer.observe(hiddenInput, { attributes: true });
+    }
+});
+</script>
+""", height=0)
+
+# Поле для ручного ввода JSON (на случай если автоматика не сработает)
+st.markdown('<div style="margin-top: 20px; font-size: 14px; color: #666; text-align: right;">או הזן נתונים ידנית (JSON):</div>', unsafe_allow_html=True)
+groups_json_input = st.text_area(
+    "",
+    value='',
+    key="groups_json_input",
+    label_visibility="collapsed",
+    placeholder='[[3,2,"עומד"],[2,1,"שוכב"]]',
+    height=100
 )
-
-# JavaScript для получения данных от компоненты
-components.html("""
-<script>
-// Обработчик сообщений от компоненты
-window.addEventListener('message', function(event) {
-    if (event.data.type === 'solar_groups_update') {
-        // Сохраняем в sessionStorage для передачи в Streamlit
-        sessionStorage.setItem('solar_groups_data', JSON.stringify(event.data.groups));
-        
-        // Можно также сразу отправить в Streamlit
-        window.parent.postMessage({
-            type: 'streamlit:setComponentValue',
-            key: 'groups_data',
-            value: event.data.groups
-        }, '*');
-    }
-});
-</script>
-""", height=0)
-
-# Скрытый input для передачи данных (через JavaScript)
-components.html("""
-<div id="hidden-data-container" style="display: none;">
-    <input type="text" id="hidden-groups-input">
-</div>
-
-<script>
-// Функция для установки значения в скрытое поле
-function setHiddenInputValue(value) {
-    const input = document.getElementById('hidden-groups-input');
-    if (input) {
-        input.value = JSON.stringify(value);
-        
-        // Инициируем событие input для Streamlit
-        const event = new Event('input', { bubbles: true });
-        input.dispatchEvent(event);
-    }
-}
-
-// Прослушиваем сообщения от компоненты
-window.addEventListener('message', function(event) {
-    if (event.data.type === 'solar_groups_update') {
-        setHiddenInputValue(event.data.groups);
-    }
-});
-</script>
-""", height=0)
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
 # ---------- BUTTON: CALCULATE ----------
 if st.button("חשב", type="primary", use_container_width=True):
     
-    # ПРОСТОЙ способ получить данные
+    # Пробуем получить данные разными способами
+    groups_list = []
+    
+    # Способ 1: Из localStorage через JavaScript
     get_data_js = '''
     <script>
-    // Получаем текущие данные из компоненты - ИСПРАВЛЕННАЯ ВЕРСИЯ
-    function collectGroupsData() {
-        const groups = [];
-        
-        // Простой способ: ищем ВСЕ поля ввода
-        const allInputs = document.querySelectorAll('input[type="number"]');
-        console.log('Найдено полей:', allInputs.length);
-        
-        // Группируем по строкам
-        const rowsData = {};
-        
-        allInputs.forEach(input => {
-            const id = input.id;
-            // id выглядит как "standing_n_1" или "laying_g_2"
-            const parts = id.split('_');
-            if (parts.length === 3) {
-                const type = parts[0]; // "standing" или "laying"
-                const field = parts[1]; // "n" или "g"
-                const index = parts[2]; // номер строки
+    function getGroupsData() {
+        try {
+            // Пытаемся получить из localStorage
+            const savedData = localStorage.getItem('solar_groups_data');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                const groups = [];
                 
-                const key = `${type}_${index}`;
-                if (!rowsData[key]) {
-                    rowsData[key] = { type: type, index: index, n: 0, g: 0 };
+                // Обрабатываем стоячие
+                for (let key in data.standing) {
+                    if (key.startsWith('n_')) {
+                        const index = key.replace('n_', '');
+                        const n = data.standing[`n_${index}`] || 0;
+                        const g = data.standing[`g_${index}`] || 0;
+                        if (n > 0 && g > 0) {
+                            groups.push([n, g, 'עומד']);
+                        }
+                    }
                 }
                 
-                const value = parseInt(input.value) || 0;
-                if (field === 'n') {
-                    rowsData[key].n = value;
-                } else if (field === 'g') {
-                    rowsData[key].g = value;
+                // Обрабатываем лежачие
+                for (let key in data.laying) {
+                    if (key.startsWith('n_')) {
+                        const index = key.replace('n_', '');
+                        const n = data.laying[`n_${index}`] || 0;
+                        const g = data.laying[`g_${index}`] || 0;
+                        if (n > 0 && g > 0) {
+                            groups.push([n, g, 'שוכב']);
+                        }
+                    }
                 }
+                
+                return groups;
             }
-        });
+        } catch(e) {
+            console.log('Error getting data from localStorage:', e);
+        }
         
-        // Преобразуем в нужный формат
-        Object.values(rowsData).forEach(row => {
-            if (row.n > 0 && row.g > 0) {
-                const hebrewType = row.type === 'standing' ? 'עומד' : 'שוכב';
-                groups.push([row.n, row.g, hebrewType]);
-            }
-        });
-        
-        console.log('Собрано групп:', groups);
-        return groups;
+        return [];
     }
     
-    // Собираем данные
-    const groupsData = collectGroupsData();
+    const groupsData = getGroupsData();
+    console.log('Groups data from localStorage:', groupsData);
     
-    // Показываем в alert для проверки
+    // Сохраняем в скрытое поле
+    const resultDiv = document.createElement('div');
+    resultDiv.id = 'calculation-result';
+    resultDiv.style.display = 'none';
+    resultDiv.setAttribute('data-groups', JSON.stringify(groupsData));
+    document.body.appendChild(resultDiv);
+    
+    // Показываем alert с информацией
     if (groupsData.length > 0) {
-        let message = 'נמצאו קבוצות: ' + groupsData.length + '\\n';
-        groupsData.forEach((g, i) => {
-            message += 'קבוצה ' + (i+1) + ': ' + g[0] + ' פאנלים, ' + g[1] + ' שורות (' + g[2] + ')\\n';
-        });
-        alert(message);
+        alert('נמצאו ' + groupsData.length + ' קבוצות לחישוב');
     } else {
-        alert('אין נתונים לחישוב. הזן ערכים.');
+        alert('לא נמצאו נתונים. הזן ערכים בטופס.');
     }
-    
-    // Создаем скрытый div עם נתונים
-    let dataDiv = document.getElementById('streamlit-groups-data');
-    if (!dataDiv) {
-        dataDiv = document.createElement('div');
-        dataDiv.id = 'streamlit-groups-data';
-        dataDiv.style.display = 'none';
-        document.body.appendChild(dataDiv);
-    }
-    
-    // רושמים נתונים
-    dataDiv.setAttribute('data-groups', JSON.stringify(groupsData));
-    
-    // שולחים ל-Streamlit
-    window.parent.postMessage({
-        type: 'streamlit_groups_data',
-        data: groupsData
-    }, '*');
     </script>
     '''
     
     components.html(get_data_js, height=0)
-    
-    # מחכים קצת
     time.sleep(0.5)
     
-    # מנסים לקבל נתונים
-    get_data_js2 = '''
-    <script>
-    const dataDiv = document.getElementById('streamlit-groups-data');
-    if (dataDiv && dataDiv.getAttribute('data-groups')) {
-        const groupsJson = dataDiv.getAttribute('data-groups');
-        
-        let hiddenInput = document.getElementById('hidden-groups-json');
-        if (!hiddenInput) {
-            hiddenInput = document.createElement('input');
-            hiddenInput.type = 'hidden';
-            hiddenInput.id = 'hidden-groups-json';
-            hiddenInput.name = 'groups_json';
-            document.body.appendChild(hiddenInput);
-        }
-        
-        hiddenInput.value = groupsJson;
-        
-        const event = new Event('input', { bubbles: true });
-        hiddenInput.dispatchEvent(event);
-    }
-    </script>
-    '''
-    
-    components.html(get_data_js2, height=0)
-    
-    # שדה להזנה ידנית (למקרה הצורך)
-    groups_json_input = st.text_input(
-        "הזן נתוני קבוצות (JSON)",
-        key="groups_json_input",
-        label_visibility="collapsed",
-        placeholder='[[3,2,"עומד"],[2,1,"שוכב"]]'
-    )
-    
-    # מנסים לפענח
-    groups_list = []
-    
+    # Способ 2: Из текстового поля JSON
     if groups_json_input and groups_json_input.strip():
         try:
             groups_list = json.loads(groups_json_input)
-            st.success(f"התקבלו {len(groups_list)} קבוצות")
-        except:
-            st.error("שגיאה בפענוח JSON")
+            if isinstance(groups_list, list) and len(groups_list) > 0:
+                st.success(f"התקבלו {len(groups_list)} קבוצות מהזנה ידנית")
+            else:
+                groups_list = []
+        except Exception as e:
+            st.error(f"שגיאה בפענוח JSON: {e}")
     
-    # אם אין נתונים, שולחים הודעה
+    # Если всё еще нет данных, используем тестовые
     if not groups_list:
-        st.error("לא התקבלו נתונים מהטופס. אנא הזן ערכים ולחץ שוב על 'חשב'")
-        st.stop()
+        # Пробуем еще раз получить через другой скрипт
+        get_data_js2 = '''
+        <script>
+        // Простая проверка - если есть данные в localStorage
+        const saved = localStorage.getItem('solar_groups_data');
+        if (saved) {
+            alert('יש נתונים ב-localStorage. לחץ שוב על "חשב".');
+        } else {
+            alert('אין נתונים. הזן ערכים בטופס ולחץ שוב.');
+        }
+        </script>
+        '''
+        components.html(get_data_js2, height=0)
+        
+        # Используем тестовые данные для демонстрации
+        groups_list = [[3, 2, "עומד"], [2, 1, "שוכב"]]
+        st.warning("שימוש בנתוני דוגמה. הזן ערכים בטופס ולחץ שוב על 'חשב'.")
     
-    # שומרים להצגה
-    st.session_state.groups_data_received = groups_list
+    # Сохраняем данные
+    st.session_state.groups_data = groups_list
     
-    # איפוס מצב
+    # Остальной код расчета
     st.session_state.koshrot_qty = None
     st.session_state.koshrot_boxes_version += 1
     st.session_state.manual_rows = 1
@@ -1008,7 +920,7 @@ if st.button("חשב", type="primary", use_container_width=True):
     st.session_state.manual_rails_prev = {}
     st.session_state.manual_form_version += 1
     
-    # מבצעים חישוב
+    # Выполняем расчет
     if groups_list:
         st.session_state.calc_result = do_calculation(panel, groups_list)
         st.success(f"החישוב בוצע! סה\"כ פאנלים: {st.session_state.calc_result['total_panels']}")
@@ -1359,8 +1271,8 @@ if calc_result is not None:
                     
                     materials_text += f"• {p['name']}: {p['qty']} {unit}\n"
             
-            # Используем полученные группы
-            valid_groups = st.session_state.groups_data_received
+            # Используем сохраненные группы
+            valid_groups = st.session_state.groups_data
             
             whatsapp_msg = format_whatsapp_message(
                 project_name=project_name,
