@@ -5,6 +5,7 @@ import math
 import json
 import urllib.parse
 import os
+import time
 
 # ---------- PAGE CONFIG ----------
 st.set_page_config(
@@ -328,20 +329,59 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
                 font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             }}
             
-            .section {{
-                background: #F0F2F6;
-                border-radius: 10px;
-                padding: 15px;
-                margin: 20px 0;
-                border: 1px solid #DCDCDC;
+            /* Темная тема - исправленная */
+            @media (prefers-color-scheme: dark) {{
+                :root {{
+                    --bg-color: #0E1117;
+                    --section-bg: #1E293B;
+                    --border-color: #2D3748;
+                    --text-color: #FAFAFA;
+                    --input-bg: #1E293B;
+                    --button-bg: #1E293B;
+                }}
             }}
             
-            .section-title {{
+            @media (prefers-color-scheme: light) {{
+                :root {{
+                    --bg-color: #ffffff;
+                    --section-bg: #F0F2F6;
+                    --border-color: #DCDCDC;
+                    --text-color: #31333F;
+                    --input-bg: #ffffff;
+                    --button-bg: #F0F2F6;
+                }}
+            }}
+            
+            body {{
+                background: var(--bg-color);
+                color: var(--text-color);
+                padding: 10px;
+            }}
+            
+            .spoiler {{
+                margin-bottom: 15px;
+            }}
+            
+            .spoiler-header {{
+                background: #4b75c9;
+                color: white;
+                padding: 12px 15px;
+                border-radius: 8px;
+                cursor: pointer;
                 font-size: 16px;
                 font-weight: 600;
-                color: #31333F;
-                margin-bottom: 15px;
-                text-align: center;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }}
+            
+            .spoiler-content {{
+                background: var(--section-bg);
+                border: 1px solid var(--border-color);
+                border-radius: 0 0 8px 8px;
+                padding: 15px;
+                margin-top: -5px;
+                border-top: none;
             }}
             
             .columns-header {{
@@ -350,7 +390,7 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
                 margin-bottom: 10px;
                 font-size: 14px;
                 font-weight: 500;
-                color: #31333F;
+                color: var(--text-color);
             }}
             
             .column-label {{
@@ -372,9 +412,9 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
             
             .input-group {{
                 display: flex;
-                background: white;
+                background: var(--input-bg);
                 border-radius: 8px;
-                border: 1px solid #DCDCDC;
+                border: 1px solid var(--border-color);
                 overflow: hidden;
                 height: 42px;
             }}
@@ -386,9 +426,9 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
             
             .btn {{
                 width: 40px;
-                background: #F0F2F6;
+                background: var(--button-bg);
                 border: none;
-                color: #31333F;
+                color: var(--text-color);
                 font-size: 20px;
                 font-weight: 300;
                 cursor: pointer;
@@ -409,10 +449,11 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
                 text-align: center;
                 font-size: 16px;
                 font-weight: 500;
-                color: #31333F;
+                color: var(--text-color);
                 padding: 0;
                 outline: none;
                 min-width: 0;
+                background: var(--input-bg);
             }}
             
             input::-webkit-outer-spin-button,
@@ -484,52 +525,39 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
                     font-size: 14px;
                 }}
             }}
-            
-            /* Темная тема */
-            @media (prefers-color-scheme: dark) {{
-                .section {{
-                    background: #1E293B;
-                    border-color: #2D3748;
-                }}
-                
-                .input-group {{
-                    background: #1E293B;
-                    border-color: #2D3748;
-                }}
-                
-                .input {{
-                    color: #FAFAFA;
-                    background: #1E293B;
-                }}
-                
-                .btn {{
-                    background: #1E293B;
-                    color: #FAFAFA;
-                }}
-            }}
         </style>
     </head>
     <body>
-        <!-- СТОЯЧИЕ -->
-        <div class="section">
-            <div class="section-title">עומד</div>
-            <div class="columns-header">
-                <div class="column-label">פאנלים</div>
-                <div class="column-label">שורות</div>
+        <!-- СПОЙЛЕР 1: СТОЯЧИЕ -->
+        <div class="spoiler">
+            <div class="spoiler-header" onclick="toggleSpoiler('standing')">
+                <span>עומדים (פאנלים עומדים)</span>
+                <span id="standing-arrow">▼</span>
             </div>
-            <div id="standing-rows"></div>
-            <button class="add-btn" onclick="addRow('standing')">עוד שורה</button>
+            <div class="spoiler-content" id="standing-content">
+                <div class="columns-header">
+                    <div class="column-label">פאנלים</div>
+                    <div class="column-label">שורות</div>
+                </div>
+                <div id="standing-rows"></div>
+                <button class="add-btn" onclick="addRow('standing')">עוד שורה</button>
+            </div>
         </div>
         
-        <!-- ЛЕЖАЧИЕ -->
-        <div class="section">
-            <div class="section-title">שוכב</div>
-            <div class="columns-header">
-                <div class="column-label">פאנלים</div>
-                <div class="column-label">שורות</div>
+        <!-- СПОЙЛЕР 2: ЛЕЖАЧИЕ -->
+        <div class="spoiler">
+            <div class="spoiler-header" onclick="toggleSpoiler('laying')">
+                <span>שוכבים (פאנלים שוכבים)</span>
+                <span id="laying-arrow">▼</span>
             </div>
-            <div id="laying-rows"></div>
-            <button class="add-btn" onclick="addRow('laying')">עוד שורה</button>
+            <div class="spoiler-content" id="laying-content">
+                <div class="columns-header">
+                    <div class="column-label">פאנלים</div>
+                    <div class="column-label">שורות</div>
+                </div>
+                <div id="laying-rows"></div>
+                <button class="add-btn" onclick="addRow('laying')">עוד שורה</button>
+            </div>
         </div>
         
         <script>
@@ -540,6 +568,20 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
             standing: {{}},
             laying: {{}}
         }};
+        
+        // Функция переключения спойлера
+        function toggleSpoiler(type) {{
+            const content = document.getElementById(type + '-content');
+            const arrow = document.getElementById(type + '-arrow');
+            
+            if (content.style.display === 'none' || content.style.display === '') {{
+                content.style.display = 'block';
+                arrow.textContent = '▼';
+            }} else {{
+                content.style.display = 'none';
+                arrow.textContent = '▶';
+            }}
+        }}
         
         // Инициализация
         function init() {{
@@ -693,14 +735,19 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
         }}
         
         // Инициализация при загрузке
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', function() {{
+            init();
+            // Спойлеры открыты по умолчанию
+            document.getElementById('standing-content').style.display = 'block';
+            document.getElementById('laying-content').style.display = 'block';
+        }});
         </script>
     </body>
     </html>
     '''
     
     # Отображаем компоненту
-    component = components.html(html, height=600)
+    component = components.html(html, height=800, scrolling=True)
     
     return component
 
@@ -815,38 +862,49 @@ if st.button("חשב", type="primary", use_container_width=True):
     # ПРОСТОЙ способ получить данные
     get_data_js = '''
     <script>
-    // Получаем текущие данные из компоненты
+    // Получаем текущие данные из компоненты - ИСПРАВЛЕННАЯ ВЕРСИЯ
     function collectGroupsData() {
         const groups = [];
         
-        // Стоячие панели
-        for (let i = 1; i <= 20; i++) {
-            const nInput = document.getElementById('standing_n_' + i);
-            const gInput = document.getElementById('standing_g_' + i);
-            
-            if (nInput && gInput) {
-                const n = parseInt(nInput.value) || 0;
-                const g = parseInt(gInput.value) || 0;
-                if (n > 0 && g > 0) {
-                    groups.push([n, g, 'עומד']);
+        // Простой способ: ищем ВСЕ поля ввода
+        const allInputs = document.querySelectorAll('input[type="number"]');
+        console.log('Найдено полей:', allInputs.length);
+        
+        // Группируем по строкам
+        const rowsData = {};
+        
+        allInputs.forEach(input => {
+            const id = input.id;
+            // id выглядит как "standing_n_1" или "laying_g_2"
+            const parts = id.split('_');
+            if (parts.length === 3) {
+                const type = parts[0]; // "standing" или "laying"
+                const field = parts[1]; // "n" или "g"
+                const index = parts[2]; // номер строки
+                
+                const key = `${type}_${index}`;
+                if (!rowsData[key]) {
+                    rowsData[key] = { type: type, index: index, n: 0, g: 0 };
+                }
+                
+                const value = parseInt(input.value) || 0;
+                if (field === 'n') {
+                    rowsData[key].n = value;
+                } else if (field === 'g') {
+                    rowsData[key].g = value;
                 }
             }
-        }
+        });
         
-        // Лежачие панели
-        for (let i = 1; i <= 20; i++) {
-            const nInput = document.getElementById('laying_n_' + i);
-            const gInput = document.getElementById('laying_g_' + i);
-            
-            if (nInput && gInput) {
-                const n = parseInt(nInput.value) || 0;
-                const g = parseInt(gInput.value) || 0;
-                if (n > 0 && g > 0) {
-                    groups.push([n, g, 'שוכב']);
-                }
+        // Преобразуем в нужный формат
+        Object.values(rowsData).forEach(row => {
+            if (row.n > 0 && row.g > 0) {
+                const hebrewType = row.type === 'standing' ? 'עומד' : 'שוכב';
+                groups.push([row.n, row.g, hebrewType]);
             }
-        }
+        });
         
+        console.log('Собрано групп:', groups);
         return groups;
     }
     
@@ -855,16 +913,16 @@ if st.button("חשב", type="primary", use_container_width=True):
     
     // Показываем в alert для проверки
     if (groupsData.length > 0) {
-        let message = 'Найдено групп: ' + groupsData.length + '\\n';
+        let message = 'נמצאו קבוצות: ' + groupsData.length + '\\n';
         groupsData.forEach((g, i) => {
-            message += 'Группа ' + (i+1) + ': ' + g[0] + ' панелей, ' + g[1] + ' строк (' + g[2] + ')\\n';
+            message += 'קבוצה ' + (i+1) + ': ' + g[0] + ' פאנלים, ' + g[1] + ' שורות (' + g[2] + ')\\n';
         });
         alert(message);
     } else {
-        alert('Нет данных для расчета. Введите значения.');
+        alert('אין נתונים לחישוב. הזן ערכים.');
     }
     
-    // Создаем скрытый div с данными
+    // Создаем скрытый div עם נתונים
     let dataDiv = document.getElementById('streamlit-groups-data');
     if (!dataDiv) {
         dataDiv = document.createElement('div');
@@ -873,10 +931,10 @@ if st.button("חשב", type="primary", use_container_width=True):
         document.body.appendChild(dataDiv);
     }
     
-    // Записываем данные
+    // רושמים נתונים
     dataDiv.setAttribute('data-groups', JSON.stringify(groupsData));
     
-    // Отправляем в Streamlit
+    // שולחים ל-Streamlit
     window.parent.postMessage({
         type: 'streamlit_groups_data',
         data: groupsData
@@ -886,11 +944,10 @@ if st.button("חשב", type="primary", use_container_width=True):
     
     components.html(get_data_js, height=0)
     
-    # Ждем немного
-    import time
+    # מחכים קצת
     time.sleep(0.5)
     
-    # Пробуем получить данные
+    # מנסים לקבל נתונים
     get_data_js2 = '''
     <script>
     const dataDiv = document.getElementById('streamlit-groups-data');
@@ -916,33 +973,33 @@ if st.button("חשב", type="primary", use_container_width=True):
     
     components.html(get_data_js2, height=0)
     
-    # Поле для ручного ввода (на всякий случай)
+    # שדה להזנה ידנית (למקרה הצורך)
     groups_json_input = st.text_input(
-        "Введите данные групп (JSON)",
+        "הזן נתוני קבוצות (JSON)",
         key="groups_json_input",
         label_visibility="collapsed",
         placeholder='[[3,2,"עומד"],[2,1,"שוכב"]]'
     )
     
-    # Пробуем распарсить
+    # מנסים לפענח
     groups_list = []
     
     if groups_json_input and groups_json_input.strip():
         try:
             groups_list = json.loads(groups_json_input)
-            st.success(f"Получено {len(groups_list)} групп")
+            st.success(f"התקבלו {len(groups_list)} קבוצות")
         except:
-            st.error("Ошибка парсинга JSON")
+            st.error("שגיאה בפענוח JSON")
     
-    # Если нет данных, используем тестовые
+    # אם אין נתונים, שולחים הודעה
     if not groups_list:
-        st.warning("Использую тестовые данные для проверки")
-        groups_list = [[3, 2, "עומד"], [2, 1, "שוכב"]]
+        st.error("לא התקבלו נתונים מהטופס. אנא הזן ערכים ולחץ שוב על 'חשב'")
+        st.stop()
     
-    # Сохраняем
+    # שומרים להצגה
     st.session_state.groups_data_received = groups_list
     
-    # Сброс состояния
+    # איפוס מצב
     st.session_state.koshrot_qty = None
     st.session_state.koshrot_boxes_version += 1
     st.session_state.manual_rows = 1
@@ -951,10 +1008,10 @@ if st.button("חשב", type="primary", use_container_width=True):
     st.session_state.manual_rails_prev = {}
     st.session_state.manual_form_version += 1
     
-    # Делаем расчет
+    # מבצעים חישוב
     if groups_list:
         st.session_state.calc_result = do_calculation(panel, groups_list)
-        st.success(f"Расчет выполнен! Всего панелей: {st.session_state.calc_result['total_panels']}")
+        st.success(f"החישוב בוצע! סה\"כ פאנלים: {st.session_state.calc_result['total_panels']}")
     else:
         st.session_state.calc_result = {
             "auto_rails": {},
