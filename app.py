@@ -2,9 +2,8 @@ import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
 import math
-
-
 import json
+
 # ---------- SESSION STATE INIT (required) ----------
 st.session_state.setdefault("fasteners", None)
 
@@ -312,66 +311,105 @@ panel = panel_rows.iloc[0]
 # ---------- GROUPS ----------
 st.markdown(right_header("קבוצות פאנלים"), unsafe_allow_html=True)
 
-gh = st.columns(3)
-gh[0].markdown(right_label("שורות"), unsafe_allow_html=True)
-gh[1].markdown(right_label("פאנלים"), unsafe_allow_html=True)
-gh[2].markdown(right_label("כיוון"), unsafe_allow_html=True)
+# Убираем заголовки для колонок (так как теперь только две колонки)
+# gh = st.columns(3)
+# gh[0].markdown(right_label("שורות"), unsafe_allow_html=True)
+# gh[1].markdown(right_label("פאנלים"), unsafe_allow_html=True)
+# gh[2].markdown(right_label("כיוון"), unsafe_allow_html=True)
 
 groups = []
 rows = st.session_state.group_rows
 
-for i in range(1, rows + 1):
-    c0, c1, c2 = st.columns(3)
+# Секция вертикальных панелей (первые 8 строк) - עומדים
+with st.expander("עומדים"):
+    # Добавляем заголовки колонок внутри спойлера
+    vh = st.columns(2)
+    vh[0].markdown(right_label("שורות"), unsafe_allow_html=True)
+    vh[1].markdown(right_label("פאנלים"), unsafe_allow_html=True)
+    
+    for i in range(1, 9):  # строки 1-8
+        c0, c1 = st.columns(2)
+        
+        g = c0.number_input(
+            "",
+            0,
+            50,
+            0,
+            key=f"g_g_{i}",
+            label_visibility="collapsed",
+        )
 
-    # предустановленные значения для ПАНЕЛЕЙ
-    if i <= 8:
-        default_n = i          # 1..8 עומד
-    elif i <= 12:
-        default_n = i - 8      # 1..4 שוכב
-    else:
-        default_n = 0
+        n = c1.number_input(
+            "",
+            0,
+            100,
+            i,  # предустановленные значения: 1 для строки 1, 2 для строки 2 и т.д.
+            key=f"g_n_{i}",
+            label_visibility="collapsed",
+        )
 
-    g = c0.number_input(
-        "",
-        0,
-        50,
-        0,
-        key=f"g_g_{i}",
-        label_visibility="collapsed",
-    )
+        if n > 0 and g > 0:
+            groups.append((n, g, "עומד"))  # ориентация фиксирована
 
-    n = c1.number_input(
-        "",
-        0,
-        100,
-        default_n,
-        key=f"g_n_{i}",
-        label_visibility="collapsed",
-    )
+    # Кнопка "להוסיף פאנלים" в конце секции вертикальных панелей
+    if st.button("להוסיף פאנלים", key="add_panels_vertical"):
+        # Находим первую пустую строку в вертикальном разделе
+        for i in range(1, 9):
+            g = st.session_state.get(f"g_g_{i}", 0)
+            n = st.session_state.get(f"g_n_{i}", 0)
+            if g == 0 and n == 0:
+                # Активируем эту строку, устанавливая минимальное значение
+                st.session_state[f"g_g_{i}"] = 1
+                st.session_state[f"g_n_{i}"] = 1
+                break
+        st.rerun()
 
-    if i <= 8:
-        default_index = 0  # עומד
-    elif i <= 12:
-        default_index = 1  # שוכב
-    else:
-        default_index = 0
+# Секция горизонтальных панелей (последние 4 строки) - שוכבים
+with st.expander("שוכבים"):
+    # Добавляем заголовки колонок внутри спойлера
+    hh = st.columns(2)
+    hh[0].markdown(right_label("שורות"), unsafe_allow_html=True)
+    hh[1].markdown(right_label("פאנלים"), unsafe_allow_html=True)
+    
+    for i in range(9, 13):  # строки 9-12
+        c0, c1 = st.columns(2)
+        
+        g = c0.number_input(
+            "",
+            0,
+            50,
+            0,
+            key=f"g_g_{i}",
+            label_visibility="collapsed",
+        )
 
-    o = c2.selectbox(
-        "",
-        ["עומד", "שוכב"],
-        index=default_index,
-        key=f"g_o_{i}",
-        label_visibility="collapsed",
-    )
+        # Для горизонтальных панелей предустановленные значения: 1 для строки 9, 2 для строки 10 и т.д.
+        default_n = i - 8  # 1, 2, 3, 4
+        
+        n = c1.number_input(
+            "",
+            0,
+            100,
+            default_n,
+            key=f"g_n_{i}",
+            label_visibility="collapsed",
+        )
 
-    if n > 0 and g > 0:
-        groups.append((n, g, o))
+        if n > 0 and g > 0:
+            groups.append((n, g, "שוכב"))  # ориентация фиксирована
 
-if st.button("להוסיף פאנלים"):
-    st.session_state.group_rows += 1
-    st.rerun()
-
-
+    # Кнопка "להוסיף פאנלים" в конце секции горизонтальных панелей
+    if st.button("להוסיף פאנלים", key="add_panels_horizontal"):
+        # Находим первую пустую строку в горизонтальном разделе
+        for i in range(9, 13):
+            g = st.session_state.get(f"g_g_{i}", 0)
+            n = st.session_state.get(f"g_n_{i}", 0)
+            if g == 0 and n == 0:
+                # Активируем эту строку, устанавливая минимальное значение
+                st.session_state[f"g_g_{i}"] = 1
+                st.session_state[f"g_n_{i}"] = 1
+                break
+        st.rerun()
 
 # ---------- ENGINE ----------
 
@@ -668,40 +706,40 @@ calc_result = st.session_state.calc_result
 # ---------- MANUAL RAILS ----------
 st.markdown(right_header("קושרות (הוספה ידנית)"), unsafe_allow_html=True)
 
-mh = st.columns(3)
-mh[0].markdown(right_label("אורך (ס״מ)"), unsafe_allow_html=True)
-mh[1].markdown(right_label("כמות"), unsafe_allow_html=True)
-mh[2].markdown("&nbsp;", unsafe_allow_html=True)
+# Секция ручного добавления рельс в спойлере
+with st.expander("הוספה ידנית"):
+    # Добавляем заголовки колонок внутри спойлера
+    mh = st.columns(2)  # теперь только 2 колонки
+    mh[0].markdown(right_label("אורך (ס״מ)"), unsafe_allow_html=True)
+    mh[1].markdown(right_label("כמות"), unsafe_allow_html=True)
+    
+    manual_rows = st.session_state.manual_rows
 
-manual_rows = st.session_state.manual_rows
+    for j in range(1, manual_rows + 1):
+        cols = st.columns(2)  # только 2 колонки
+        length = cols[0].number_input(
+            "",
+            min_value=0,
+            max_value=10000,
+            step=10,
+            key=f"m_len_{st.session_state.manual_form_version}_{j}",
+            label_visibility="collapsed",
+        )
+        qty = cols[1].number_input(
+            "",
+            min_value=0,
+            max_value=1000,
+            step=1,
+            key=f"m_qty_{st.session_state.manual_form_version}_{j}",
+            label_visibility="collapsed",
+        )
 
-for j in range(1, manual_rows + 1):
-    cols = st.columns(3)
-    length = cols[0].number_input(
-        "",
-        min_value=0,
-        max_value=10000,
-        step=10,
-        key=f"m_len_{st.session_state.manual_form_version}_{j}",
-        label_visibility="collapsed",
-    )
-    qty = cols[1].number_input(
-        "",
-        min_value=0,
-        max_value=1000,
-        step=1,
-        key=f"m_qty_{st.session_state.manual_form_version}_{j}",
-        label_visibility="collapsed",
-    )
-    if j == 1:
-        cols[2].markdown(right_label("להוסיף קושרות"), unsafe_allow_html=True)
-    else:
-        cols[2].markdown("&nbsp;", unsafe_allow_html=True)
+    # Кнопка для добавления строк в конце секции
+    if st.button("להוסיף עוד קושרות"):
+        st.session_state.manual_rows += 1
+        st.rerun()
 
-if st.button("להוסיף עוד קושרות"):
-    st.session_state.manual_rows += 1
-    st.rerun()
-
+# Обработка данных ручного добавления (остается вне спойлера)
 manual_rails_dict = {}
 for j in range(1, st.session_state.manual_rows + 1):
     if j in st.session_state.manual_deleted_rows:
@@ -839,9 +877,6 @@ if calc_result is not None:
         for name, _ in fasteners_base:
             if name not in st.session_state["fasteners_include"]:
                 st.session_state["fasteners_include"][name] = True
-
-
-
 
     # Инициализация значений (после нового расчёта fasteners сбрасывается в None)
     if st.session_state.get("fasteners") is None:
