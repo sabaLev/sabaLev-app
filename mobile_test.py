@@ -1,58 +1,131 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-st.title("📱 Тест мобильной верстки")
+st.title("📱 Тест рабочих кнопок")
 
-st.write("**Откройте эту страницу на телефоне**")
+# Инициализация значения в памяти
+if 'test_value' not in st.session_state:
+    st.session_state.test_value = 1
 
-# HTML с двумя колонками
-html = '''
+st.write(f"**Текущее значение в памяти:** {st.session_state.test_value}")
+
+# HTML компонента с работающими кнопками
+html = f'''
 <div style="
-    display: flex; 
-    gap: 10px; 
-    margin: 30px 0;
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    border: 1px solid #dee2e6;
 ">
+    <h3 style="text-align: center; margin-bottom: 15px;">פאנלים</h3>
+    
     <div style="
-        flex: 1;
-        background: #4b75c9;
-        color: white;
-        padding: 20px;
-        border-radius: 10px;
-        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
     ">
-        <h3>פאנלים</h3>
-        <div style="font-size: 32px; font-weight: bold;">3</div>
+        <button style="
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            font-weight: bold;
+        "
+        onclick="changeValue(-1)"
+        >-</button>
+        
+        <div id="valueDisplay" style="
+            font-size: 36px;
+            font-weight: bold;
+            min-width: 60px;
+            text-align: center;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 2px solid #4b75c9;
+        ">{st.session_state.test_value}</div>
+        
+        <button style="
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            font-weight: bold;
+        "
+        onclick="changeValue(1)"
+        >+</button>
     </div>
     
     <div style="
-        flex: 1;
-        background: #25D366;
-        color: white;
-        padding: 20px;
-        border-radius: 10px;
         text-align: center;
+        margin-top: 15px;
+        color: #6c757d;
+        font-size: 14px;
     ">
-        <h3>שורות</h3>
-        <div style="font-size: 32px; font-weight: bold;">2</div>
+        Нажмите + или - чтобы изменить значение
     </div>
 </div>
 
-<div style="
-    background: #f0f9ff;
-    padding: 20px;
-    border-radius: 10px;
-    margin-top: 20px;
-    border: 2px solid #bae6fd;
-">
-    <h4>🎯 Результат теста:</h4>
-    <p><strong>Если видите два цветных блока РЯДОМ</strong> → ✅ Успех</p>
-    <p><strong>Если блоки друг под другом</strong> → ❌ Провал</p>
-</div>
+<script>
+let currentValue = {st.session_state.test_value};
+
+function changeValue(delta) {{
+    currentValue += delta;
+    if (currentValue < 0) currentValue = 0;
+    if (currentValue > 99) currentValue = 99;
+    
+    // Обновляем отображение
+    document.getElementById('valueDisplay').innerText = currentValue;
+    
+    // Отправляем в Streamlit
+    window.parent.postMessage({{
+        type: 'update_value',
+        value: currentValue
+    }}, '*');
+}}
+</script>
 '''
 
-components.html(html, height=300)
+components.html(html, height=250)
 
+# JavaScript для получения данных от компоненты
+components.html('''
+<script>
+window.addEventListener('message', function(event) {
+    if (event.data.type === 'update_value') {
+        // Отправляем в Streamlit
+        window.parent.postMessage({
+            type: 'streamlit:setComponentValue',
+            value: event.data.value
+        }, '*');
+    }
+});
+</script>
+''', height=0)
+
+# Кнопка для проверки сохранения значения
 st.write("---")
-st.write("**Скажите мне:**")
-st.write("1. Видите два цветных блока (синий и зеленый)?")
-st.write("2. Они рядом или друг под другом?")
+st.write("**Проверка:**")
+
+if st.button("🔄 Обновить страницу и проверить значение"):
+    st.rerun()
+
+st.write("**Инструкция:**")
+st.write("1. Нажмите кнопку + или - несколько раз")
+st.write("2. Значение в центре должно меняться")
+st.write("3. Нажмите кнопку 'Обновить' выше")
+st.write("4. Значение должно сохраниться после обновления")
+
+# Отображаем все значения session_state
+with st.expander("📊 Показать все значения в памяти"):
+    st.write(st.session_state)
