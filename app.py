@@ -600,8 +600,8 @@ def build_html_report(calc_result, project_name, panel_name, channel_order, extr
         ("פקק לקושרות", edge),
         ("מחברי קושרות", conn),
         ("בורג איסכורית 3,5", screws_iso),
-        ("בורג M8", m8_count),
-        ("אום M8", m8_count),
+        ("M8 בורג", m8_count),
+        ("M8 אום", m8_count),
     ]
     # apply user overrides from UI (if any)
     overrides = None
