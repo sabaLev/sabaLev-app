@@ -3,7 +3,7 @@ import streamlit.components.v1 as components
 
 # ---------- PAGE CONFIG ----------
 st.set_page_config(
-    page_title="Тест групп",
+    page_title="Тест групп - исправлено",
     page_icon="📱",
     layout="centered"
 )
@@ -23,7 +23,7 @@ st.markdown("""
         font-size: 18px;
         font-weight: 600;
         color: #31333F;
-        margin: 0 0 15px 0;
+        margin: 20px 0 15px 0;
         text-align: center;
         padding: 12px;
         background: #F0F2F6;
@@ -262,13 +262,11 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- HELPER FUNCTION ----------
-def create_input_row(panel_type, row_num, default_n=0, default_g=0):
-    """Создает строку с двумя инпутами"""
-    
+# ---------- ФУНКЦИЯ ДЛЯ СОЗДАНИЯ СТРОКИ ----------
+def create_input_row_html(panel_type, row_num, default_n=0, default_g=0):
+    """Возвращает HTML для строки с двумя инпутами"""
     return f'''
-    <div class="input-row" id="row_{panel_type}_{row_num}">
-        <!-- Поле "פאנלים" -->
+    <div class="input-row">
         <div class="input-column">
             <div class="streamlit-style-input">
                 <input type="number" 
@@ -276,8 +274,7 @@ def create_input_row(panel_type, row_num, default_n=0, default_g=0):
                        value="{default_n}" 
                        min="0" 
                        max="99" 
-                       class="number-input"
-                       oninput="validateInput(this)">
+                       class="number-input">
                 <div class="button-group">
                     <button class="stepper-button" type="button" 
                             onclick="adjustValue('{panel_type}_n_{row_num}', -1)">−</button>
@@ -286,8 +283,6 @@ def create_input_row(panel_type, row_num, default_n=0, default_g=0):
                 </div>
             </div>
         </div>
-        
-        <!-- Поле "שורות" -->
         <div class="input-column">
             <div class="streamlit-style-input">
                 <input type="number" 
@@ -295,8 +290,7 @@ def create_input_row(panel_type, row_num, default_n=0, default_g=0):
                        value="{default_g}" 
                        min="0" 
                        max="99" 
-                       class="number-input"
-                       oninput="validateInput(this)">
+                       class="number-input">
                 <div class="button-group">
                     <button class="stepper-button" type="button" 
                             onclick="adjustValue('{panel_type}_g_{row_num}', -1)">−</button>
@@ -309,7 +303,7 @@ def create_input_row(panel_type, row_num, default_n=0, default_g=0):
     '''
 
 # ---------- JAVASCRIPT ----------
-javascript = '''
+javascript_code = '''
 <script>
 // Корректировка значения кнопками +/-
 function adjustValue(inputId, change) {
@@ -317,153 +311,107 @@ function adjustValue(inputId, change) {
     let value = parseInt(input.value) || 0;
     value += change;
     
-    // Ограничения 0-99
     if (value < 0) value = 0;
     if (value > 99) value = 99;
     
     input.value = value;
-    
-    // Проверка на слишком большие значения
-    if (value > 90) {
-        showWarning(inputId, value);
-    }
+    console.log(inputId + " = " + value);
 }
 
 // Валидация ручного ввода
-function validateInput(input) {
-    let value = parseInt(input.value) || 0;
-    
-    if (value < 0) {
-        input.value = 0;
-        value = 0;
-    }
-    
-    if (value > 99) {
-        input.value = 99;
-        value = 99;
-        showWarning(input.id, value);
-    }
-}
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('.number-input');
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            let value = parseInt(this.value) || 0;
+            if (value < 0) this.value = 0;
+            if (value > 99) this.value = 99;
+        });
+    });
+});
 
-// Предупреждение для больших значений
-function showWarning(inputId, value) {
-    const isRows = inputId.includes('_g_');
-    const isPanels = inputId.includes('_n_');
-    
-    if (value > 90) {
-        if (isRows) {
-            alert(`וואי! ${value} שורות? אולי תפצל למערכות קטנות יותר? 😄`);
-        } else if (isPanels) {
-            alert(`וואי! ${value} פאנלים בשורה אחת? אולי תפצל לשתי שורות? 😄`);
-        }
-    }
-}
-
-// Функция для получения всех значений (для теста)
+// Получить все значения для отладки
 function getAllValues() {
-    const values = {
-        standing: [],
-        laying: []
-    };
+    const values = {standing: [], laying: []};
     
-    console.log("Собираем значения...");
-    
-    // Собираем стоячие (до 20 строк)
+    // Стоячие
     for (let i = 1; i <= 20; i++) {
         const nInput = document.getElementById('standing_n_' + i);
         const gInput = document.getElementById('standing_g_' + i);
-        
         if (nInput && gInput) {
-            const n = parseInt(nInput.value) || 0;
-            const g = parseInt(gInput.value) || 0;
-            
-            console.log(`Стоячие строка ${i}: n=${n}, g=${g}`);
-            
-            if (n > 0 && g > 0) {
-                values.standing.push({n: n, g: g, type: 'עומד'});
-            }
+            values.standing.push({
+                n: parseInt(nInput.value) || 0,
+                g: parseInt(gInput.value) || 0
+            });
         }
     }
     
-    // Собираем лежачие (до 20 строк)
+    // Лежачие
     for (let i = 1; i <= 20; i++) {
         const nInput = document.getElementById('laying_n_' + i);
         const gInput = document.getElementById('laying_g_' + i);
-        
         if (nInput && gInput) {
-            const n = parseInt(nInput.value) || 0;
-            const g = parseInt(gInput.value) || 0;
-            
-            console.log(`Лежачие строка ${i}: n=${n}, g=${g}`);
-            
-            if (n > 0 && g > 0) {
-                values.laying.push({n: n, g: g, type: 'שוכב'});
-            }
+            values.laying.push({
+                n: parseInt(nInput.value) || 0,
+                g: parseInt(gInput.value) || 0
+            });
         }
     }
     
-    console.log("Итоговые значения:", values);
     return values;
 }
 
-// Тестовая функция для показа значений
-function showCurrentValues() {
+// Показать значения
+function showValues() {
     const values = getAllValues();
-    const resultDiv = document.getElementById('testResult');
-    
+    const resultDiv = document.getElementById('resultDisplay');
     if (resultDiv) {
         let html = '<h4>📊 Текущие значения:</h4>';
         
-        if (values.standing.length > 0) {
-            html += '<p><strong>עומד (стоячие):</strong></p>';
-            values.standing.forEach((item, i) => {
-                html += `<p>Строка ${i+1}: ${item.n} פאנלים × ${item.g} שורות</p>`;
-            });
-        } else {
-            html += '<p>עומד: нет данных</p>';
-        }
+        // Стоячие
+        html += '<p><strong>עומד:</strong></p>';
+        values.standing.forEach((item, idx) => {
+            if (item.n > 0 || item.g > 0) {
+                html += `<p>Строка ${idx+1}: ${item.n} פאנלים, ${item.g} שורות</p>`;
+            }
+        });
         
-        if (values.laying.length > 0) {
-            html += '<p><strong>שוכב (лежачие):</strong></p>';
-            values.laying.forEach((item, i) => {
-                html += `<p>Строка ${i+1}: ${item.n} פאנלים × ${item.g} שורות</p>`;
-            });
-        } else {
-            html += '<p>שוכב: нет данных</p>';
-        }
+        // Лежачие
+        html += '<p><strong>שוכב:</strong></p>';
+        values.laying.forEach((item, idx) => {
+            if (item.n > 0 || item.g > 0) {
+                html += `<p>Строка ${idx+1}: ${item.n} פאנלים, ${item.g} שורות</p>`;
+            }
+        });
         
         resultDiv.innerHTML = html;
     }
-    
-    return values;
 }
 </script>
 '''
 
-# ---------- MAIN APP ----------
-st.title("📱 Тест раздела групп")
+# ---------- ОСНОВНОЕ ПРИЛОЖЕНИЕ ----------
+st.title("📱 Тест раздела групп - ИСПРАВЛЕНО")
 
 st.markdown("""
 <div class="info-box">
-<strong>Что тестируем:</strong>
-<ul>
-<li>Два спойлера (עומד и שוכב)</li>
-<li>Две колонки на мобильных (פאנלים и שורות)</li>
-<li>Кнопки + и - работают</li>
-<li>Можно вводить вручную</li>
-<li>Дизайн похож на нативные Streamlit кнопки</li>
-</ul>
+<strong>Инструкция:</strong>
+<ol>
+<li>Должны появиться два раздела (עומד и שוכב)</li>
+<li>В каждом разделе - строки с двумя полями рядом</li>
+<li>Кнопки + и - должны работать</li>
+<li>Можно вводить числа вручную</li>
+</ol>
 </div>
 """, unsafe_allow_html=True)
 
-# Инициализация состояния
+# Инициализация
 if 'standing_rows' not in st.session_state:
-    st.session_state.standing_rows = 8
-
+    st.session_state.standing_rows = 4  # Уменьшил для теста
 if 'laying_rows' not in st.session_state:
-    st.session_state.laying_rows = 4
+    st.session_state.laying_rows = 2
 
-# ---------- СПОЙЛЕР 1: СТОЯЧИЕ ПАНЕЛИ ----------
+# ---------- РАЗДЕЛ 1: СТОЯЧИЕ ----------
 st.markdown('<div class="spoiler-header">עומד (стоячие панели)</div>', unsafe_allow_html=True)
 
 # Заголовки колонок
@@ -474,21 +422,19 @@ st.markdown('''
 </div>
 ''', unsafe_allow_html=True)
 
-# Создаем строки для стоячих панелей
-standing_html = ""
+# Создаем строки
 for i in range(1, st.session_state.standing_rows + 1):
-    default_n = i  # 1, 2, 3... 8
-    default_g = 0  # всегда 0 по умолчанию
-    standing_html += create_input_row("standing", i, default_n, default_g)
+    html = create_input_row_html("standing", i, default_n=i, default_g=0)
+    st.markdown(html, unsafe_allow_html=True)
 
-st.markdown(standing_html, unsafe_allow_html=True)
+# Кнопка добавить строку
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    if st.button("➕ עוד שורה (עומד)", key="add_standing"):
+        st.session_state.standing_rows += 1
+        st.rerun()
 
-# Кнопка "עוד שורה" для стоячих
-if st.button("עוד שורה (עומד)", key="add_standing"):
-    st.session_state.standing_rows += 1
-    st.rerun()
-
-# ---------- СПОЙЛЕР 2: ЛЕЖАЧИЕ ПАНЕЛИ ----------
+# ---------- РАЗДЕЛ 2: ЛЕЖАЧИЕ ----------
 st.markdown('<div class="spoiler-header">שוכב (лежачие панели)</div>', unsafe_allow_html=True)
 
 # Заголовки колонок
@@ -499,60 +445,44 @@ st.markdown('''
 </div>
 ''', unsafe_allow_html=True)
 
-# Создаем строки для лежачих панелей
-laying_html = ""
+# Создаем строки
 for i in range(1, st.session_state.laying_rows + 1):
-    default_n = i if i <= 4 else 0  # 1, 2, 3, 4, потом 0
-    default_g = 0  # всегда 0 по умолчанию
-    laying_html += create_input_row("laying", i, default_n, default_g)
+    default_n = i if i <= 4 else 0
+    html = create_input_row_html("laying", i, default_n=default_n, default_g=0)
+    st.markdown(html, unsafe_allow_html=True)
 
-st.markdown(laying_html, unsafe_allow_html=True)
+# Кнопка добавить строку
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    if st.button("➕ עוד שורה (שוכב)", key="add_laying"):
+        st.session_state.laying_rows += 1
+        st.rerun()
 
-# Кнопка "עוד שורה" для лежачих
-if st.button("עוד שורה (שוכב)", key="add_laying"):
-    st.session_state.laying_rows += 1
-    st.rerun()
+# ---------- ДОБАВЛЯЕМ JAVASCRIPT ----------
+st.markdown(javascript_code, unsafe_allow_html=True)
 
-# ---------- JAVASCRIPT КОД ----------
-st.markdown(javascript, unsafe_allow_html=True)
-
-# ---------- ТЕСТОВАЯ КНОПКА ----------
+# ---------- ТЕСТОВАЯ ОБЛАСТЬ ----------
 st.markdown("---")
-st.markdown("### 🧪 Тест функциональности")
+st.subheader("🧪 Тест функциональности")
 
-# Место для вывода результатов
-st.markdown('<div id="testResult" style="margin: 20px 0; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px;"></div>', unsafe_allow_html=True)
+# Место для отображения результатов
+st.markdown('<div id="resultDisplay" style="padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; margin: 15px 0;"></div>', unsafe_allow_html=True)
 
 # Кнопка для теста
-if st.button("Показать текущие значения", key="show_values"):
-    # JavaScript для получения и отображения значений
+if st.button("🔄 Показать текущие значения", key="test_button"):
+    # Запускаем JavaScript
     test_js = '''
     <script>
     setTimeout(function() {
-        showCurrentValues();
+        showValues();
     }, 100);
     </script>
     '''
     components.html(test_js, height=0)
 
-# ---------- ИНФОРМАЦИЯ ----------
-st.markdown("---")
-st.markdown("""
-<div class="info-box">
-<strong>Инструкция по тесту:</strong>
-<ol>
-<li>Откройте на телефоне</li>
-<li>Проверьте, что два поля в строке идут РЯДОМ (не друг под другом)</li>
-<li>Нажмите кнопки + и - (значения должны меняться)</li>
-<li>Введите число вручную (должно работать)</li>
-<li>Нажмите "Показать текущие значения"</li>
-<li>Добавьте строки кнопками "עוד שורה"</li>
-</ol>
-</div>
-""", unsafe_allow_html=True)
-
 # ---------- СТАТУС ----------
 st.markdown("---")
-st.write(f"**Текущее состояние:**")
+st.write("**Текущее состояние:**")
 st.write(f"- Стоячие строки: {st.session_state.standing_rows}")
 st.write(f"- Лежачие строки: {st.session_state.laying_rows}")
+st.write("**Проверьте на телефоне:** поля должны быть РЯДОМ, не друг под другом")
