@@ -225,8 +225,8 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
             <button class="add-btn" onclick="addRow('laying')">עוד שורה</button>
         </div>
         
-        <!-- Скрытый элемент для передачи данных -->
-        <div id="data-output" style="display: none;"></div>
+        <!-- Скрытый input для передачи данных в Streamlit -->
+        <input type="hidden" id="streamlit-data" name="streamlit_data">
         
         <script>
         // Данные
@@ -297,65 +297,12 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
             }}
             document.getElementById('laying-rows').innerHTML = layingHtml;
             
-            // Отправляем данные после рендера
-            sendDataToStreamlit();
+            // Сохраняем данные
+            saveData();
         }}
         
-        // Изменение значения кнопками
-        function adjustValue(type, field, index, delta) {{
-            const key = `${{field}}_${{index}}`;
-            let value = parseInt(data[type][key]) || 0;
-            value += delta;
-            
-            if (value < 0) value = 0;
-            if (value > 99) value = 99;
-            
-            data[type][key] = value;
-            
-            // Обновляем поле ввода
-            const input = document.getElementById(`${{type}}_${{field}}_${{index}}`);
-            if (input) input.value = value;
-            
-            sendDataToStreamlit();
-        }}
-        
-        // Обновление ручного ввода
-        function updateValue(type, field, index, value) {{
-            const key = `${{field}}_${{index}}`;
-            const numValue = parseInt(value) || 0;
-            
-            let finalValue = numValue;
-            if (numValue < 0) finalValue = 0;
-            if (numValue > 99) finalValue = 99;
-            
-            data[type][key] = finalValue;
-            
-            // Корректируем значение в поле если нужно
-            if (numValue !== finalValue) {{
-                const input = document.getElementById(`${{type}}_${{field}}_${{index}}`);
-                if (input) input.value = finalValue;
-            }}
-            
-            sendDataToStreamlit();
-        }}
-        
-        // Добавление строки
-        function addRow(type) {{
-            if (type === 'standing') {{
-                standingRows++;
-                data.standing[`n_${{standingRows}}`] = 0;
-                data.standing[`g_${{standingRows}}`] = 0;
-            }} else {{
-                layingRows++;
-                data.laying[`n_${{layingRows}}`] = 0;
-                data.laying[`g_${{layingRows}}`] = 0;
-            }}
-            
-            renderAll();
-        }}
-        
-        // Отправка данных в Streamlit
-        function sendDataToStreamlit() {{
+        // Сохранение и отправка данных
+        function saveData() {{
             // Преобразуем в формат для расчета
             const groupsForCalculation = [];
             
@@ -377,29 +324,78 @@ def create_groups_component(standing_rows=8, laying_rows=4, key="groups"):
                 }}
             }}
             
-            // Сохраняем для передачи при нажатии "חשב"
-            window.currentGroupsData = groupsForCalculation;
-            
-            // Отправляем в data-output
-            const outputDiv = document.getElementById('data-output');
-            if (outputDiv) {{
-                outputDiv.setAttribute('data-groups', JSON.stringify(groupsForCalculation));
-                outputDiv.setAttribute('data-raw', JSON.stringify(data));
+            // Сохраняем в скрытом поле
+            const hiddenInput = document.getElementById('streamlit-data');
+            if (hiddenInput) {{
+                hiddenInput.value = JSON.stringify(groupsForCalculation);
+                
+                // Триггерим событие input чтобы Streamlit увидел изменение
+                const event = new Event('input', {{ bubbles: true }});
+                hiddenInput.dispatchEvent(event);
             }}
             
-            // Отправляем сообщение родителю
-            window.parent.postMessage({{
-                type: 'solar_groups_update',
-                groups: groupsForCalculation,
-                rawData: data
-            }}, '*');
+            // Также сохраняем в глобальной переменной для доступа через JS
+            window.solarGroupsData = groupsForCalculation;
             
-            console.log('Данные обновлены:', groupsForCalculation);
+            return groupsForCalculation;
         }}
         
-        // Функция для получения данных (будет вызвана из Streamlit)
-        function getCurrentGroups() {{
-            return window.currentGroupsData || [];
+        // Изменение значения кнопками
+        function adjustValue(type, field, index, delta) {{
+            const key = `${{field}}_${{index}}`;
+            let value = parseInt(data[type][key]) || 0;
+            value += delta;
+            
+            if (value < 0) value = 0;
+            if (value > 99) value = 99;
+            
+            data[type][key] = value;
+            
+            // Обновляем поле ввода
+            const input = document.getElementById(`${{type}}_${{field}}_${{index}}`);
+            if (input) input.value = value;
+            
+            saveData();
+        }}
+        
+        // Обновление ручного ввода
+        function updateValue(type, field, index, value) {{
+            const key = `${{field}}_${{index}}`;
+            const numValue = parseInt(value) || 0;
+            
+            let finalValue = numValue;
+            if (numValue < 0) finalValue = 0;
+            if (numValue > 99) finalValue = 99;
+            
+            data[type][key] = finalValue;
+            
+            // Корректируем значение в поле если нужно
+            if (numValue !== finalValue) {{
+                const input = document.getElementById(`${{type}}_${{field}}_${{index}}`);
+                if (input) input.value = finalValue;
+            }}
+            
+            saveData();
+        }}
+        
+        // Добавление строки
+        function addRow(type) {{
+            if (type === 'standing') {{
+                standingRows++;
+                data.standing[`n_${{standingRows}}`] = 0;
+                data.standing[`g_${{standingRows}}`] = 0;
+            }} else {{
+                layingRows++;
+                data.laying[`n_${{layingRows}}`] = 0;
+                data.laying[`g_${{layingRows}}`] = 0;
+            }}
+            
+            renderAll();
+        }}
+        
+        // Функция для получения данных извне
+        function getGroupsData() {{
+            return saveData();
         }}
         
         // Инициализация при загрузке
