@@ -320,18 +320,38 @@ groups = []
 # CSS для стрелок спойлера (добавляем глобально)
 st.markdown("""
     <style>
-    /* Стрелки для expander: закрыт - вниз, открыт - влево */
+    /* Стрелки для expander: закрыт - вниз, открыт - влево (как в PDF) */
     .streamlit-expanderHeader svg {
-        transform: rotate(0deg);
+        transform: rotate(-90deg);
         transition: transform 0.3s;
     }
     .streamlit-expanderHeader[aria-expanded="true"] svg {
-        transform: rotate(-90deg);
+        transform: rotate(0deg);
     }
     /* Выравнивание заголовка по правому краю */
-    .streamlit-expanderHeader {
+    .streamlit-expanderHeader, 
+    .streamlit-expanderHeader > div {
         text-align: right;
         direction: rtl;
+        justify-content: flex-end;
+    }
+    
+    /* Дополнительный CSS для лучшего выравнивания */
+    /* Убедимся, что заголовки спойлеров всегда по правому краю */
+    .streamlit-expanderHeader {
+        flex-direction: row-reverse !important;
+    }
+    
+    /* Выравнивание текста внутри заголовка */
+    .streamlit-expanderHeader span {
+        text-align: right !important;
+        width: 100%;
+        padding-right: 10px;
+    }
+    
+    /* Выравнивание заголовков внутри спойлеров */
+    div[data-testid="stExpander"] div[data-testid="stVerticalBlock"] > div:first-child {
+        text-align: right !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -350,27 +370,36 @@ with st.expander("**עומדים**", expanded=True):
         
         # Определяем предустановленные значения
         if i <= 8:
-            default_g = 1
+            default_g = 0  # ИЗМЕНЕНО: было 1, стало 0
             default_n = i
         else:
             default_g = 0
             default_n = 0
         
+        # Используем значения из session_state если они есть
+        key_g = f"g_g_vertical_{i}"
+        if key_g not in st.session_state:
+            st.session_state[key_g] = default_g
+        
         g = c0.number_input(
             "",
             0,
             50,
-            default_g,
-            key=f"g_g_vertical_{i}",
+            st.session_state[key_g],
+            key=key_g,
             label_visibility="collapsed",
         )
+
+        key_n = f"g_n_vertical_{i}"
+        if key_n not in st.session_state:
+            st.session_state[key_n] = default_n
 
         n = c1.number_input(
             "",
             0,
             100,
-            default_n,
-            key=f"g_n_vertical_{i}",
+            st.session_state[key_n],
+            key=key_n,
             label_visibility="collapsed",
         )
 
@@ -395,27 +424,36 @@ with st.expander("**שוכבים**", expanded=True):
         
         # Определяем предустановленные значения
         if i <= 4:
-            default_g = 1
+            default_g = 0  # ИЗМЕНЕНО: было 1, стало 0
             default_n = i
         else:
             default_g = 0
             default_n = 0
         
+        # Используем значения из session_state если они есть
+        key_g = f"g_g_horizontal_{i}"
+        if key_g not in st.session_state:
+            st.session_state[key_g] = default_g
+        
         g = c0.number_input(
             "",
             0,
             50,
-            default_g,
-            key=f"g_g_horizontal_{i}",
+            st.session_state[key_g],
+            key=key_g,
             label_visibility="collapsed",
         )
+
+        key_n = f"g_n_horizontal_{i}"
+        if key_n not in st.session_state:
+            st.session_state[key_n] = default_n
 
         n = c1.number_input(
             "",
             0,
             100,
-            default_n,
-            key=f"g_n_horizontal_{i}",
+            st.session_state[key_n],
+            key=key_n,
             label_visibility="collapsed",
         )
 
