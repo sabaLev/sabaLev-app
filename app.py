@@ -38,26 +38,6 @@ st.markdown("""
         margin: 20px 0;
     }
     
-    /* ВЕСЕЛОЕ СООБЩЕНИЕ С АНИМАЦИЕЙ */
-    .funny-message {
-        background-color: #fffbeb;
-        border: 2px solid #fbbf24;
-        border-radius: 10px;
-        padding: 12px 16px;
-        margin: 10px 0;
-        text-align: right;
-        font-size: 15px;
-        color: #92400e;
-        font-weight: 500;
-        animation: bounce 0.8s ease;
-        box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2);
-    }
-    
-    @keyframes bounce {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-5px); }
-    }
-    
     /* CSS переменные */
     :root {
         --background-color: #ffffff;
@@ -81,6 +61,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------- SESSION STATE INIT ----------
+# Минимальный набор переменных
 if "calc_result" not in st.session_state:
     st.session_state.calc_result = None
 if "just_calculated" not in st.session_state:
@@ -115,14 +96,17 @@ if "fasteners_include" not in st.session_state:
     st.session_state.fasteners_include = None
 if "koshrot_qty" not in st.session_state:
     st.session_state.koshrot_qty = None
-if "show_report" not in st.session_state:
-    st.session_state.show_report = False
-if "show_funny_message" not in st.session_state:
-    st.session_state.show_funny_message = {"rows": False, "panels": False}
-if "funny_message_text" not in st.session_state:
-    st.session_state.funny_message_text = ""
+
+# Новые переменные для групп
 if "groups_data" not in st.session_state:
-    st.session_state.groups_data = {"standing": [], "laying": []}
+    st.session_state.groups_data = {
+        "standing": [
+            {"n": i, "g": 0, "row": i} for i in range(1, 9)  # 1-8 פאנלים, 0 שורות
+        ],
+        "laying": [
+            {"n": i, "g": 0, "row": i} for i in range(1, 5)  # 1-4 פאנלים, 0 שורות
+        ]
+    }
 
 # ---------- LOAD DATABASES ----------
 @st.cache_data
@@ -188,18 +172,6 @@ def format_qty(q):
         return s
     except Exception:
         return str(q)
-
-def check_and_show_funny_message(value: int, field_type: str):
-    if value > 99:
-        if field_type == "rows":
-            message = f"אל תגזים אחי, איזה [{value}] שורות במערכת ביתית? 😅"
-        else:
-            message = f"וואי [{value}] פאנלים בשורה אחת? אולי תפצל לשתי שורות? 😄"
-        
-        st.session_state.show_funny_message[field_type] = True
-        st.session_state.funny_message_text = message
-        return True
-    return False
 
 # ---------- ENGINE FUNCTIONS ----------
 def split_into_segments(total_length: int):
@@ -344,13 +316,10 @@ panel = panel_rows.iloc[0]
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
-# ---------- GROUPS SECTION ----------
+# ---------- GROUPS SECTION (Material Design Stepper) ----------
 st.markdown(right_header("קבוצות פאנלים"), unsafe_allow_html=True)
 
-if st.session_state.show_funny_message.get("rows") or st.session_state.show_funny_message.get("panels"):
-    st.markdown(f'<div class="funny-message">{st.session_state.funny_message_text}</div>', unsafe_allow_html=True)
-
-# HTML компонент с localStorage
+# HTML компонент с Material Design Stepper
 groups_component = """
 <!DOCTYPE html>
 <html dir="rtl">
@@ -362,22 +331,26 @@ groups_component = """
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
         
         :root {
-            --bg: #F0F2F6;
-            --text: #31333F;
-            --border: #DCDCDC;
-            --hover: #EC5953;
+            --bg-color: #F0F2F6;
+            --text-color: #31333F;
+            --border-color: #DCDCDC;
+            --hover-color: #EC5953;
+            --button-bg: #F0F2F6;
             --radius: 8px;
-            --height: 38px;
+            --stepper-height: 38px;
+            --stepper-width: 140px;
         }
         
         @media (prefers-color-scheme: dark) {
             :root {
-                --bg: #1E293B;
-                --text: #FAFAFA;
-                --border: #2D3748;
+                --bg-color: #1E293B;
+                --text-color: #FAFAFA;
+                --border-color: #2D3748;
+                --button-bg: #1E293B;
             }
         }
         
@@ -385,30 +358,32 @@ groups_component = """
             width: 100%;
             max-width: 800px;
             margin: 0 auto;
-            padding: 0 8px;
+            padding: 0 4px;
         }
         
         .spoiler-section {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
+            background: var(--bg-color);
+            border-radius: var(--radius);
+            padding: 16px;
+            border: 1px solid var(--border-color);
         }
         
-        .spoiler-header {
+        .spoiler-title {
             font-size: 16px;
             font-weight: 600;
-            color: var(--text);
-            margin-bottom: 12px;
-            padding-bottom: 4px;
-            border-bottom: 1px solid var(--border);
+            color: var(--text-color);
+            margin-bottom: 16px;
+            text-align: center;
         }
         
         .columns-header {
             display: flex;
             width: 100%;
-            margin-bottom: 6px;
-            font-size: 13px;
+            margin-bottom: 12px;
+            font-size: 14px;
             font-weight: 500;
-            color: var(--text);
-            opacity: 0.7;
+            color: var(--text-color);
         }
         
         .column-label {
@@ -417,78 +392,73 @@ groups_component = """
             padding: 0 4px;
         }
         
+        .rows-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
         .row {
             display: flex;
             width: 100%;
-            margin-bottom: 8px;
-            gap: 6px;
+            gap: 12px;
+            align-items: center;
         }
         
-        .input-wrapper {
+        .stepper-wrapper {
             flex: 1;
-            position: relative;
-            min-width: 0;
+            display: flex;
+            justify-content: center;
         }
         
-        .input-group {
+        /* Material Design Stepper */
+        .md-stepper {
             display: flex;
-            width: 100%;
-            height: var(--height);
-            background: var(--bg);
+            align-items: center;
+            background: var(--button-bg);
             border-radius: var(--radius);
+            height: var(--stepper-height);
+            width: var(--stepper-width);
             overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         
-        .number-input {
-            flex: 1;
-            min-width: 0;
-            width: 100%;
-            border: none;
-            background: transparent;
-            color: var(--text);
-            font-size: 14px;
-            text-align: center;
-            padding: 0 8px;
-            outline: none;
-            font-family: inherit;
-        }
-        
-        .number-input::-webkit-inner-spin-button,
-        .number-input::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        
-        .btn-group {
-            display: flex;
-            border-left: 1px solid var(--border);
-        }
-        
-        .btn {
-            width: 32px;
+        .md-stepper-btn {
+            width: 40px;
             height: 100%;
-            background: var(--bg);
+            background: var(--button-bg);
             border: none;
-            color: var(--text);
-            font-size: 16px;
-            font-weight: bold;
+            color: var(--text-color);
+            font-size: 20px;
+            font-weight: 300;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background 0.2s;
+            transition: all 0.2s ease;
             user-select: none;
         }
         
-        .btn:hover {
-            background: var(--hover) !important;
-            color: white !important;
+        .md-stepper-btn:hover {
+            background: var(--hover-color);
+            color: white;
         }
         
-        .btn:active {
-            opacity: 0.9;
+        .md-stepper-btn:active {
+            transform: scale(0.95);
         }
         
+        .md-stepper-value {
+            flex: 1;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-color);
+            min-width: 40px;
+            padding: 0 4px;
+        }
+        
+        /* Кнопка добавления строки */
         .add-row-btn {
             background: #4b75c9;
             color: white;
@@ -496,70 +466,71 @@ groups_component = """
             border-radius: var(--radius);
             padding: 8px 16px;
             font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            margin-top: 8px;
+            margin-top: 12px;
             transition: background 0.2s;
+            display: block;
+            width: 120px;
+            margin-left: auto;
+            margin-right: auto;
         }
         
         .add-row-btn:hover {
             background: #3a62b5;
         }
         
-        .save-btn {
-            background: #4b75c9;
-            color: white;
-            border: none;
-            border-radius: var(--radius);
-            padding: 12px 24px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            width: 100%;
-            margin: 20px 0;
-            transition: background 0.2s;
-        }
-        
-        .save-btn:hover {
-            background: #3a62b5;
-        }
-        
+        /* Адаптация для мобильных */
         @media (max-width: 768px) {
+            .spoiler-section {
+                padding: 12px;
+            }
+            
             .row {
-                gap: 4px;
-                margin-bottom: 6px;
+                gap: 8px;
             }
             
-            .number-input {
-                font-size: 13px;
-                padding: 0 6px;
+            .md-stepper {
+                width: 120px;
+                height: 34px;
             }
             
-            .btn {
-                width: 28px;
-                font-size: 14px;
+            .md-stepper-btn {
+                width: 36px;
+                font-size: 18px;
+            }
+            
+            .md-stepper-value {
+                font-size: 15px;
             }
             
             :root {
-                --height: 36px;
+                --stepper-height: 34px;
+                --stepper-width: 120px;
             }
         }
         
         @media (max-width: 480px) {
+            .spoiler-section {
+                padding: 10px;
+            }
+            
             .row {
-                gap: 3px;
+                gap: 6px;
             }
             
-            .number-input {
-                font-size: 12px;
-                padding: 0 4px;
+            .md-stepper {
+                width: 110px;
+                height: 32px;
             }
             
-            .btn {
-                width: 26px;
+            .md-stepper-btn {
+                width: 34px;
+                font-size: 16px;
             }
             
-            :root {
-                --height: 34px;
+            .md-stepper-value {
+                font-size: 14px;
             }
         }
     </style>
@@ -568,27 +539,25 @@ groups_component = """
     <div class="container">
         <!-- СПОЙЛЕР 1: СТОЯЧИЕ ПАНЕЛИ -->
         <div class="spoiler-section">
-            <div class="spoiler-header">עומד</div>
+            <div class="spoiler-title">עומד</div>
             <div class="columns-header">
                 <div class="column-label">פאנלים</div>
                 <div class="column-label">שורות</div>
             </div>
-            <div id="standing-rows"></div>
+            <div class="rows-container" id="standing-rows"></div>
             <button class="add-row-btn" onclick="addRow('standing')">עוד שורה</button>
         </div>
         
         <!-- СПОЙЛЕР 2: ЛЕЖАЧИЕ ПАНЕЛИ -->
         <div class="spoiler-section">
-            <div class="spoiler-header">שוכב</div>
+            <div class="spoiler-title">שוכב</div>
             <div class="columns-header">
                 <div class="column-label">פאנלים</div>
                 <div class="column-label">שורות</div>
             </div>
-            <div id="laying-rows"></div>
+            <div class="rows-container" id="laying-rows"></div>
             <button class="add-row-btn" onclick="addRow('laying')">עוד שורה</button>
         </div>
-        
-        <button class="save-btn" onclick="saveAllData()">שמור וחשב</button>
     </div>
 
     <script>
@@ -600,135 +569,155 @@ groups_component = """
             laying: {}
         };
         
-        // Загружаем из localStorage
-        function loadFromStorage() {
-            const saved = localStorage.getItem('solar_groups_data');
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                if (parsed.standingRows) standingRows = parsed.standingRows;
-                if (parsed.layingRows) layingRows = parsed.layingRows;
-                if (parsed.data) {
-                    Object.assign(data.standing, parsed.data.standing || {});
-                    Object.assign(data.laying, parsed.data.laying || {});
-                }
-            }
-            
-            // Предустановленные значения для стоячих (1-8)
+        // Инициализация из session_state через родительское окно
+        function initFromSessionState() {
+            // Предустановленные значения для стоячих (1-8 פאנלים, 0 שורות)
             for (let i = 1; i <= standingRows; i++) {
-                if (!data.standing[`n_${i}`]) {
-                    data.standing[`n_${i}`] = i <= 8 ? i : 0;
-                }
-                if (!data.standing[`g_${i}`]) {
-                    data.standing[`g_${i}`] = 0;
+                data.standing[`n_${i}`] = i;  // פאנלים: 1,2,3...8
+                data.standing[`g_${i}`] = 0;  // שורות: 0
+            }
+            
+            // Предустановленные значения для лежачих (1-4 פאנלים, 0 שורות)
+            for (let i = 1; i <= layingRows; i++) {
+                data.laying[`n_${i}`] = i;    // פאנלים: 1,2,3,4
+                data.laying[`g_${i}`] = 0;    // שורות: 0
+            }
+            
+            // Загружаем из localStorage если есть
+            const saved = localStorage.getItem('solar_stepper_data');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.standingRows) standingRows = parsed.standingRows;
+                    if (parsed.layingRows) layingRows = parsed.layingRows;
+                    if (parsed.data) {
+                        Object.assign(data.standing, parsed.data.standing || {});
+                        Object.assign(data.laying, parsed.data.laying || {});
+                    }
+                } catch(e) {
+                    console.log('Error loading from localStorage:', e);
                 }
             }
             
-            // Предустановленные значения для лежачих (1-4)
-            for (let i = 1; i <= layingRows; i++) {
-                if (!data.laying[`n_${i}`]) {
-                    data.laying[`n_${i}`] = i <= 4 ? i : 0;
-                }
-                if (!data.laying[`g_${i}`]) {
-                    data.laying[`g_${i}`] = 0;
-                }
-            }
+            saveToStorage();
+            renderAllRows();
         }
         
-        // Сохраняем в localStorage
+        // Сохранение в localStorage
         function saveToStorage() {
-            localStorage.setItem('solar_groups_data', JSON.stringify({
+            localStorage.setItem('solar_stepper_data', JSON.stringify({
                 standingRows,
                 layingRows,
                 data
             }));
         }
         
-        // Создаем строку с двумя инпутами
-        function createRow(type, index, nValue, gValue) {
+        // Отправка данных в Streamlit
+        function sendToStreamlit() {
+            const groupsData = {
+                standing: [],
+                laying: []
+            };
+            
+            // Собираем стоячие группы
+            for (let i = 1; i <= standingRows; i++) {
+                groupsData.standing.push({
+                    n: data.standing[`n_${i}`] || 0,
+                    g: data.standing[`g_${i}`] || 0,
+                    row: i
+                });
+            }
+            
+            // Собираем лежачие группы
+            for (let i = 1; i <= layingRows; i++) {
+                groupsData.laying.push({
+                    n: data.laying[`n_${i}`] || 0,
+                    g: data.laying[`g_${i}`] || 0,
+                    row: i
+                });
+            }
+            
+            // Отправляем в Streamlit
+            if (window.parent) {
+                window.parent.postMessage({
+                    type: 'streamlit:setComponentValue',
+                    value: groupsData
+                }, '*');
+            }
+            
+            // Сохраняем в localStorage
+            saveToStorage();
+        }
+        
+        // Создание Material Design Stepper
+        function createStepper(type, field, index, value) {
+            const stepperId = `${type}_${field}_${index}`;
+            
             return `
-                <div class="row">
-                    <div class="input-wrapper">
-                        <div class="input-group">
-                            <input type="number" 
-                                   id="${type}_n_${index}" 
-                                   class="number-input" 
-                                   value="${nValue}" 
-                                   min="0" 
-                                   max="99"
-                                   oninput="updateValue('${type}', 'n', ${index}, this.value)">
-                            <div class="btn-group">
-                                <button class="btn" onclick="updateNumber('${type}_n_${index}', -1)">−</button>
-                                <button class="btn" onclick="updateNumber('${type}_n_${index}', 1)">+</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="input-wrapper">
-                        <div class="input-group">
-                            <input type="number" 
-                                   id="${type}_g_${index}" 
-                                   class="number-input" 
-                                   value="${gValue}" 
-                                   min="0" 
-                                   max="99"
-                                   oninput="updateValue('${type}', 'g', ${index}, this.value)">
-                            <div class="btn-group">
-                                <button class="btn" onclick="updateNumber('${type}_g_${index}', -1)">−</button>
-                                <button class="btn" onclick="updateNumber('${type}_g_${index}', 1)">+</button>
-                            </div>
-                        </div>
+                <div class="stepper-wrapper">
+                    <div class="md-stepper" id="stepper_${stepperId}">
+                        <button class="md-stepper-btn" onclick="updateStepper('${type}', '${field}', ${index}, -1)">−</button>
+                        <div class="md-stepper-value" id="value_${stepperId}">${value}</div>
+                        <button class="md-stepper-btn" onclick="updateStepper('${type}', '${field}', ${index}, 1)">+</button>
                     </div>
                 </div>
             `;
         }
         
-        // Отображаем строки
-        function renderRows() {
+        // Обновление значения stepper
+        function updateStepper(type, field, index, delta) {
+            const key = `${field}_${index}`;
+            let value = data[type][key] || 0;
+            value += delta;
+            
+            // Ограничиваем значения 0-99
+            if (value < 0) value = 0;
+            if (value > 99) value = 99;
+            
+            // Обновляем данные
+            data[type][key] = value;
+            
+            // Обновляем отображение
+            const valueElement = document.getElementById(`value_${type}_${field}_${index}`);
+            if (valueElement) {
+                valueElement.textContent = value;
+            }
+            
+            // Сохраняем и отправляем
+            saveToStorage();
+            sendToStreamlit();
+        }
+        
+        // Создание строки
+        function createRow(type, index) {
+            const nValue = data[type][`n_${index}`] || 0;
+            const gValue = data[type][`g_${index}`] || 0;
+            
+            return `
+                <div class="row" id="row_${type}_${index}">
+                    ${createStepper(type, 'n', index, nValue)}
+                    ${createStepper(type, 'g', index, gValue)}
+                </div>
+            `;
+        }
+        
+        // Отображение всех строк
+        function renderAllRows() {
             const standingContainer = document.getElementById('standing-rows');
             const layingContainer = document.getElementById('laying-rows');
             
             let standingHtml = '';
             for (let i = 1; i <= standingRows; i++) {
-                const nValue = data.standing[`n_${i}`] || (i <= 8 ? i : 0);
-                const gValue = data.standing[`g_${i}`] || 0;
-                standingHtml += createRow('standing', i, nValue, gValue);
+                standingHtml += createRow('standing', i);
             }
             
             let layingHtml = '';
             for (let i = 1; i <= layingRows; i++) {
-                const nValue = data.laying[`n_${i}`] || (i <= 4 ? i : 0);
-                const gValue = data.laying[`g_${i}`] || 0;
-                layingHtml += createRow('laying', i, nValue, gValue);
+                layingHtml += createRow('laying', i);
             }
             
             standingContainer.innerHTML = standingHtml;
             layingContainer.innerHTML = layingHtml;
-        }
-        
-        // Обновление значения
-        function updateValue(type, field, index, value) {
-            const numValue = parseInt(value) || 0;
-            const clampedValue = Math.min(Math.max(numValue, 0), 99);
-            
-            data[type][`${field}_${index}`] = clampedValue;
-            saveToStorage();
-            
-            // Обновляем отображаемое значение
-            const input = document.getElementById(`${type}_${field}_${index}`);
-            if (input) {
-                input.value = clampedValue;
-            }
-        }
-        
-        // Обновление числа с кнопок
-        function updateNumber(fieldId, delta) {
-            const input = document.getElementById(fieldId);
-            if (!input) return;
-            
-            const [type, field, index] = fieldId.split('_');
-            let value = parseInt(input.value) || 0;
-            value += delta;
-            
-            updateValue(type, field, parseInt(index), value);
         }
         
         // Добавление строки
@@ -744,82 +733,37 @@ groups_component = """
             }
             
             saveToStorage();
-            renderRows();
+            renderAllRows();
+            sendToStreamlit();
         }
         
-        // Сохранение всех данных и отправка в Streamlit
-        function saveAllData() {
-            saveToStorage();
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            initFromSessionState();
             
-            // Подготавливаем данные для отправки
-            const groups = [];
-            
-            // Стоячие группы
-            for (let i = 1; i <= standingRows; i++) {
-                const n = data.standing[`n_${i}`] || 0;
-                const g = data.standing[`g_${i}`] || 0;
-                if (n > 0 && g > 0) {
-                    groups.push({n, g, o: 'עומד'});
-                }
-            }
-            
-            // Лежачие группы
-            for (let i = 1; i <= layingRows; i++) {
-                const n = data.laying[`n_${i}`] || 0;
-                const g = data.laying[`g_${i}`] || 0;
-                if (n > 0 && g > 0) {
-                    groups.push({n, g, o: 'שוכב'});
-                }
-            }
-            
-            // Отправляем в Streamlit через postMessage
-            if (window.parent) {
-                window.parent.postMessage({
-                    type: 'streamlit:setComponentValue',
-                    value: groups
-                }, '*');
-            }
-            
-            // Показываем сообщение
-            alert('הנתונים נשמרו! לחץ על "חשב" כדי לעדכן את החישוב.');
-        }
-        
-        // Инициализация
-        function init() {
-            loadFromStorage();
-            renderRows();
-            
-            // Отправляем сообщение о готовности
+            // Сообщаем Streamlit о готовности
             setTimeout(() => {
-                if (window.parent) {
-                    window.parent.postMessage({
-                        type: 'streamlit:componentReady',
-                        value: true
-                    }, '*');
-                }
-            }, 100);
-        }
-        
-        // Запускаем при загрузке
-        document.addEventListener('DOMContentLoaded', init);
+                sendToStreamlit();
+            }, 500);
+        });
     </script>
 </body>
 </html>
 """
 
 # Отображаем компонент
-components.html(groups_component, height=600)
+components.html(groups_component, height=500)
 
-# Компонент для получения данных
+# Скрытое поле для получения данных из компонента
 components.html("""
 <script>
-// Обработчик сообщений от компонента
+// Отправляем данные при изменении
 window.addEventListener('message', function(event) {
     if (event.data.type === 'streamlit:setComponentValue') {
-        // Сохраняем данные в sessionStorage для передачи в Streamlit
-        sessionStorage.setItem('groups_data', JSON.stringify(event.data.value));
+        // Сохраняем в sessionStorage для передачи
+        sessionStorage.setItem('stepper_groups_data', JSON.stringify(event.data.value));
         
-        // Отправляем команду на обновление
+        // Отправляем в Streamlit
         window.parent.postMessage({
             type: 'streamlit:setComponentValue',
             value: event.data.value
@@ -829,25 +773,37 @@ window.addEventListener('message', function(event) {
 </script>
 """, height=0)
 
-# Получаем данные из sessionStorage через JavaScript
+# JavaScript для получения данных из sessionStorage
 get_data_js = """
 <script>
-// Проверяем есть ли сохраненные данные
-const savedData = sessionStorage.getItem('groups_data');
-if (savedData) {
-    // Отправляем в Streamlit
-    window.parent.postMessage({
-        type: 'streamlit:setComponentValue',
-        value: JSON.parse(savedData)
-    }, '*');
-    
-    // Очищаем storage
-    sessionStorage.removeItem('groups_data');
+// Проверяем есть ли данные от stepper
+try {
+    const savedData = sessionStorage.getItem('stepper_groups_data');
+    if (savedData) {
+        const data = JSON.parse(savedData);
+        
+        // Отправляем в Streamlit
+        if (window.parent) {
+            window.parent.postMessage({
+                type: 'streamlit:setComponentValue',
+                value: data
+            }, '*');
+        }
+        
+        // Очищаем
+        sessionStorage.removeItem('stepper_groups_data');
+    }
+} catch(e) {
+    console.log('Error getting stepper data:', e);
 }
 </script>
 """
 
 st.markdown(get_data_js, unsafe_allow_html=True)
+
+# Поле для получения данных
+if 'component_groups' not in st.session_state:
+    st.session_state.component_groups = st.session_state.groups_data
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
@@ -855,24 +811,25 @@ st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 st.markdown('<div style="background-color: #4b75c9; font-size: 17px; font-weight: 600; padding: 16px; margin: 20px 0; text-align: center; color: white; border-radius: 6px;">חשב</div>', unsafe_allow_html=True)
 
 if st.button("חשב", type="primary", use_container_width=True, key="calculate_main"):
-    # Пытаемся получить данные из компонента
-    groups_data = []
+    # Получаем актуальные данные из session_state
+    current_groups = st.session_state.get("groups_data", st.session_state.groups_data)
     
-    # Проверяем session_state
-    if 'component_groups' in st.session_state:
-        groups_data = st.session_state.component_groups
+    # Конвертируем в формат для расчета
+    groups_for_calculation = []
     
-    # Если нет данных, используем предустановленные
-    if not groups_data:
-        # Стоячие группы
-        for i in range(1, 9):
-            groups_data.append({"n": i, "g": 0, "o": "עומד"})
-        # Лежачие группы
-        for i in range(1, 5):
-            groups_data.append({"n": i, "g": 0, "o": "שוכב"})
+    # Стоячие панели
+    for item in current_groups.get("standing", []):
+        n = item.get("n", 0)
+        g = item.get("g", 0)
+        if n > 0 and g > 0:
+            groups_for_calculation.append((n, g, "עומד"))
     
-    # Фильтруем только группы с данными
-    valid_groups = [(item["n"], item["g"], item["o"]) for item in groups_data if item["n"] > 0 and item["g"] > 0]
+    # Лежачие панели
+    for item in current_groups.get("laying", []):
+        n = item.get("n", 0)
+        g = item.get("g", 0)
+        if n > 0 and g > 0:
+            groups_for_calculation.append((n, g, "שוכב"))
     
     # Сброс состояния
     st.session_state.koshrot_qty = None
@@ -883,8 +840,8 @@ if st.button("חשב", type="primary", use_container_width=True, key="calculate_
     st.session_state.manual_rails_prev = {}
     st.session_state.manual_form_version += 1
     
-    if valid_groups:
-        st.session_state.calc_result = do_calculation(panel, valid_groups)
+    if groups_for_calculation:
+        st.session_state.calc_result = do_calculation(panel, groups_for_calculation)
     else:
         st.session_state.calc_result = {
             "auto_rails": {},
@@ -1232,14 +1189,27 @@ if calc_result is not None:
                     
                     materials_text += f"• {p['name']}: {p['qty']} {unit}\n"
             
-            # Используем предустановленные группы для примера
-            valid_groups = []
-            for i in range(1, 9):
-                valid_groups.append((i, 0, "עומד"))
-            for i in range(1, 5):
-                valid_groups.append((i, 0, "שוכב"))
+            # Используем текущие данные групп
+            current_groups = st.session_state.get("groups_data", {
+                "standing": [{"n": i, "g": 0} for i in range(1, 9)],
+                "laying": [{"n": i, "g": 0} for i in range(1, 5)]
+            })
             
-            valid_groups = [(n, g, o) for n, g, o in valid_groups if n > 0 and g > 0]
+            valid_groups = []
+            
+            # Стоячие панели
+            for i, item in enumerate(current_groups.get("standing", []), 1):
+                n = item.get("n", 0)
+                g = item.get("g", 0)
+                if n > 0 and g > 0:
+                    valid_groups.append((n, g, "עומד"))
+            
+            # Лежачие панели
+            for i, item in enumerate(current_groups.get("laying", []), 1):
+                n = item.get("n", 0)
+                g = item.get("g", 0)
+                if n > 0 and g > 0:
+                    valid_groups.append((n, g, "שוכב"))
             
             whatsapp_msg = format_whatsapp_message(
                 project_name=project_name,
