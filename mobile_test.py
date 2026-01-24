@@ -1,6 +1,371 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
+st.title("🧪 Тест только компоненты")
+
+# Ваша компонента (скопируйте HTML код из моего предыдущего сообщения)
+html_code = '''
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 10px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            background: #F0F2F6;
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid #DCDCDC;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #31333F;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .columns-header {
+            display: flex;
+            width: 100%;
+            margin-bottom: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #31333F;
+        }
+        
+        .column-label {
+            flex: 1;
+            text-align: center;
+            padding: 0 5px;
+        }
+        
+        .input-row {
+            display: flex;
+            width: 100%;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        
+        .input-column {
+            flex: 1;
+        }
+        
+        .stepper {
+            display: flex;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #DCDCDC;
+            overflow: hidden;
+            height: 42px;
+        }
+        
+        .stepper-button {
+            width: 40px;
+            height: 100%;
+            background: #F0F2F6;
+            border: none;
+            color: #31333F;
+            font-size: 20px;
+            font-weight: 300;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        
+        .stepper-button:hover {
+            background: #EC5953;
+            color: white;
+        }
+        
+        .stepper-input {
+            flex: 1;
+            border: none;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 500;
+            color: #31333F;
+            padding: 0 10px;
+            outline: none;
+            min-width: 0;
+        }
+        
+        .add-button {
+            background: #4b75c9;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 10px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .add-button:hover {
+            background: #3a62b5;
+        }
+        
+        /* Для мобильных */
+        @media (max-width: 768px) {
+            .input-row {
+                gap: 8px;
+            }
+            
+            .stepper {
+                height: 38px;
+            }
+            
+            .stepper-button {
+                width: 36px;
+                font-size: 18px;
+            }
+            
+            .stepper-input {
+                font-size: 15px;
+                padding: 0 8px;
+            }
+        }
+        
+        .debug-box {
+            background: #f0f9ff;
+            border: 2px solid #bae6fd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- СТОЯЧИЕ ПАНЕЛИ -->
+        <div class="section">
+            <div class="section-title">עומד (Тест)</div>
+            <div class="columns-header">
+                <div class="column-label">פאנלים</div>
+                <div class="column-label">שורות</div>
+            </div>
+            <div id="standing-rows"></div>
+            <button class="add-button" onclick="addRow('standing')">עוד שורה</button>
+        </div>
+        
+        <!-- ЛЕЖАЧИЕ ПАНЕЛИ -->
+        <div class="section">
+            <div class="section-title">שוכב (Тест)</div>
+            <div class="columns-header">
+                <div class="column-label">פאנלים</div>
+                <div class="column-label">שורות</div>
+            </div>
+            <div id="laying-rows"></div>
+            <button class="add-button" onclick="addRow('laying')">עוד שורה</button>
+        </div>
+        
+        <!-- ДЕБАГ ИНФОРМАЦИЯ -->
+        <div class="debug-box">
+            <div id="debug-info">Нажмите кнопки +/- для теста...</div>
+        </div>
+        
+        <button class="add-button" onclick="showDebugInfo()" style="background: #10b981;">Показать данные</button>
+    </div>
+    
+    <script>
+        // Данные
+        let standingRows = 4;  // Только 4 для теста
+        let layingRows = 2;    // Только 2 для теста
+        let data = {
+            standing: {},
+            laying: {}
+        };
+        
+        // Инициализация
+        function init() {
+            // Стоячие: 1-4 פאנלים, 0 שורות
+            for (let i = 1; i <= standingRows; i++) {
+                data.standing[`n_${i}`] = i;
+                data.standing[`g_${i}`] = 0;
+            }
+            
+            // Лежачие: 1-2 פאנלים, 0 שורות
+            for (let i = 1; i <= layingRows; i++) {
+                data.laying[`n_${i}`] = i <= 2 ? i : 0;
+                data.laying[`g_${i}`] = 0;
+            }
+            
+            renderAll();
+            updateDebugInfo();
+        }
+        
+        // Создание строки
+        function createRow(type, index) {
+            const nValue = data[type][`n_${index}`] || 0;
+            const gValue = data[type][`g_${index}`] || 0;
+            
+            return `
+                <div class="input-row">
+                    <div class="input-column">
+                        <div class="stepper">
+                            <button class="stepper-button" onclick="adjustValue('${type}', 'n', ${index}, -1)">−</button>
+                            <input type="number" class="stepper-input" value="${nValue}" 
+                                   min="0" max="99" 
+                                   oninput="updateValue('${type}', 'n', ${index}, this.value)">
+                            <button class="stepper-button" onclick="adjustValue('${type}', 'n', ${index}, 1)">+</button>
+                        </div>
+                    </div>
+                    <div class="input-column">
+                        <div class="stepper">
+                            <button class="stepper-button" onclick="adjustValue('${type}', 'g', ${index}, -1)">−</button>
+                            <input type="number" class="stepper-input" value="${gValue}" 
+                                   min="0" max="99" 
+                                   oninput="updateValue('${type}', 'g', ${index}, this.value)">
+                            <button class="stepper-button" onclick="adjustValue('${type}', 'g', ${index}, 1)">+</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Отрисовка всех строк
+        function renderAll() {
+            let standingHtml = '';
+            for (let i = 1; i <= standingRows; i++) {
+                standingHtml += createRow('standing', i);
+            }
+            document.getElementById('standing-rows').innerHTML = standingHtml;
+            
+            let layingHtml = '';
+            for (let i = 1; i <= layingRows; i++) {
+                layingHtml += createRow('laying', i);
+            }
+            document.getElementById('laying-rows').innerHTML = layingHtml;
+        }
+        
+        // Изменение значения кнопками
+        function adjustValue(type, field, index, delta) {
+            const key = `${field}_${index}`;
+            let value = parseInt(data[type][key]) || 0;
+            value += delta;
+            
+            if (value < 0) value = 0;
+            if (value > 99) value = 99;
+            
+            data[type][key] = value;
+            renderAll(); // Перерисовываем
+            updateDebugInfo();
+        }
+        
+        // Обновление ручного ввода
+        function updateValue(type, field, index, value) {
+            const key = `${field}_${index}`;
+            const numValue = parseInt(value) || 0;
+            
+            if (numValue < 0) {
+                data[type][key] = 0;
+            } else if (numValue > 99) {
+                data[type][key] = 99;
+            } else {
+                data[type][key] = numValue;
+            }
+            
+            updateDebugInfo();
+        }
+        
+        // Добавление строки
+        function addRow(type) {
+            if (type === 'standing') {
+                standingRows++;
+                data.standing[`n_${standingRows}`] = 0;
+                data.standing[`g_${standingRows}`] = 0;
+            } else {
+                layingRows++;
+                data.laying[`n_${layingRows}`] = 0;
+                data.laying[`g_${layingRows}`] = 0;
+            }
+            
+            renderAll();
+            updateDebugInfo();
+        }
+        
+        // Показать данные для дебага
+        function showDebugInfo() {
+            updateDebugInfo();
+            alert('Данные в консоли! Откройте DevTools (F12) → Console');
+            console.log('=== ДАННЫЕ КОМПОНЕНТЫ ===', data);
+        }
+        
+        // Обновление дебаг информации
+        function updateDebugInfo() {
+            const debugDiv = document.getElementById('debug-info');
+            if (debugDiv) {
+                let html = '<strong>Текущие данные:</strong><br>';
+                
+                html += '<strong>עומד:</strong><br>';
+                for (let i = 1; i <= standingRows; i++) {
+                    const n = data.standing[`n_${i}`] || 0;
+                    const g = data.standing[`g_${i}`] || 0;
+                    html += `Строка ${i}: ${n} פאנלים, ${g} שורות<br>`;
+                }
+                
+                html += '<strong>שוכב:</strong><br>';
+                for (let i = 1; i <= layingRows; i++) {
+                    const n = data.laying[`n_${i}`] || 0;
+                    const g = data.laying[`g_${i}`] || 0;
+                    html += `Строка ${i}: ${n} פאנלים, ${g} שורות<br>`;
+                }
+                
+                debugDiv.innerHTML = html;
+            }
+        }
+        
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
+'''
+
+# Отображаем компоненту
+components.html(html_code, height=700)
+
+st.markdown("---")
+st.write("**Инструкция по тесту:**")
+st.write("1. Откройте на телефоне")
+st.write("2. Проверьте, что две колонки рядом")
+st.write("3. Нажмите кнопки + и - (должны работать)")
+st.write("4. Введите число вручную (должно работать)")
+st.write("5. Нажмите 'Показать данные' для проверки")
+st.write("6. Кнопки 'עוד שורה' добавляют строки")
+
+st.write("**Результат теста:**")
+st.write("- Если всё работает — компонента готова")
+st.write("- Если что-то не работает — скажите что именно")import streamlit as st
+import streamlit.components.v1 as components
+
 # ---------- PAGE CONFIG ----------
 st.set_page_config(
     page_title="Тест групп - исправлено",
