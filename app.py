@@ -812,99 +812,188 @@ st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 # ---------- BUTTON: CALCULATE ----------
 if st.button("חשב", type="primary", use_container_width=True):
     
-    # JavaScript для получения текущих данных из компоненты
+    # ПРОСТОЙ способ получить данные: используем JavaScript для alert и ручного ввода
     get_data_js = '''
     <script>
-    // Получаем данные из sessionStorage
-    const groupsJson = sessionStorage.getItem('solar_groups_data');
-    
-    if (groupsJson) {
-        try {
-            const groups = JSON.parse(groupsJson);
+    // Получаем текущие данные из компоненты
+    function collectGroupsData() {
+        const groups = [];
+        
+        // Стоячие панели (до 20 строк)
+        for (let i = 1; i <= 20; i++) {
+            const nInput = document.getElementById('standing_n_' + i);
+            const gInput = document.getElementById('standing_g_' + i);
             
-            // Устанавливаем значение в скрытое поле
-            const hiddenInput = document.getElementById('hidden-groups-input');
-            if (hiddenInput) {
-                hiddenInput.value = groupsJson;
-                
-                // Триггерим событие
-                const event = new Event('input', { bubbles: true });
-                hiddenInput.dispatchEvent(event);
+            if (nInput && gInput) {
+                const n = parseInt(nInput.value) || 0;
+                const g = parseInt(gInput.value) || 0;
+                if (n > 0 && g > 0) {
+                    groups.push([n, g, 'עומד']);
+                }
             }
+        }
+        
+        // Лежачие панели (до 20 строк)
+        for (let i = 1; i <= 20; i++) {
+            const nInput = document.getElementById('laying_n_' + i);
+            const gInput = document.getElementById('laying_g_' + i);
             
-            console.log('Данные отправлены в Streamlit:', groups);
-        } catch(e) {
-            console.error('Ошибка парсинга данных:', e);
+            if (nInput && gInput) {
+                const n = parseInt(nInput.value) || 0;
+                const g = parseInt(gInput.value) || 0;
+                if (n > 0 && g > 0) {
+                    groups.push([n, g, 'שוכב']);
+                }
+            }
         }
-    } else {
-        console.warn('Нет данных о группах');
-        // Отправляем пустой массив
-        const hiddenInput = document.getElementById('hidden-groups-input');
-        if (hiddenInput) {
-            hiddenInput.value = '[]';
-            const event = new Event('input', { bubbles: true });
-            hiddenInput.dispatchEvent(event);
-        }
+        
+        return groups;
     }
+    
+    // Собираем данные
+    const groupsData = collectGroupsData();
+    console.log('Собраны группы:', groupsData);
+    
+    // Показываем в alert для проверки
+    if (groupsData.length > 0) {
+        let message = 'Найдено групп: ' + groupsData.length + '\\n';
+        groupsData.forEach((g, i) => {
+            message += `Группа ${i+1}: ${g[0]} панелей, ${g[1]} строк (${g[2]})\\n`;
+        });
+        alert(message);
+    } else {
+        alert('Нет данных для расчета. Введите значения.');
+    }
+    
+    // Создаем скрытый div с данными
+    let dataDiv = document.getElementById('streamlit-groups-data');
+    if (!dataDiv) {
+        dataDiv = document.createElement('div');
+        dataDiv.id = 'streamlit-groups-data';
+        dataDiv.style.display = 'none';
+        document.body.appendChild(dataDiv);
+    }
+    
+    // Записываем данные
+    dataDiv.setAttribute('data-groups', JSON.stringify(groupsData));
+    
+    // Инициируем отправку в Streamlit
+    window.parent.postMessage({
+        type: 'streamlit_groups_data',
+        data: groupsData
+    }, '*');
     </script>
     '''
     
     components.html(get_data_js, height=0)
     
-    # Получаем данные через скрытое поле
-    # Создаем текстовое поле для получения данных
-    groups_json = st.text_input("", key="hidden_groups_field", label_visibility="collapsed")
+    # Ждем немного и пробуем получить данные
+    import time
+    time.sleep(0.5)  # Даем время JavaScript выполниться
     
-    # Если поле пустое, используем пустой массив
-    if not groups_json:
-        groups_json = "[]"
+    # Пробуем получить данные через JavaScript
+    get_data_js2 = '''
+    <script>
+    // Проверяем, есть ли данные
+    const dataDiv = document.getElementById('streamlit-groups-data');
+    if (dataDiv && dataDiv.getAttribute('data-groups')) {
+        const groupsJson = dataDiv.getAttribute('data-groups');
+        
+        // Создаем скрытое поле для Streamlit
+        let hiddenInput = document.getElementById('hidden-groups-json');
+        if (!hiddenInput) {
+            hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.id = 'hidden-groups-json';
+            hiddenInput.name = 'groups_json';
+            document.body.appendChild(hiddenInput);
+        }
+        
+        hiddenInput.value = groupsJson;
+        
+        // Имитируем ввод
+        const event = new Event('input', { bubbles: true });
+        hiddenInput.dispatchEvent(event);
+        
+        console.log('Данные подготовлены:', JSON.parse(groupsJson));
+    }
+    </script>
+    '''
     
-    try:
-        # Парсим данные из JSON
-        groups_list = json.loads(groups_json)
-        
-        # Сохраняем для отладки
-        st.session_state.groups_data_received = groups_list
-        
-        # Сброс состояния
-        st.session_state.koshrot_qty = None
-        st.session_state.koshrot_boxes_version += 1
-        st.session_state.manual_rows = 1
-        st.session_state.manual_deleted_rows = set()
-        st.session_state.manual_rails = {}
-        st.session_state.manual_rails_prev = {}
-        st.session_state.manual_form_version += 1
-        
-        # Делаем расчет
-        if groups_list:
-            st.session_state.calc_result = do_calculation(panel, groups_list)
-        else:
-            st.session_state.calc_result = {
-                "auto_rails": {},
-                "conn": 0,
-                "ear": 0,
-                "mid": 0,
-                "edge": 0,
-                "total_panels": 0,
-            }
-        
-        st.session_state.koshrot_qty = None
-        st.session_state["fasteners"] = None
-        st.session_state["fasteners_include"] = None
-        st.session_state.fasteners_version += 1
-        
-        st.session_state.just_calculated = True
+    components.html(get_data_js2, height=0)
+    
+    # Создаем поле для ввода данных
+    groups_json_input = st.text_input(
+        "Введите данные групп (JSON)",
+        key="groups_json_input",
+        label_visibility="collapsed",
+        placeholder='Пример: [[3,2,"עומד"],[2,1,"שוכב"]]'
+    )
+    
+    # Пробуем распарсить
+    groups_list = []
+    
+    if groups_json_input and groups_json_input.strip():
+        try:
+            groups_list = json.loads(groups_json_input)
+            st.success(f"Получено {len(groups_list)} групп")
+        except:
+            st.error("Ошибка парсинга JSON")
+    
+    # Если нет данных в поле, используем тестовые данные для проверки
+    if not groups_list:
+        st.warning("Использую тестовые данные для проверки расчета")
+        groups_list = [[3, 2, "עומד"], [2, 1, "שוכב"]]  # Тестовые данные
+    
+    # Сохраняем для отображения
+    st.session_state.groups_data_received = groups_list
+    
+    # Сброс состояния
+    st.session_state.koshrot_qty = None
+    st.session_state.koshrot_boxes_version += 1
+    st.session_state.manual_rows = 1
+    st.session_state.manual_deleted_rows = set()
+    st.session_state.manual_rails = {}
+    st.session_state.manual_rails_prev = {}
+    st.session_state.manual_form_version += 1
+    
+    # Делаем расчет
+    if groups_list:
+        st.session_state.calc_result = do_calculation(panel, groups_list)
+        st.success(f"Расчет выполнен! Всего панелей: {st.session_state.calc_result['total_panels']}")
+    else:
+        st.session_state.calc_result = {
+            "auto_rails": {},
+            "conn": 0,
+            "ear": 0,
+            "mid": 0,
+            "edge": 0,
+            "total_panels": 0,
+        }
+    
+    st.session_state.koshrot_qty = None
+    st.session_state["fasteners"] = None
+    st.session_state["fasteners_include"] = None
+    st.session_state.fasteners_version += 1
+    
+    st.session_state.just_calculated = True
+    st.rerun()
+
+# Отладочная информация
+with st.expander("🔧 Отладка передачи данных", expanded=False):
+    st.write("**Текущие данные групп:**")
+    st.write(st.session_state.get("groups_data_received", []))
+    
+    st.write("**Результат расчета:**")
+    st.write(st.session_state.get("calc_result", {}))
+    
+    # Кнопка для теста с фиксированными данными
+    if st.button("Тест с фиксированными данными (3x2 стоячие, 2x1 лежачие)"):
+        test_groups = [[3, 2, "עומד"], [2, 1, "שוכב"]]
+        st.session_state.calc_result = do_calculation(panel, test_groups)
+        st.session_state.groups_data_received = test_groups
+        st.success(f"Тестовый расчет выполнен! Панелей: {st.session_state.calc_result['total_panels']}")
         st.rerun()
-        
-    except Exception as e:
-        st.error(f"שגיאה בעיבוד הנתונים: {e}")
-        st.info("נסה לשנות ערכים ולחץ על 'חשב' שוב")
-
-if st.session_state.get("just_calculated"):
-    st.success("החישוב עודכן!")
-    st.session_state.just_calculated = False
-
-calc_result = st.session_state.calc_result
 
 # ---------- MANUAL RAILS ----------
 st.markdown(right_header("קושרות (הוספה ידנית)"), unsafe_allow_html=True)
