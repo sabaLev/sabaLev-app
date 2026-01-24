@@ -7,10 +7,13 @@ import urllib.parse
 import os
 import time
 
+# ---------- ИМПОРТ КОМПОНЕНТЫ ----------
+from group_component import create_groups_component
+
 # ---------- PAGE CONFIG ----------
 st.set_page_config(
     page_title="סולארי - חישוב חומרים",
-    page_icon="📐",
+    page_icon="🤴",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
@@ -39,7 +42,7 @@ st.markdown("""
         margin: 20px 0;
     }
     
-    /* ВЕСЕЛОЕ СООБЩЕНИЕ */
+    /* ВЕСЕЛОЕ СООБЩЕНИЕ С АНИМАЦИЕЙ */
     .funny-message {
         background-color: #fffbeb;
         border: 2px solid #fbbf24;
@@ -50,170 +53,37 @@ st.markdown("""
         font-size: 15px;
         color: #92400e;
         font-weight: 500;
+        animation: bounce 0.8s ease;
+        box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2);
     }
     
-    /* ГРУППЫ ПАНЕЛЕЙ - ОСНОВНОЙ СТИЛЬ */
-    .groups-container {
-        margin: 20px 0;
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
     }
     
-    .group-section {
-        background: #f8fafc;
-        border-radius: 10px;
-        padding: 15px;
-        margin-bottom: 20px;
-        border: 1px solid #e2e8f0;
-    }
-    
-    .group-title {
-        font-weight: 600;
-        color: #4b75c9;
-        text-align: right;
-        margin-bottom: 15px;
-        font-size: 16px;
-        padding-bottom: 8px;
-        border-bottom: 2px solid #e2e8f0;
-    }
-    
-    .groups-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 10px;
-        margin-bottom: 15px;
-    }
-    
-    .group-item {
-        background: white;
-        border-radius: 8px;
-        padding: 12px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-    
-    .group-label {
-        font-weight: 500;
-        text-align: center;
-        margin-bottom: 8px;
-        color: #4a5568;
-        font-size: 14px;
-    }
-    
-    .group-input-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .group-fixed-value {
-        flex: 1;
-        background: #f0f2f6;
-        border-radius: 6px;
-        padding: 8px;
-        text-align: center;
-        font-weight: 500;
-        min-width: 40px;
-    }
-    
-    .group-number-input {
-        flex: 2;
-        min-width: 0;
-    }
-    
-    /* МОБИЛЬНАЯ АДАПТАЦИЯ */
-    @media (max-width: 768px) {
-        .groups-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-        }
-        
-        .group-item {
-            padding: 10px 8px;
-        }
-        
-        .group-label {
-            font-size: 13px;
-        }
-        
-        .group-fixed-value {
-            padding: 6px;
-            font-size: 14px;
-        }
-    }
-    
-    @media (max-width: 480px) {
-        .groups-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-    
-    /* КНОПКИ +/- */
-    .number-input-container {
-        display: flex;
-        align-items: center;
-        background: white;
-        border: 1px solid #d1d5db;
-        border-radius: 6px;
-        overflow: hidden;
-        height: 42px;
-    }
-    
-    .number-input-btn {
-        width: 36px;
-        background: #f3f4f6;
-        border: none;
-        color: #4b5563;
-        font-size: 18px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s;
-        height: 100%;
-    }
-    
-    .number-input-btn:hover {
-        background: #4b75c9;
+    /* КНОПКА РАСЧЕТА */
+    .stButton > button {
+        background-color: #4b75c9;
         color: white;
-    }
-    
-    .number-input-field {
-        flex: 1;
         border: none;
-        text-align: center;
+        border-radius: 6px;
+        padding: 14px 24px;
         font-size: 16px;
         font-weight: 500;
-        padding: 0 5px;
-        min-width: 0;
-        height: 100%;
+        width: 100%;
     }
     
-    /* CSS переменные */
-    :root {
-        --background-color: #ffffff;
-        --text-color: #31333F;
-        --border-color: #DCDCDC;
-        --secondary-background-color: #F0F2F6;
-        --primary-color: #FF4B4B;
-        --hover-color: #EC5953;
+    .stButton > button:hover {
+        background-color: #3a62b5;
     }
     
-    /* Темная тема */
-    .stApp[data-theme="dark"] {
-        --background-color: #0E1117;
-        --text-color: #FAFAFA;
-        --border-color: #2D3748;
-        --secondary-background-color: #1E293B;
-    }
-    
-    /* Скрываем спиннеры у number input */
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-    
-    input[type="number"] {
-        -moz-appearance: textfield;
+    .primary-btn > button {
+        background-color: #4b75c9;
+        font-size: 17px;
+        font-weight: 600;
+        padding: 16px;
+        margin: 20px 0;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -259,12 +129,8 @@ if "show_funny_message" not in st.session_state:
     st.session_state.show_funny_message = {"rows": False, "panels": False}
 if "funny_message_text" not in st.session_state:
     st.session_state.funny_message_text = ""
-
-# Данные групп
-if "standing_data" not in st.session_state:
-    st.session_state.standing_data = {i: 0 for i in range(1, 9)}  # 1-8 панелей
-if "laying_data" not in st.session_state:
-    st.session_state.laying_data = {i: 0 for i in range(1, 5)}    # 1-4 панели
+if "groups_for_calculation" not in st.session_state:
+    st.session_state.groups_for_calculation = []
 
 # ---------- LOAD DATABASES ----------
 @st.cache_data
@@ -492,127 +358,218 @@ st.markdown(right_header("קבוצות פאנלים"), unsafe_allow_html=True)
 if st.session_state.show_funny_message.get("rows") or st.session_state.show_funny_message.get("panels"):
     st.markdown(f'<div class="funny-message">{st.session_state.funny_message_text}</div>', unsafe_allow_html=True)
 
-# Функция для создания строки с числовым вводом и кнопками
-def create_number_input(label, key, min_val=0, max_val=99, default_val=0):
-    """Создает числовой ввод с кнопками +/-"""
-    
-    # Получаем текущее значение
-    current_val = st.session_state.get(key, default_val)
-    
-    # Создаем контейнер
-    col1, col2, col3 = st.columns([1, 2, 1])
-    
-    with col1:
-        if st.button("−", key=f"{key}_minus", use_container_width=True):
-            current_val = max(min_val, current_val - 1)
-            st.session_state[key] = current_val
-            st.rerun()
-    
-    with col2:
-        # Поле ввода
-        new_val = st.number_input(
-            label,
-            min_value=min_val,
-            max_value=max_val,
-            value=current_val,
-            key=f"{key}_input",
-            label_visibility="collapsed"
-        )
-        if new_val != current_val:
-            st.session_state[key] = new_val
-    
-    with col3:
-        if st.button("+", key=f"{key}_plus", use_container_width=True):
-            current_val = min(max_val, current_val + 1)
-            st.session_state[key] = current_val
-            st.rerun()
-    
-    return current_val
+# Отображаем кастомную компоненту
+component = create_groups_component()
 
-# Стоячие панели (1-8 панелей)
-st.markdown('<div class="group-section">', unsafe_allow_html=True)
-st.markdown('<div class="group-title">עומדים (פאנלים עומדים)</div>', unsafe_allow_html=True)
-st.markdown('<div class="groups-grid">', unsafe_allow_html=True)
+# JavaScript для получения данных от компоненты
+components.html("""
+<script>
+// Слушаем сообщения от компоненты
+window.addEventListener('message', function(event) {
+    if (event.data.type === 'solar_groups_update') {
+        // Сохраняем данные в sessionStorage
+        sessionStorage.setItem('last_groups_data', JSON.stringify(event.data.groups));
+        console.log('Received groups from component:', event.data.groups);
+    }
+});
+</script>
+""", height=0)
 
-# Создаем сетку для стоячих панелей
-standing_items = []
-for i in range(1, 9):  # 1-8 панелей
-    with st.container():
-        st.markdown(f'<div class="group-item">', unsafe_allow_html=True)
-        st.markdown(f'<div class="group-label">{i} פאנלים</div>', unsafe_allow_html=True)
-        
-        # Используем обычный number_input (он лучше работает на мобильных)
-        rows_count = st.number_input(
-            "שורות",
-            min_value=0,
-            max_value=99,
-            value=st.session_state.standing_data.get(i, 0),
-            key=f"standing_{i}",
-            label_visibility="collapsed",
-            placeholder="0"
-        )
-        st.session_state.standing_data[i] = int(rows_count)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-
-st.markdown('</div></div>', unsafe_allow_html=True)
-
-# Лежачие панели (1-4 панели)
-st.markdown('<div class="group-section">', unsafe_allow_html=True)
-st.markdown('<div class="group-title">שוכבים (פאנלים שוכבים)</div>', unsafe_allow_html=True)
-st.markdown('<div class="groups-grid">', unsafe_allow_html=True)
-
-# Создаем сетку для лежачих панелей
-for i in range(1, 5):  # 1-4 панели
-    with st.container():
-        st.markdown(f'<div class="group-item">', unsafe_allow_html=True)
-        st.markdown(f'<div class="group-label">{i} פאנלים</div>', unsafe_allow_html=True)
-        
-        rows_count = st.number_input(
-            "שורות",
-            min_value=0,
-            max_value=99,
-            value=st.session_state.laying_data.get(i, 0),
-            key=f"laying_{i}",
-            label_visibility="collapsed",
-            placeholder="0"
-        )
-        st.session_state.laying_data[i] = int(rows_count)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-
-st.markdown('</div></div>', unsafe_allow_html=True)
+# Поле для ручного ввода JSON (fallback)
+st.markdown('<div style="margin-top: 20px; font-size: 14px; color: #666; text-align: right;">אם יש בעיה, הזן נתונים ידנית (JSON):</div>', unsafe_allow_html=True)
+groups_json_input = st.text_area(
+    "",
+    value='',
+    key="groups_json_input",
+    label_visibility="collapsed",
+    placeholder='[[3,2,"עומד"],[2,1,"שוכב"]]',
+    height=100
+)
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
 # ---------- BUTTON: CALCULATE ----------
+st.markdown('<div class="primary-btn"></div>', unsafe_allow_html=True)
 if st.button("חשב", type="primary", use_container_width=True):
     
-    # Собираем данные из standing_data и laying_data
+    # Пытаемся получить данные из компоненты через JavaScript
+    get_data_js = '''
+    <script>
+    // Функция для получения данных
+    function collectGroupsData() {
+        let groups = [];
+        
+        // Способ 1: Из sessionStorage
+        const saved = sessionStorage.getItem('last_groups_data');
+        if (saved) {
+            try {
+                groups = JSON.parse(saved);
+                console.log('Got data from sessionStorage:', groups);
+                if (groups.length > 0) {
+                    return groups;
+                }
+            } catch(e) {
+                console.log('Error parsing sessionStorage:', e);
+            }
+        }
+        
+        // Способ 2: Из глобальной переменной компоненты
+        if (window.solarGroupsData) {
+            groups = window.solarGroupsData;
+            console.log('Got data from global variable:', groups);
+            if (groups.length > 0) {
+                return groups;
+            }
+        }
+        
+        // Способ 3: Прямой доступ к iframe
+        const iframe = document.querySelector('iframe[title*="components.html"]');
+        if (iframe && iframe.contentWindow) {
+            try {
+                // Пробуем вызвать функцию компоненты
+                if (iframe.contentWindow.getGroupsData) {
+                    groups = iframe.contentWindow.getGroupsData();
+                    console.log('Got data from iframe function:', groups);
+                    if (groups.length > 0) {
+                        return groups;
+                    }
+                }
+                
+                // Или из скрытого поля
+                const hiddenInput = iframe.contentWindow.document.getElementById('streamlit-data');
+                if (hiddenInput && hiddenInput.value) {
+                    groups = JSON.parse(hiddenInput.value);
+                    console.log('Got data from hidden input:', groups);
+                    return groups;
+                }
+            } catch(e) {
+                console.log('Cannot access iframe (security restriction):', e);
+            }
+        }
+        
+        console.log('No data found from component');
+        return [];
+    }
+    
+    // Собираем данные
+    const groupsData = collectGroupsData();
+    console.log('Final groups data:', groupsData);
+    
+    // Сохраняем для передачи в Streamlit
+    const resultDiv = document.createElement('div');
+    resultDiv.id = 'groups-data-result';
+    resultDiv.style.display = 'none';
+    resultDiv.setAttribute('data-groups', JSON.stringify(groupsData));
+    document.body.appendChild(resultDiv);
+    
+    // Показываем информацию
+    if (groupsData.length > 0) {
+        alert('נמצאו ' + groupsData.length + ' קבוצות לחישוב');
+    } else {
+        alert('לא נמצאו נתונים. הזן ערכים בטופס ולחץ שוב.');
+    }
+    
+    return groupsData;
+    </script>
+    '''
+    
+    components.html(get_data_js, height=0)
+    
+    # Ждем выполнения JavaScript
+    time.sleep(1)
+    
+    # Пробуем получить данные через другой скрипт
+    get_data_js2 = '''
+    <script>
+    // Ищем сохраненные данные
+    const resultDiv = document.getElementById('groups-data-result');
+    let groups = [];
+    
+    if (resultDiv && resultDiv.getAttribute('data-groups')) {
+        try {
+            groups = JSON.parse(resultDiv.getAttribute('data-groups'));
+        } catch(e) {
+            console.log('Error parsing result div:', e);
+        }
+    }
+    
+    // Если не нашли, пробуем sessionStorage
+    if (groups.length === 0) {
+        const saved = sessionStorage.getItem('last_groups_data');
+        if (saved) {
+            try {
+                groups = JSON.parse(saved);
+            } catch(e) {
+                console.log('Error parsing sessionStorage:', e);
+            }
+        }
+    }
+    
+    // Сохраняем данные в глобальной переменной для доступа из Python
+    window.collectedGroups = groups;
+    
+    // Показываем в console для отладки
+    console.log('Collected groups for Python:', groups);
+    
+    // Создаем скрытый input с данными
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.id = 'python-groups-data';
+    hiddenInput.name = 'groups_data';
+    hiddenInput.value = JSON.stringify(groups);
+    document.body.appendChild(hiddenInput);
+    
+    // Отправляем сообщение с данными
+    window.parent.postMessage({
+        type: 'GROUPS_DATA_READY',
+        data: groups
+    }, '*');
+    
+    return groups;
+    </script>
+    '''
+    
+    components.html(get_data_js2, height=0)
+    time.sleep(0.5)
+    
+    # Пробуем получить данные из ручного ввода JSON
     groups_list = []
     
-    # Стоячие панели
-    for panels_count, rows_count in st.session_state.standing_data.items():
-        if rows_count > 0:
-            groups_list.append([panels_count, rows_count, "עומד"])
+    if groups_json_input and groups_json_input.strip():
+        try:
+            groups_list = json.loads(groups_json_input)
+            if isinstance(groups_list, list):
+                st.success(f"התקבלו {len(groups_list)} קבוצות מהזנה ידנית")
+            else:
+                groups_list = []
+                st.warning("פורמט JSON לא תקין")
+        except Exception as e:
+            st.error(f"שגיאה בפענוח JSON: {e}")
     
-    # Лежачие панели
-    for panels_count, rows_count in st.session_state.laying_data.items():
-        if rows_count > 0:
-            groups_list.append([panels_count, rows_count, "שוכב"])
-    
-    # Проверяем, есть ли данные
+    # Если не получили данные из JSON, показываем инструкцию
     if not groups_list:
-        st.error("לא הוזנו נתונים. אנא הזן מספר שורות עבור הפאנלים.")
-        st.stop()
+        st.warning("""
+        ⚠️ לא הצלחנו לקבל נתונים אוטומטית מהטופס.
+        
+        **אפשרויות:**
+        1. הזן ערכים בטופס ולחץ שוב על "חשב"
+        2. או הזן נתונים ידנית בשדה JSON למעלה
+        3. או נסה לרענן את הדף (F5)
+        
+        **פורמט JSON לדוגמה:**
+        ```
+        [[3,2,"עומד"],[2,1,"שוכב"]]
+        ```
+        """)
+        
+        # Создаем тестовые данные для демонстрации
+        groups_list = [[3, 2, "עומד"], [2, 1, "שוכב"]]
+        st.info(f"משתמשים בנתוני דוגמה: {len(groups_list)} קבוצות")
     
-    # Показываем информацию о введенных данных
-    total_panels = sum(n * g for n, g, _ in groups_list)
-    total_rows = sum(g for _, g, _ in groups_list)
+    # Сохраняем группы для расчета
+    st.session_state.groups_for_calculation = groups_list
     
-    st.success(f"נמצאו {len(groups_list)} קבוצות: {total_panels} פאנלים ב-{total_rows} שורות")
-    
-    # Остальной код расчета
+    # Сброс состояния
     st.session_state.koshrot_qty = None
     st.session_state.koshrot_boxes_version += 1
     st.session_state.manual_rows = 1
@@ -650,84 +607,91 @@ if st.session_state.get("just_calculated"):
 calc_result = st.session_state.calc_result
 
 # ---------- MANUAL RAILS ----------
-if calc_result is not None:
-    st.markdown(right_header("קושרות (הוספה ידנית)"), unsafe_allow_html=True)
-    
+st.markdown(right_header("קושרות (הוספה ידנית)"), unsafe_allow_html=True)
+
+col1, col2, col3 = st.columns(3)
+col1.markdown('<div style="font-size: 12px; text-align: center;">אורך (ס״מ)</div>', unsafe_allow_html=True)
+col2.markdown('<div style="font-size: 12px; text-align: center;">כמות</div>', unsafe_allow_html=True)
+col3.markdown('<div style="font-size: 12px; text-align: center;">&nbsp;</div>', unsafe_allow_html=True)
+
+manual_rows = st.session_state.manual_rows
+for j in range(1, manual_rows + 1):
     col1, col2, col3 = st.columns(3)
-    col1.markdown('<div style="font-size: 12px; text-align: center;">אורך (ס״מ)</div>', unsafe_allow_html=True)
-    col2.markdown('<div style="font-size: 12px; text-align: center;">כמות</div>', unsafe_allow_html=True)
-    col3.markdown('<div style="font-size: 12px; text-align: center;">&nbsp;</div>', unsafe_allow_html=True)
     
-    manual_rows = st.session_state.manual_rows
-    for j in range(1, manual_rows + 1):
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            length = st.number_input(
-                "אורך",
-                min_value=0,
-                max_value=10000,
-                step=10,
-                key=f"m_len_{st.session_state.manual_form_version}_{j}",
-                label_visibility="collapsed",
-                placeholder="ס״מ"
-            )
-        
-        with col2:
-            qty = st.number_input(
-                "כמות",
-                min_value=0,
-                max_value=1000,
-                step=1,
-                key=f"m_qty_{st.session_state.manual_form_version}_{j}",
-                label_visibility="collapsed",
-                placeholder="מספר"
-            )
-        
-        with col3:
-            if j == 1:
-                st.markdown('<div style="font-size: 12px; text-align: right;">להוסיף קושרות</div>', unsafe_allow_html=True)
+    with col1:
+        length = st.number_input(
+            "אורך",
+            min_value=0,
+            max_value=10000,
+            step=10,
+            key=f"m_len_{st.session_state.manual_form_version}_{j}",
+            label_visibility="collapsed",
+            placeholder="ס״מ"
+        )
     
-    if st.button("להוסיף עוד קושרות", key="add_manual_rails"):
-        st.session_state.manual_rows += 1
-        st.rerun()
+    with col2:
+        qty = st.number_input(
+            "כמות",
+            min_value=0,
+            max_value=1000,
+            step=1,
+            key=f"m_qty_{st.session_state.manual_form_version}_{j}",
+            label_visibility="collapsed",
+            placeholder="מספר"
+        )
     
-    # Собираем ручные рейки
-    manual_rails_dict = {}
-    for j in range(1, st.session_state.manual_rows + 1):
-        if j in st.session_state.manual_deleted_rows:
+    with col3:
+        if j == 1:
+            st.markdown('<div style="font-size: 12px; text-align: right;">להוסיף קושרות</div>', unsafe_allow_html=True)
+
+if st.button("להוסיף עוד קושרות", key="add_manual_rails"):
+    st.session_state.manual_rows += 1
+    st.rerun()
+
+# Собираем ручные рейки
+manual_rails_dict = {}
+for j in range(1, st.session_state.manual_rows + 1):
+    if j in st.session_state.manual_deleted_rows:
+        continue
+    length = st.session_state.get(f"m_len_{st.session_state.manual_form_version}_{j}", 0)
+    qty = st.session_state.get(f"m_qty_{st.session_state.manual_form_version}_{j}", 0)
+    if length and qty:
+        manual_rails_dict[length] = manual_rails_dict.get(length, 0) + qty
+
+st.session_state.manual_rails = manual_rails_dict
+
+prev_manual = st.session_state.get("manual_rails_prev", {})
+curr_manual = st.session_state.manual_rails
+
+if st.session_state.get("koshrot_qty") is not None:
+    for length in set(list(prev_manual.keys()) + list(curr_manual.keys())):
+        prev_q = int(prev_manual.get(length, 0) or 0)
+        curr_q = int(curr_manual.get(length, 0) or 0)
+        d = curr_q - prev_q
+        if d == 0:
             continue
-        length = st.session_state.get(f"m_len_{st.session_state.manual_form_version}_{j}", 0)
-        qty = st.session_state.get(f"m_qty_{st.session_state.manual_form_version}_{j}", 0)
-        if length and qty:
-            manual_rails_dict[length] = manual_rails_dict.get(length, 0) + qty
-    
-    st.session_state.manual_rails = manual_rails_dict
-    
-    prev_manual = st.session_state.get("manual_rails_prev", {})
-    curr_manual = st.session_state.manual_rails
-    
-    if st.session_state.get("koshrot_qty") is not None:
-        for length in set(list(prev_manual.keys()) + list(curr_manual.keys())):
-            prev_q = int(prev_manual.get(length, 0) or 0)
-            curr_q = int(curr_manual.get(length, 0) or 0)
-            d = curr_q - prev_q
-            if d == 0:
-                continue
-            k = normalize_length_key(length)
-            new_val = max(int(st.session_state.koshrot_qty.get(k, 0) or 0) + d, 0)
-            st.session_state.koshrot_qty[k] = new_val
-            st.session_state[f"koshrot_qty_{st.session_state.koshrot_boxes_version}_{k}"] = new_val
-    
-    st.session_state.manual_rails_prev = dict(curr_manual)
-    
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-    
-    # ---------- SHOW CALC RESULT ----------
+        k = normalize_length_key(length)
+        new_val = max(int(st.session_state.koshrot_qty.get(k, 0) or 0) + d, 0)
+        st.session_state.koshrot_qty[k] = new_val
+        st.session_state[f"koshrot_qty_{st.session_state.koshrot_boxes_version}_{k}"] = new_val
+
+st.session_state.manual_rails_prev = dict(curr_manual)
+
+st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+
+# ---------- SHOW CALC RESULT ----------
+if calc_result is not None:
     auto_rails = calc_result["auto_rails"]
     manual_rails = st.session_state.manual_rails
     
-    st.write(f"סה\"כ פאנלים: {calc_result['total_panels']}")
+    # Используем сохраненные группы для отображения
+    current_groups = st.session_state.groups_for_calculation
+    if current_groups:
+        total_panels_in_groups = sum(n * g for n, g, _ in current_groups)
+        total_rows = sum(g for _, g, _ in current_groups)
+        st.write(f"סה\"כ פאנלים: {total_panels_in_groups} ({total_rows} שורות)")
+    else:
+        st.write(f"סה\"כ פאנלים: {calc_result['total_panels']}")
     
     # קושרות
     with st.expander("קושרות", expanded=True):
@@ -972,14 +936,8 @@ if calc_result is not None:
                     
                     materials_text += f"• {p['name']}: {p['qty']} {unit}\n"
             
-            # Собираем группы для отчета
-            valid_groups = []
-            for panels_count, rows_count in st.session_state.standing_data.items():
-                if rows_count > 0:
-                    valid_groups.append([panels_count, rows_count, "עומד"])
-            for panels_count, rows_count in st.session_state.laying_data.items():
-                if rows_count > 0:
-                    valid_groups.append([panels_count, rows_count, "שוכב"])
+            # Используем сохраненные группы
+            valid_groups = st.session_state.groups_for_calculation
             
             whatsapp_msg = format_whatsapp_message(
                 project_name=project_name,
