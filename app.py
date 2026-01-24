@@ -14,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ---------- CUSTOM STYLES ----------
+# ---------- CUSTOM STYLES (ОБНОВЛЕННЫЕ) ----------
 st.markdown("""
 <style>
     .main {
@@ -58,140 +58,184 @@ st.markdown("""
         50% { transform: translateY(-5px); }
     }
     
-    /* УЛУЧШЕННЫЕ СТИЛИ ДЛЯ АДАПТИВНЫХ ИНПУТОВ */
-    .compact-group-container {
+    /* НОВЫЙ СТИЛЬ: ДВУХКОЛОНОЧНЫЙ МАКЕТ ДЛЯ ГРУПП */
+    .groups-container {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 12px;
         margin-bottom: 16px;
     }
     
-    .compact-row {
+    .group-row {
         display: flex !important;
-        flex-direction: row !important;
         width: 100% !important;
-        gap: 8px !important;
+        gap: 12px !important;
         align-items: center !important;
     }
     
-    /* Скрываем заголовки */
-    .compact-row div[data-testid="stNumberInput"] > div > label,
-    .compact-row div[data-testid="column"] > label {
+    .group-col {
+        flex: 1 !important;
+        min-width: 0 !important;
+    }
+    
+    /* Скрываем заголовки у инпутов */
+    .group-col div[data-testid="stNumberInput"] > div > label {
         display: none !important;
     }
     
-    /* МАТЕРИАЛЬНЫЕ STEPPER КНОПКИ */
-    .material-stepper-container {
-        display: flex;
-        width: 100%;
-        flex-direction: column;
+    /* Стиль для Material Design Stepper (кнопки слева и справа) */
+    .md-stepper-input {
+        background: #F0F2F6 !important;
+        border-radius: 8px !important;
+        border: none !important;
+        min-width: 0 !important;
+        height: 42px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        overflow: hidden !important;
     }
     
-    .material-stepper {
-        display: flex;
-        align-items: center;
-        background: #F0F2F6;
-        border-radius: 8px;
-        height: 38px;
-        width: 140px;
-        margin: 0 auto;
-        overflow: hidden;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    .md-stepper-input > div[data-baseweb="input"] {
+        background: transparent !important;
+        border: none !important;
+        width: 100% !important;
+        height: 100% !important;
     }
     
-    .stepper-btn {
-        width: 40px;
-        height: 100%;
-        background: #F0F2F6;
-        border: none;
-        color: var(--text-color);
-        font-size: 20px;
-        font-weight: 300;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-        user-select: none;
+    .md-stepper-input > div[data-baseweb="input"] > div {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        height: 100% !important;
     }
     
-    .stepper-btn:hover {
-        background: #EC5953;
-        color: white;
+    /* Кнопки +/- с обеих сторон */
+    .md-stepper-input button {
+        background: #F0F2F6 !important;
+        border: none !important;
+        width: 42px !important;
+        height: 100% !important;
+        color: var(--text-color) !important;
+        font-size: 20px !important;
+        font-weight: 300 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        flex-shrink: 0 !important;
     }
     
-    .stepper-value {
-        flex: 1;
-        text-align: center;
-        font-size: 16px;
-        font-weight: 500;
-        color: var(--text-color);
-        min-width: 40px;
-        padding: 0 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    .md-stepper-input button:hover {
+        background: #EC5953 !important;
+        color: white !important;
     }
     
-    /* Скрываем нативные инпуты но сохраняем их функциональность */
-    .hidden-input {
-        display: none !important;
+    /* Левая кнопка (минус) */
+    .md-stepper-input button:first-child {
+        border-top-left-radius: 8px !important;
+        border-bottom-left-radius: 8px !important;
+        border-right: 1px solid rgba(0,0,0,0.1) !important;
     }
     
-    /* Колонки для Material Stepper */
-    .stepper-col {
-        flex: 1;
-        display: flex;
-        justify-content: center;
+    /* Правая кнопка (плюс) */
+    .md-stepper-input button:last-child {
+        border-top-right-radius: 8px !important;
+        border-bottom-right-radius: 8px !important;
+        border-left: 1px solid rgba(0,0,0,0.1) !important;
+    }
+    
+    /* Поле ввода в центре */
+    .md-stepper-input input {
+        background: transparent !important;
+        text-align: center !important;
+        padding: 10px 4px !important;
+        font-size: 16px !important;
+        font-weight: 500 !important;
+        border: none !important;
+        min-width: 0 !important;
+        color: var(--text-color) !important;
+        width: 100% !important;
+        height: 100% !important;
+    }
+    
+    /* Убираем стрелочки у number input */
+    .md-stepper-input input::-webkit-inner-spin-button,
+    .md-stepper-input input::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    
+    .md-stepper-input input[type="number"] {
+        -moz-appearance: textfield;
+    }
+    
+    /* Заголовки колонок */
+    .columns-header {
+        display: flex !important;
+        width: 100% !important;
+        margin-bottom: 8px !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        color: var(--text-color) !important;
+    }
+    
+    .column-label {
+        flex: 1 !important;
+        text-align: center !important;
+        padding: 0 4px !important;
     }
     
     /* Адаптация для мобильных */
     @media (max-width: 768px) {
-        .material-stepper {
-            width: 120px;
-            height: 34px;
+        .group-row {
+            gap: 8px !important;
         }
         
-        .stepper-btn {
-            width: 36px;
-            font-size: 18px;
+        .md-stepper-input {
+            height: 38px !important;
         }
         
-        .stepper-value {
-            font-size: 15px;
+        .md-stepper-input button {
+            width: 36px !important;
+            font-size: 18px !important;
         }
         
-        .compact-row {
-            gap: 6px !important;
+        .md-stepper-input input {
+            font-size: 15px !important;
+            padding: 8px 2px !important;
         }
     }
     
     @media (max-width: 480px) {
-        .material-stepper {
-            width: 110px;
-            height: 32px;
+        .group-row {
+            gap: 6px !important;
         }
         
-        .stepper-btn {
-            width: 34px;
-            font-size: 16px;
+        .md-stepper-input {
+            height: 36px !important;
         }
         
-        .stepper-value {
-            font-size: 14px;
+        .md-stepper-input button {
+            width: 34px !important;
+            font-size: 16px !important;
+        }
+        
+        .md-stepper-input input {
+            font-size: 14px !important;
         }
     }
     
     /* Темная тема */
-    .stApp[data-theme="dark"] .material-stepper,
-    .stApp[data-theme="dark"] .stepper-btn {
+    .stApp[data-theme="dark"] .md-stepper-input,
+    .stApp[data-theme="dark"] .md-stepper-input > div[data-baseweb="input"],
+    .stApp[data-theme="dark"] .md-stepper-input button {
         background: #1E293B !important;
-        color: #FAFAFA !important;
     }
     
-    .stApp[data-theme="dark"] .stepper-btn:hover {
+    .stApp[data-theme="dark"] .md-stepper-input button:hover {
         background: #EC5953 !important;
-        color: white !important;
     }
     
     /* CSS переменные */
@@ -206,7 +250,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- SESSION STATE INIT ----------
+# ---------- SESSION STATE INIT (ИЗ ВЕРСИИ 1) ----------
 if "calc_result" not in st.session_state:
     st.session_state.calc_result = None
 if "just_calculated" not in st.session_state:
@@ -252,20 +296,22 @@ if "standing_groups_data" not in st.session_state:
 if "laying_groups_data" not in st.session_state:
     st.session_state.laying_groups_data = {}
 
-# Инициализация групп для стоячих и лежачих панелей (из первого варианта)
+# Группы для стоячих и лежачих панелей (ИЗ ВЕРСИИ 1)
 if "standing_rows" not in st.session_state:
     st.session_state.standing_rows = 8
+    # Инициализируем значения для стоячих
     for i in range(1, 9):
         st.session_state.standing_groups_data[f"n_{i}"] = i  # פאנלים: 1, 2, 3... 8
         st.session_state.standing_groups_data[f"g_{i}"] = 0  # שורות: 0
 
 if "laying_rows" not in st.session_state:
     st.session_state.laying_rows = 4
+    # Инициализируем значения для лежачих
     for i in range(1, 5):
         st.session_state.laying_groups_data[f"n_{i}"] = i  # פאנלים: 1, 2, 3, 4
         st.session_state.laying_groups_data[f"g_{i}"] = 0  # שורות: 0
 
-# ---------- LOAD DATABASES ----------
+# ---------- LOAD DATABASES (ИЗ ВЕРСИИ 1) ----------
 @st.cache_data
 def load_data():
     if not os.path.exists("panels.csv"):
@@ -288,7 +334,7 @@ def load_data():
 
 panels, channels_df, parts = load_data()
 
-# ---------- HELPER FUNCTIONS ----------
+# ---------- HELPER FUNCTIONS (ИЗ ВЕРСИИ 1) ----------
 def right_label(text: str) -> str:
     return f'<div style="text-align:right; font-weight:500; margin-bottom:8px;">{text}</div>'
 
@@ -342,7 +388,7 @@ def check_and_show_funny_message(value: int, field_type: str):
         return True
     return False
 
-# ---------- ENGINE FUNCTIONS ----------
+# ---------- ENGINE FUNCTIONS (ИЗ ВЕРСИИ 1) ----------
 def split_into_segments(total_length: int):
     if total_length <= 0:
         return []
@@ -447,7 +493,7 @@ def format_whatsapp_message(project_name, panel_name, groups, materials_text):
     
     return message
 
-# ---------- UI: PROJECT NAME ----------
+# ---------- UI: PROJECT NAME (ИЗ ВЕРСИИ 1) ----------
 st.markdown('<div class="section-header">שם פרויקט</div>', unsafe_allow_html=True)
 project_name = st.text_input(
     "",
@@ -460,7 +506,7 @@ st.session_state.project_name = project_name
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
-# ---------- UI: PANEL SELECTION ----------
+# ---------- UI: PANEL SELECTION (ИЗ ВЕРСИИ 1) ----------
 st.markdown('<div class="section-header">סוג פאנל</div>', unsafe_allow_html=True)
 
 panel_options = sorted(panels["name"].unique().tolist())
@@ -485,7 +531,7 @@ panel = panel_rows.iloc[0]
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
-# ---------- GROUPS SECTION (с Material Design стилями) ----------
+# ---------- GROUPS SECTION (ОБНОВЛЕННЫЙ МАКЕТ) ----------
 st.markdown(right_header("קבוצות פאנלים"), unsafe_allow_html=True)
 
 if st.session_state.show_funny_message.get("rows") or st.session_state.show_funny_message.get("panels"):
@@ -493,44 +539,48 @@ if st.session_state.show_funny_message.get("rows") or st.session_state.show_funn
 
 # СПОЙЛЕР 1: СТОЯЧИЕ ПАНЕЛИ
 with st.expander("עומד", expanded=True):
-    # Заголовки колонок
-    cols = st.columns(2)
-    cols[0].markdown('<div style="text-align: center; font-weight: 500; margin-bottom: 12px;">פאנלים</div>', unsafe_allow_html=True)
-    cols[1].markdown('<div style="text-align: center; font-weight: 500; margin-bottom: 12px;">שורות</div>', unsafe_allow_html=True)
+    # Заголовки колонок (две колонки как в версии 2)
+    st.markdown('''
+    <div class="columns-header">
+        <div class="column-label">פאנלים</div>
+        <div class="column-label">שורות</div>
+    </div>
+    ''', unsafe_allow_html=True)
+    
+    st.markdown('<div class="groups-container">', unsafe_allow_html=True)
+    
+    all_groups = []
+    standing_groups = []
     
     for i in range(1, st.session_state.standing_rows + 1):
-        cols = st.columns(2)
+        # Создаем строку с двумя колонками
+        st.markdown('<div class="group-row">', unsafe_allow_html=True)
         
-        # Получаем текущие значения
-        current_n = st.session_state.standing_groups_data.get(f"n_{i}", i)
-        current_g = st.session_state.standing_groups_data.get(f"g_{i}", 0)
-        
-        # Колонка 1: פאנלים
-        with cols[0]:
-            # Создаём скрытый инпут для сохранения значения
-            n_key = f"standing_n_hidden_{i}"
+        # КОЛОНКА 1: פאנלים
+        col1 = st.container()
+        with col1:
+            # פאנלים - предустановленные значения 1-8
+            default_n = i
+            current_n = st.session_state.standing_groups_data.get(f"n_{i}", default_n)
+            
+            # Создаем уникальный ключ для виджета
+            widget_key = f"standing_n_widget_{i}"
+            
+            # Добавляем CSS класс для Material Design стиля
+            st.markdown('<div class="md-stepper-input">', unsafe_allow_html=True)
+            
             n = st.number_input(
                 "פאנלים",
                 0,
                 99,
                 value=current_n,
-                key=n_key,
-                label_visibility="collapsed",
-                disabled=False  # Разрешаем обновление
+                key=widget_key,
+                label_visibility="collapsed"
             )
             
-            # Material Design Stepper для панелей
-            st.markdown(f"""
-            <div class="material-stepper-container">
-                <div class="material-stepper">
-                    <button class="stepper-btn" onclick="updateValue('{n_key}', -1)">−</button>
-                    <div class="stepper-value">{n}</div>
-                    <button class="stepper-btn" onclick="updateValue('{n_key}', 1)">+</button>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
             
-            # Сохраняем значение
+            # Сохраняем значение в session_state
             st.session_state.standing_groups_data[f"n_{i}"] = n
             
             # Проверяем лимиты
@@ -539,31 +589,31 @@ with st.expander("עומד", expanded=True):
                 st.session_state.standing_groups_data[f"n_{i}"] = 99
                 st.rerun()
         
-        # Колонка 2: שורות
-        with cols[1]:
-            # Создаём скрытый инпут для сохранения значения
-            g_key = f"standing_g_hidden_{i}"
+        # КОЛОНКА 2: שורות
+        col2 = st.container()
+        with col2:
+            # שורות - 0 по умолчанию
+            default_g = 0
+            current_g = st.session_state.standing_groups_data.get(f"g_{i}", default_g)
+            
+            # Создаем уникальный ключ для виджета
+            widget_key = f"standing_g_widget_{i}"
+            
+            # Добавляем CSS класс для Material Design стиля
+            st.markdown('<div class="md-stepper-input">', unsafe_allow_html=True)
+            
             g = st.number_input(
                 "שורות",
                 0,
                 99,
                 value=current_g,
-                key=g_key,
+                key=widget_key,
                 label_visibility="collapsed"
             )
             
-            # Material Design Stepper для строк
-            st.markdown(f"""
-            <div class="material-stepper-container">
-                <div class="material-stepper">
-                    <button class="stepper-btn" onclick="updateValue('{g_key}', -1)">−</button>
-                    <div class="stepper-value">{g}</div>
-                    <button class="stepper-btn" onclick="updateValue('{g_key}', 1)">+</button>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
             
-            # Сохраняем значение
+            # Сохраняем значение в session_state
             st.session_state.standing_groups_data[f"g_{i}"] = g
             
             # Проверяем лимиты
@@ -571,54 +621,68 @@ with st.expander("עומד", expanded=True):
                 check_and_show_funny_message(g, "rows")
                 st.session_state.standing_groups_data[f"g_{i}"] = 99
                 st.rerun()
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        if n > 0 and g > 0:
+            standing_groups.append((n, g, "עומד"))
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # Кнопка добавить строку
     if st.button("עוד שורה", key="add_standing_row"):
         st.session_state.standing_rows += 1
+        # Инициализируем новые значения
         i = st.session_state.standing_rows
         st.session_state.standing_groups_data[f"n_{i}"] = 0
         st.session_state.standing_groups_data[f"g_{i}"] = 0
         st.rerun()
+    
+    all_groups.extend(standing_groups)
 
 # СПОЙЛЕР 2: ЛЕЖАЧИЕ ПАНЕЛИ
 with st.expander("שוכב", expanded=False):
-    # Заголовки колонок
-    cols = st.columns(2)
-    cols[0].markdown('<div style="text-align: center; font-weight: 500; margin-bottom: 12px;">פאנלים</div>', unsafe_allow_html=True)
-    cols[1].markdown('<div style="text-align: center; font-weight: 500; margin-bottom: 12px;">שורות</div>', unsafe_allow_html=True)
+    # Заголовки колонок (две колонки как в версии 2)
+    st.markdown('''
+    <div class="columns-header">
+        <div class="column-label">פאנלים</div>
+        <div class="column-label">שורות</div>
+    </div>
+    ''', unsafe_allow_html=True)
+    
+    st.markdown('<div class="groups-container">', unsafe_allow_html=True)
+    
+    laying_groups = []
     
     for i in range(1, st.session_state.laying_rows + 1):
-        cols = st.columns(2)
+        # Создаем строку с двумя колонками
+        st.markdown('<div class="group-row">', unsafe_allow_html=True)
         
-        # Получаем текущие значения
-        current_n = st.session_state.laying_groups_data.get(f"n_{i}", i if i <= 4 else 0)
-        current_g = st.session_state.laying_groups_data.get(f"g_{i}", 0)
-        
-        # Колонка 1: פאנלים
-        with cols[0]:
-            # Создаём скрытый инпут для сохранения значения
-            n_key = f"laying_n_hidden_{i}"
+        # КОЛОНКА 1: פאנלים
+        col1 = st.container()
+        with col1:
+            # פאנלים - предустановленные значения 1-4
+            default_n = i if i <= 4 else 0
+            current_n = st.session_state.laying_groups_data.get(f"n_{i}", default_n)
+            
+            # Создаем уникальный ключ для виджета
+            widget_key = f"laying_n_widget_{i}"
+            
+            # Добавляем CSS класс для Material Design стиля
+            st.markdown('<div class="md-stepper-input">', unsafe_allow_html=True)
+            
             n = st.number_input(
                 "פאנלים",
                 0,
                 99,
                 value=current_n,
-                key=n_key,
+                key=widget_key,
                 label_visibility="collapsed"
             )
             
-            # Material Design Stepper для панелей
-            st.markdown(f"""
-            <div class="material-stepper-container">
-                <div class="material-stepper">
-                    <button class="stepper-btn" onclick="updateValue('{n_key}', -1)">−</button>
-                    <div class="stepper-value">{n}</div>
-                    <button class="stepper-btn" onclick="updateValue('{n_key}', 1)">+</button>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
             
-            # Сохраняем значение
+            # Сохраняем значение в session_state
             st.session_state.laying_groups_data[f"n_{i}"] = n
             
             # Проверяем лимиты
@@ -627,31 +691,31 @@ with st.expander("שוכב", expanded=False):
                 st.session_state.laying_groups_data[f"n_{i}"] = 99
                 st.rerun()
         
-        # Колонка 2: שורות
-        with cols[1]:
-            # Создаём скрытый инпут для сохранения значения
-            g_key = f"laying_g_hidden_{i}"
+        # КОЛОНКА 2: שורות
+        col2 = st.container()
+        with col2:
+            # שורות - 0 по умолчанию
+            default_g = 0
+            current_g = st.session_state.laying_groups_data.get(f"g_{i}", default_g)
+            
+            # Создаем уникальный ключ для виджета
+            widget_key = f"laying_g_widget_{i}"
+            
+            # Добавляем CSS класс для Material Design стиля
+            st.markdown('<div class="md-stepper-input">', unsafe_allow_html=True)
+            
             g = st.number_input(
                 "שורות",
                 0,
                 99,
                 value=current_g,
-                key=g_key,
+                key=widget_key,
                 label_visibility="collapsed"
             )
             
-            # Material Design Stepper для строк
-            st.markdown(f"""
-            <div class="material-stepper-container">
-                <div class="material-stepper">
-                    <button class="stepper-btn" onclick="updateValue('{g_key}', -1)">−</button>
-                    <div class="stepper-value">{g}</div>
-                    <button class="stepper-btn" onclick="updateValue('{g_key}', 1)">+</button>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
             
-            # Сохраняем значение
+            # Сохраняем значение в session_state
             st.session_state.laying_groups_data[f"g_{i}"] = g
             
             # Проверяем лимиты
@@ -659,62 +723,28 @@ with st.expander("שוכב", expanded=False):
                 check_and_show_funny_message(g, "rows")
                 st.session_state.laying_groups_data[f"g_{i}"] = 99
                 st.rerun()
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        if n > 0 and g > 0:
+            laying_groups.append((n, g, "שוכב"))
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # Кнопка добавить строку
     if st.button("עוד שורה", key="add_laying_row"):
         st.session_state.laying_rows += 1
+        # Инициализируем новые значения
         i = st.session_state.laying_rows
         st.session_state.laying_groups_data[f"n_{i}"] = 0
         st.session_state.laying_groups_data[f"g_{i}"] = 0
         st.rerun()
-
-# JavaScript для обновления значений stepper
-st.markdown("""
-<script>
-function updateValue(inputId, delta) {
-    // Находим скрытый input
-    const inputs = window.parent.document.querySelectorAll(`input[data-testid]`);
-    let targetInput = null;
     
-    // Ищем input с нужным ключом
-    inputs.forEach(input => {
-        if (input.id.includes(inputId) || input.name.includes(inputId)) {
-            targetInput = input;
-        }
-    });
-    
-    if (targetInput) {
-        // Обновляем значение
-        let currentValue = parseInt(targetInput.value) || 0;
-        let newValue = currentValue + delta;
-        
-        // Ограничиваем значения 0-99
-        if (newValue < 0) newValue = 0;
-        if (newValue > 99) newValue = 99;
-        
-        // Устанавливаем новое значение
-        targetInput.value = newValue;
-        
-        // Триггерим событие изменения
-        const event = new Event('input', { bubbles: true });
-        targetInput.dispatchEvent(event);
-        
-        // Обновляем отображение stepper
-        const stepperDiv = targetInput.closest('.element-container').nextElementSibling;
-        if (stepperDiv) {
-            const valueDisplay = stepperDiv.querySelector('.stepper-value');
-            if (valueDisplay) {
-                valueDisplay.textContent = newValue;
-            }
-        }
-    }
-}
-</script>
-""", unsafe_allow_html=True)
+    all_groups.extend(laying_groups)
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
-# ---------- BUTTON: CALCULATE ----------
+# ---------- BUTTON: CALCULATE (ИЗ ВЕРСИИ 1) ----------
 if st.button("חשב", type="primary", use_container_width=True):
     # Собираем текущие группы
     current_standing_groups = []
@@ -769,7 +799,7 @@ if st.session_state.get("just_calculated"):
 
 calc_result = st.session_state.calc_result
 
-# ---------- MANUAL RAILS ----------
+# ---------- MANUAL RAILS (ИЗ ВЕРСИИ 1) ----------
 st.markdown(right_header("קושרות (הוספה ידנית)"), unsafe_allow_html=True)
 
 col1, col2, col3 = st.columns(3)
@@ -842,7 +872,7 @@ st.session_state.manual_rails_prev = dict(curr_manual)
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
-# ---------- SHOW CALC RESULT ----------
+# ---------- SHOW CALC RESULT (ИЗ ВЕРСИИ 1) ----------
 if calc_result is not None:
     auto_rails = calc_result["auto_rails"]
     manual_rails = st.session_state.manual_rails
@@ -1037,7 +1067,7 @@ if calc_result is not None:
                 {"name": n, "qty": q} for n, q in agg.items()
             ]
     
-    # ---------- EXPORT ----------
+    # ---------- EXPORT (ИЗ ВЕРСИИ 1) ----------
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
     st.markdown(right_header('ייצוא דו״ח'), unsafe_allow_html=True)
     
@@ -1164,7 +1194,7 @@ if calc_result is not None:
             </script>
             """, height=0)
 
-# ---------- AUTO CREATE FILES ----------
+# ---------- AUTO CREATE FILES (ИЗ ВЕРСИИ 1) ----------
 if not os.path.exists("manifest.json"):
     with open("manifest.json", "w", encoding="utf-8") as f:
         f.write("""{
@@ -1174,7 +1204,7 @@ if not os.path.exists("manifest.json"):
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#4b75c9",
+  "theme_color": #4b75c9",
   "icons": [
     {
       "src": "https://img.icons8.com/color/96/000000/sun--v1.png",
@@ -1200,7 +1230,7 @@ components.html("""
 <meta name="theme-color" content="#4b75c9">
 """, height=0)
 
-# ---------- FOOTER ----------
+# ---------- FOOTER (ИЗ ВЕРСИИ 1) ----------
 st.markdown("""
 <div style='
     margin-top: 40px;
