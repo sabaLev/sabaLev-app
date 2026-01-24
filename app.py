@@ -38,30 +38,175 @@ st.markdown("""
         margin: 20px 0;
     }
     
+    /* ВЕСЕЛОЕ СООБЩЕНИЕ С АНИМАЦИЕЙ */
+    .funny-message {
+        background-color: #fffbeb;
+        border: 2px solid #fbbf24;
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin: 10px 0;
+        text-align: right;
+        font-size: 15px;
+        color: #92400e;
+        font-weight: 500;
+        animation: bounce 0.8s ease;
+        box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2);
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+    
+    /* УЛУЧШЕННЫЕ СТИЛИ ДЛЯ АДАПТИВНЫХ ИНПУТОВ */
+    .compact-group-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    
+    .compact-row {
+        display: flex !important;
+        flex-direction: row !important;
+        width: 100% !important;
+        gap: 8px !important;
+        align-items: center !important;
+    }
+    
+    /* Скрываем заголовки */
+    .compact-row div[data-testid="stNumberInput"] > div > label,
+    .compact-row div[data-testid="column"] > label {
+        display: none !important;
+    }
+    
+    /* МАТЕРИАЛЬНЫЕ STEPPER КНОПКИ */
+    .material-stepper-container {
+        display: flex;
+        width: 100%;
+        flex-direction: column;
+    }
+    
+    .material-stepper {
+        display: flex;
+        align-items: center;
+        background: #F0F2F6;
+        border-radius: 8px;
+        height: 38px;
+        width: 140px;
+        margin: 0 auto;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .stepper-btn {
+        width: 40px;
+        height: 100%;
+        background: #F0F2F6;
+        border: none;
+        color: var(--text-color);
+        font-size: 20px;
+        font-weight: 300;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        user-select: none;
+    }
+    
+    .stepper-btn:hover {
+        background: #EC5953;
+        color: white;
+    }
+    
+    .stepper-value {
+        flex: 1;
+        text-align: center;
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--text-color);
+        min-width: 40px;
+        padding: 0 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Скрываем нативные инпуты но сохраняем их функциональность */
+    .hidden-input {
+        display: none !important;
+    }
+    
+    /* Колонки для Material Stepper */
+    .stepper-col {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+    }
+    
+    /* Адаптация для мобильных */
+    @media (max-width: 768px) {
+        .material-stepper {
+            width: 120px;
+            height: 34px;
+        }
+        
+        .stepper-btn {
+            width: 36px;
+            font-size: 18px;
+        }
+        
+        .stepper-value {
+            font-size: 15px;
+        }
+        
+        .compact-row {
+            gap: 6px !important;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .material-stepper {
+            width: 110px;
+            height: 32px;
+        }
+        
+        .stepper-btn {
+            width: 34px;
+            font-size: 16px;
+        }
+        
+        .stepper-value {
+            font-size: 14px;
+        }
+    }
+    
+    /* Темная тема */
+    .stApp[data-theme="dark"] .material-stepper,
+    .stApp[data-theme="dark"] .stepper-btn {
+        background: #1E293B !important;
+        color: #FAFAFA !important;
+    }
+    
+    .stApp[data-theme="dark"] .stepper-btn:hover {
+        background: #EC5953 !important;
+        color: white !important;
+    }
+    
     /* CSS переменные */
     :root {
         --background-color: #ffffff;
         --text-color: #31333F;
         --border-color: #DCDCDC;
-        --secondary-bg: #F0F2F6;
+        --secondary-background-color: #F0F2F6;
         --primary-color: #FF4B4B;
         --hover-color: #EC5953;
-        --radius: 8px;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        :root {
-            --background-color: #0E1117;
-            --text-color: #FAFAFA;
-            --border-color: #2D3748;
-            --secondary-bg: #1E293B;
-        }
     }
 </style>
 """, unsafe_allow_html=True)
 
 # ---------- SESSION STATE INIT ----------
-# Минимальный набор переменных
 if "calc_result" not in st.session_state:
     st.session_state.calc_result = None
 if "just_calculated" not in st.session_state:
@@ -96,17 +241,29 @@ if "fasteners_include" not in st.session_state:
     st.session_state.fasteners_include = None
 if "koshrot_qty" not in st.session_state:
     st.session_state.koshrot_qty = None
+if "show_report" not in st.session_state:
+    st.session_state.show_report = False
+if "show_funny_message" not in st.session_state:
+    st.session_state.show_funny_message = {"rows": False, "panels": False}
+if "funny_message_text" not in st.session_state:
+    st.session_state.funny_message_text = ""
+if "standing_groups_data" not in st.session_state:
+    st.session_state.standing_groups_data = {}
+if "laying_groups_data" not in st.session_state:
+    st.session_state.laying_groups_data = {}
 
-# Новые переменные для групп
-if "groups_data" not in st.session_state:
-    st.session_state.groups_data = {
-        "standing": [
-            {"n": i, "g": 0, "row": i} for i in range(1, 9)  # 1-8 פאנלים, 0 שורות
-        ],
-        "laying": [
-            {"n": i, "g": 0, "row": i} for i in range(1, 5)  # 1-4 פאנלים, 0 שורות
-        ]
-    }
+# Инициализация групп для стоячих и лежачих панелей (из первого варианта)
+if "standing_rows" not in st.session_state:
+    st.session_state.standing_rows = 8
+    for i in range(1, 9):
+        st.session_state.standing_groups_data[f"n_{i}"] = i  # פאנלים: 1, 2, 3... 8
+        st.session_state.standing_groups_data[f"g_{i}"] = 0  # שורות: 0
+
+if "laying_rows" not in st.session_state:
+    st.session_state.laying_rows = 4
+    for i in range(1, 5):
+        st.session_state.laying_groups_data[f"n_{i}"] = i  # פאנלים: 1, 2, 3, 4
+        st.session_state.laying_groups_data[f"g_{i}"] = 0  # שורות: 0
 
 # ---------- LOAD DATABASES ----------
 @st.cache_data
@@ -172,6 +329,18 @@ def format_qty(q):
         return s
     except Exception:
         return str(q)
+
+def check_and_show_funny_message(value: int, field_type: str):
+    if value > 99:
+        if field_type == "rows":
+            message = f"אל תגזים אחי, איזה [{value}] שורות במערכת ביתית? 😅"
+        else:
+            message = f"וואי [{value}] פאנלים בשורה אחת? אולי תפצל לשתי שורות? 😄"
+        
+        st.session_state.show_funny_message[field_type] = True
+        st.session_state.funny_message_text = message
+        return True
+    return False
 
 # ---------- ENGINE FUNCTIONS ----------
 def split_into_segments(total_length: int):
@@ -316,520 +485,254 @@ panel = panel_rows.iloc[0]
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
-# ---------- GROUPS SECTION (Material Design Stepper) ----------
+# ---------- GROUPS SECTION (с Material Design стилями) ----------
 st.markdown(right_header("קבוצות פאנלים"), unsafe_allow_html=True)
 
-# HTML компонент с Material Design Stepper
-groups_component = """
-<!DOCTYPE html>
-<html dir="rtl">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-        
-        :root {
-            --bg-color: #F0F2F6;
-            --text-color: #31333F;
-            --border-color: #DCDCDC;
-            --hover-color: #EC5953;
-            --button-bg: #F0F2F6;
-            --radius: 8px;
-            --stepper-height: 38px;
-            --stepper-width: 140px;
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-color: #1E293B;
-                --text-color: #FAFAFA;
-                --border-color: #2D3748;
-                --button-bg: #1E293B;
-            }
-        }
-        
-        .container {
-            width: 100%;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0 4px;
-        }
-        
-        .spoiler-section {
-            margin-bottom: 24px;
-            background: var(--bg-color);
-            border-radius: var(--radius);
-            padding: 16px;
-            border: 1px solid var(--border-color);
-        }
-        
-        .spoiler-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-color);
-            margin-bottom: 16px;
-            text-align: center;
-        }
-        
-        .columns-header {
-            display: flex;
-            width: 100%;
-            margin-bottom: 12px;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-color);
-        }
-        
-        .column-label {
-            flex: 1;
-            text-align: center;
-            padding: 0 4px;
-        }
-        
-        .rows-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .row {
-            display: flex;
-            width: 100%;
-            gap: 12px;
-            align-items: center;
-        }
-        
-        .stepper-wrapper {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-        }
-        
-        /* Material Design Stepper */
-        .md-stepper {
-            display: flex;
-            align-items: center;
-            background: var(--button-bg);
-            border-radius: var(--radius);
-            height: var(--stepper-height);
-            width: var(--stepper-width);
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        
-        .md-stepper-btn {
-            width: 40px;
-            height: 100%;
-            background: var(--button-bg);
-            border: none;
-            color: var(--text-color);
-            font-size: 20px;
-            font-weight: 300;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-            user-select: none;
-        }
-        
-        .md-stepper-btn:hover {
-            background: var(--hover-color);
-            color: white;
-        }
-        
-        .md-stepper-btn:active {
-            transform: scale(0.95);
-        }
-        
-        .md-stepper-value {
-            flex: 1;
-            text-align: center;
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--text-color);
-            min-width: 40px;
-            padding: 0 4px;
-        }
-        
-        /* Кнопка добавления строки */
-        .add-row-btn {
-            background: #4b75c9;
-            color: white;
-            border: none;
-            border-radius: var(--radius);
-            padding: 8px 16px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            margin-top: 12px;
-            transition: background 0.2s;
-            display: block;
-            width: 120px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        
-        .add-row-btn:hover {
-            background: #3a62b5;
-        }
-        
-        /* Адаптация для мобильных */
-        @media (max-width: 768px) {
-            .spoiler-section {
-                padding: 12px;
-            }
-            
-            .row {
-                gap: 8px;
-            }
-            
-            .md-stepper {
-                width: 120px;
-                height: 34px;
-            }
-            
-            .md-stepper-btn {
-                width: 36px;
-                font-size: 18px;
-            }
-            
-            .md-stepper-value {
-                font-size: 15px;
-            }
-            
-            :root {
-                --stepper-height: 34px;
-                --stepper-width: 120px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .spoiler-section {
-                padding: 10px;
-            }
-            
-            .row {
-                gap: 6px;
-            }
-            
-            .md-stepper {
-                width: 110px;
-                height: 32px;
-            }
-            
-            .md-stepper-btn {
-                width: 34px;
-                font-size: 16px;
-            }
-            
-            .md-stepper-value {
-                font-size: 14px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <!-- СПОЙЛЕР 1: СТОЯЧИЕ ПАНЕЛИ -->
-        <div class="spoiler-section">
-            <div class="spoiler-title">עומד</div>
-            <div class="columns-header">
-                <div class="column-label">פאנלים</div>
-                <div class="column-label">שורות</div>
-            </div>
-            <div class="rows-container" id="standing-rows"></div>
-            <button class="add-row-btn" onclick="addRow('standing')">עוד שורה</button>
-        </div>
-        
-        <!-- СПОЙЛЕР 2: ЛЕЖАЧИЕ ПАНЕЛИ -->
-        <div class="spoiler-section">
-            <div class="spoiler-title">שוכב</div>
-            <div class="columns-header">
-                <div class="column-label">פאנלים</div>
-                <div class="column-label">שורות</div>
-            </div>
-            <div class="rows-container" id="laying-rows"></div>
-            <button class="add-row-btn" onclick="addRow('laying')">עוד שורה</button>
-        </div>
-    </div>
+if st.session_state.show_funny_message.get("rows") or st.session_state.show_funny_message.get("panels"):
+    st.markdown(f'<div class="funny-message">{st.session_state.funny_message_text}</div>', unsafe_allow_html=True)
 
-    <script>
-        // Инициализация данных
-        let standingRows = 8;
-        let layingRows = 4;
-        const data = {
-            standing: {},
-            laying: {}
-        };
+# СПОЙЛЕР 1: СТОЯЧИЕ ПАНЕЛИ
+with st.expander("עומד", expanded=True):
+    # Заголовки колонок
+    cols = st.columns(2)
+    cols[0].markdown('<div style="text-align: center; font-weight: 500; margin-bottom: 12px;">פאנלים</div>', unsafe_allow_html=True)
+    cols[1].markdown('<div style="text-align: center; font-weight: 500; margin-bottom: 12px;">שורות</div>', unsafe_allow_html=True)
+    
+    for i in range(1, st.session_state.standing_rows + 1):
+        cols = st.columns(2)
         
-        // Инициализация из session_state через родительское окно
-        function initFromSessionState() {
-            // Предустановленные значения для стоячих (1-8 פאנלים, 0 שורות)
-            for (let i = 1; i <= standingRows; i++) {
-                data.standing[`n_${i}`] = i;  // פאנלים: 1,2,3...8
-                data.standing[`g_${i}`] = 0;  // שורות: 0
-            }
-            
-            // Предустановленные значения для лежачих (1-4 פאנלים, 0 שורות)
-            for (let i = 1; i <= layingRows; i++) {
-                data.laying[`n_${i}`] = i;    // פאנלים: 1,2,3,4
-                data.laying[`g_${i}`] = 0;    // שורות: 0
-            }
-            
-            // Загружаем из localStorage если есть
-            const saved = localStorage.getItem('solar_stepper_data');
-            if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    if (parsed.standingRows) standingRows = parsed.standingRows;
-                    if (parsed.layingRows) layingRows = parsed.layingRows;
-                    if (parsed.data) {
-                        Object.assign(data.standing, parsed.data.standing || {});
-                        Object.assign(data.laying, parsed.data.laying || {});
-                    }
-                } catch(e) {
-                    console.log('Error loading from localStorage:', e);
-                }
-            }
-            
-            saveToStorage();
-            renderAllRows();
-        }
+        # Получаем текущие значения
+        current_n = st.session_state.standing_groups_data.get(f"n_{i}", i)
+        current_g = st.session_state.standing_groups_data.get(f"g_{i}", 0)
         
-        // Сохранение в localStorage
-        function saveToStorage() {
-            localStorage.setItem('solar_stepper_data', JSON.stringify({
-                standingRows,
-                layingRows,
-                data
-            }));
-        }
-        
-        // Отправка данных в Streamlit
-        function sendToStreamlit() {
-            const groupsData = {
-                standing: [],
-                laying: []
-            };
+        # Колонка 1: פאנלים
+        with cols[0]:
+            # Создаём скрытый инпут для сохранения значения
+            n_key = f"standing_n_hidden_{i}"
+            n = st.number_input(
+                "פאנלים",
+                0,
+                99,
+                value=current_n,
+                key=n_key,
+                label_visibility="collapsed",
+                disabled=False  # Разрешаем обновление
+            )
             
-            // Собираем стоячие группы
-            for (let i = 1; i <= standingRows; i++) {
-                groupsData.standing.push({
-                    n: data.standing[`n_${i}`] || 0,
-                    g: data.standing[`g_${i}`] || 0,
-                    row: i
-                });
-            }
-            
-            // Собираем лежачие группы
-            for (let i = 1; i <= layingRows; i++) {
-                groupsData.laying.push({
-                    n: data.laying[`n_${i}`] || 0,
-                    g: data.laying[`g_${i}`] || 0,
-                    row: i
-                });
-            }
-            
-            // Отправляем в Streamlit
-            if (window.parent) {
-                window.parent.postMessage({
-                    type: 'streamlit:setComponentValue',
-                    value: groupsData
-                }, '*');
-            }
-            
-            // Сохраняем в localStorage
-            saveToStorage();
-        }
-        
-        // Создание Material Design Stepper
-        function createStepper(type, field, index, value) {
-            const stepperId = `${type}_${field}_${index}`;
-            
-            return `
-                <div class="stepper-wrapper">
-                    <div class="md-stepper" id="stepper_${stepperId}">
-                        <button class="md-stepper-btn" onclick="updateStepper('${type}', '${field}', ${index}, -1)">−</button>
-                        <div class="md-stepper-value" id="value_${stepperId}">${value}</div>
-                        <button class="md-stepper-btn" onclick="updateStepper('${type}', '${field}', ${index}, 1)">+</button>
-                    </div>
+            # Material Design Stepper для панелей
+            st.markdown(f"""
+            <div class="material-stepper-container">
+                <div class="material-stepper">
+                    <button class="stepper-btn" onclick="updateValue('{n_key}', -1)">−</button>
+                    <div class="stepper-value">{n}</div>
+                    <button class="stepper-btn" onclick="updateValue('{n_key}', 1)">+</button>
                 </div>
-            `;
-        }
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Сохраняем значение
+            st.session_state.standing_groups_data[f"n_{i}"] = n
+            
+            # Проверяем лимиты
+            if n > 99:
+                check_and_show_funny_message(n, "panels")
+                st.session_state.standing_groups_data[f"n_{i}"] = 99
+                st.rerun()
         
-        // Обновление значения stepper
-        function updateStepper(type, field, index, delta) {
-            const key = `${field}_${index}`;
-            let value = data[type][key] || 0;
-            value += delta;
+        # Колонка 2: שורות
+        with cols[1]:
+            # Создаём скрытый инпут для сохранения значения
+            g_key = f"standing_g_hidden_{i}"
+            g = st.number_input(
+                "שורות",
+                0,
+                99,
+                value=current_g,
+                key=g_key,
+                label_visibility="collapsed"
+            )
             
-            // Ограничиваем значения 0-99
-            if (value < 0) value = 0;
-            if (value > 99) value = 99;
-            
-            // Обновляем данные
-            data[type][key] = value;
-            
-            // Обновляем отображение
-            const valueElement = document.getElementById(`value_${type}_${field}_${index}`);
-            if (valueElement) {
-                valueElement.textContent = value;
-            }
-            
-            // Сохраняем и отправляем
-            saveToStorage();
-            sendToStreamlit();
-        }
-        
-        // Создание строки
-        function createRow(type, index) {
-            const nValue = data[type][`n_${index}`] || 0;
-            const gValue = data[type][`g_${index}`] || 0;
-            
-            return `
-                <div class="row" id="row_${type}_${index}">
-                    ${createStepper(type, 'n', index, nValue)}
-                    ${createStepper(type, 'g', index, gValue)}
+            # Material Design Stepper для строк
+            st.markdown(f"""
+            <div class="material-stepper-container">
+                <div class="material-stepper">
+                    <button class="stepper-btn" onclick="updateValue('{g_key}', -1)">−</button>
+                    <div class="stepper-value">{g}</div>
+                    <button class="stepper-btn" onclick="updateValue('{g_key}', 1)">+</button>
                 </div>
-            `;
-        }
-        
-        // Отображение всех строк
-        function renderAllRows() {
-            const standingContainer = document.getElementById('standing-rows');
-            const layingContainer = document.getElementById('laying-rows');
+            </div>
+            """, unsafe_allow_html=True)
             
-            let standingHtml = '';
-            for (let i = 1; i <= standingRows; i++) {
-                standingHtml += createRow('standing', i);
-            }
+            # Сохраняем значение
+            st.session_state.standing_groups_data[f"g_{i}"] = g
             
-            let layingHtml = '';
-            for (let i = 1; i <= layingRows; i++) {
-                layingHtml += createRow('laying', i);
-            }
-            
-            standingContainer.innerHTML = standingHtml;
-            layingContainer.innerHTML = layingHtml;
-        }
-        
-        // Добавление строки
-        function addRow(type) {
-            if (type === 'standing') {
-                standingRows++;
-                data.standing[`n_${standingRows}`] = 0;
-                data.standing[`g_${standingRows}`] = 0;
-            } else {
-                layingRows++;
-                data.laying[`n_${layingRows}`] = 0;
-                data.laying[`g_${layingRows}`] = 0;
-            }
-            
-            saveToStorage();
-            renderAllRows();
-            sendToStreamlit();
-        }
-        
-        // Инициализация при загрузке
-        document.addEventListener('DOMContentLoaded', function() {
-            initFromSessionState();
-            
-            // Сообщаем Streamlit о готовности
-            setTimeout(() => {
-                sendToStreamlit();
-            }, 500);
-        });
-    </script>
-</body>
-</html>
-"""
+            # Проверяем лимиты
+            if g > 99:
+                check_and_show_funny_message(g, "rows")
+                st.session_state.standing_groups_data[f"g_{i}"] = 99
+                st.rerun()
+    
+    # Кнопка добавить строку
+    if st.button("עוד שורה", key="add_standing_row"):
+        st.session_state.standing_rows += 1
+        i = st.session_state.standing_rows
+        st.session_state.standing_groups_data[f"n_{i}"] = 0
+        st.session_state.standing_groups_data[f"g_{i}"] = 0
+        st.rerun()
 
-# Отображаем компонент
-components.html(groups_component, height=500)
+# СПОЙЛЕР 2: ЛЕЖАЧИЕ ПАНЕЛИ
+with st.expander("שוכב", expanded=False):
+    # Заголовки колонок
+    cols = st.columns(2)
+    cols[0].markdown('<div style="text-align: center; font-weight: 500; margin-bottom: 12px;">פאנלים</div>', unsafe_allow_html=True)
+    cols[1].markdown('<div style="text-align: center; font-weight: 500; margin-bottom: 12px;">שורות</div>', unsafe_allow_html=True)
+    
+    for i in range(1, st.session_state.laying_rows + 1):
+        cols = st.columns(2)
+        
+        # Получаем текущие значения
+        current_n = st.session_state.laying_groups_data.get(f"n_{i}", i if i <= 4 else 0)
+        current_g = st.session_state.laying_groups_data.get(f"g_{i}", 0)
+        
+        # Колонка 1: פאנלים
+        with cols[0]:
+            # Создаём скрытый инпут для сохранения значения
+            n_key = f"laying_n_hidden_{i}"
+            n = st.number_input(
+                "פאנלים",
+                0,
+                99,
+                value=current_n,
+                key=n_key,
+                label_visibility="collapsed"
+            )
+            
+            # Material Design Stepper для панелей
+            st.markdown(f"""
+            <div class="material-stepper-container">
+                <div class="material-stepper">
+                    <button class="stepper-btn" onclick="updateValue('{n_key}', -1)">−</button>
+                    <div class="stepper-value">{n}</div>
+                    <button class="stepper-btn" onclick="updateValue('{n_key}', 1)">+</button>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Сохраняем значение
+            st.session_state.laying_groups_data[f"n_{i}"] = n
+            
+            # Проверяем лимиты
+            if n > 99:
+                check_and_show_funny_message(n, "panels")
+                st.session_state.laying_groups_data[f"n_{i}"] = 99
+                st.rerun()
+        
+        # Колонка 2: שורות
+        with cols[1]:
+            # Создаём скрытый инпут для сохранения значения
+            g_key = f"laying_g_hidden_{i}"
+            g = st.number_input(
+                "שורות",
+                0,
+                99,
+                value=current_g,
+                key=g_key,
+                label_visibility="collapsed"
+            )
+            
+            # Material Design Stepper для строк
+            st.markdown(f"""
+            <div class="material-stepper-container">
+                <div class="material-stepper">
+                    <button class="stepper-btn" onclick="updateValue('{g_key}', -1)">−</button>
+                    <div class="stepper-value">{g}</div>
+                    <button class="stepper-btn" onclick="updateValue('{g_key}', 1)">+</button>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Сохраняем значение
+            st.session_state.laying_groups_data[f"g_{i}"] = g
+            
+            # Проверяем лимиты
+            if g > 99:
+                check_and_show_funny_message(g, "rows")
+                st.session_state.laying_groups_data[f"g_{i}"] = 99
+                st.rerun()
+    
+    # Кнопка добавить строку
+    if st.button("עוד שורה", key="add_laying_row"):
+        st.session_state.laying_rows += 1
+        i = st.session_state.laying_rows
+        st.session_state.laying_groups_data[f"n_{i}"] = 0
+        st.session_state.laying_groups_data[f"g_{i}"] = 0
+        st.rerun()
 
-# Скрытое поле для получения данных из компонента
-components.html("""
+# JavaScript для обновления значений stepper
+st.markdown("""
 <script>
-// Отправляем данные при изменении
-window.addEventListener('message', function(event) {
-    if (event.data.type === 'streamlit:setComponentValue') {
-        // Сохраняем в sessionStorage для передачи
-        sessionStorage.setItem('stepper_groups_data', JSON.stringify(event.data.value));
-        
-        // Отправляем в Streamlit
-        window.parent.postMessage({
-            type: 'streamlit:setComponentValue',
-            value: event.data.value
-        }, '*');
-    }
-});
-</script>
-""", height=0)
-
-# JavaScript для получения данных из sessionStorage
-get_data_js = """
-<script>
-// Проверяем есть ли данные от stepper
-try {
-    const savedData = sessionStorage.getItem('stepper_groups_data');
-    if (savedData) {
-        const data = JSON.parse(savedData);
-        
-        // Отправляем в Streamlit
-        if (window.parent) {
-            window.parent.postMessage({
-                type: 'streamlit:setComponentValue',
-                value: data
-            }, '*');
+function updateValue(inputId, delta) {
+    // Находим скрытый input
+    const inputs = window.parent.document.querySelectorAll(`input[data-testid]`);
+    let targetInput = null;
+    
+    // Ищем input с нужным ключом
+    inputs.forEach(input => {
+        if (input.id.includes(inputId) || input.name.includes(inputId)) {
+            targetInput = input;
         }
+    });
+    
+    if (targetInput) {
+        // Обновляем значение
+        let currentValue = parseInt(targetInput.value) || 0;
+        let newValue = currentValue + delta;
         
-        // Очищаем
-        sessionStorage.removeItem('stepper_groups_data');
+        // Ограничиваем значения 0-99
+        if (newValue < 0) newValue = 0;
+        if (newValue > 99) newValue = 99;
+        
+        // Устанавливаем новое значение
+        targetInput.value = newValue;
+        
+        // Триггерим событие изменения
+        const event = new Event('input', { bubbles: true });
+        targetInput.dispatchEvent(event);
+        
+        // Обновляем отображение stepper
+        const stepperDiv = targetInput.closest('.element-container').nextElementSibling;
+        if (stepperDiv) {
+            const valueDisplay = stepperDiv.querySelector('.stepper-value');
+            if (valueDisplay) {
+                valueDisplay.textContent = newValue;
+            }
+        }
     }
-} catch(e) {
-    console.log('Error getting stepper data:', e);
 }
 </script>
-"""
-
-st.markdown(get_data_js, unsafe_allow_html=True)
-
-# Поле для получения данных
-if 'component_groups' not in st.session_state:
-    st.session_state.component_groups = st.session_state.groups_data
+""", unsafe_allow_html=True)
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
 # ---------- BUTTON: CALCULATE ----------
-st.markdown('<div style="background-color: #4b75c9; font-size: 17px; font-weight: 600; padding: 16px; margin: 20px 0; text-align: center; color: white; border-radius: 6px;">חשב</div>', unsafe_allow_html=True)
-
-if st.button("חשב", type="primary", use_container_width=True, key="calculate_main"):
-    # Получаем актуальные данные из session_state
-    current_groups = st.session_state.get("groups_data", st.session_state.groups_data)
+if st.button("חשב", type="primary", use_container_width=True):
+    # Собираем текущие группы
+    current_standing_groups = []
+    current_laying_groups = []
     
-    # Конвертируем в формат для расчета
-    groups_for_calculation = []
-    
-    # Стоячие панели
-    for item in current_groups.get("standing", []):
-        n = item.get("n", 0)
-        g = item.get("g", 0)
+    for i in range(1, st.session_state.standing_rows + 1):
+        n = st.session_state.standing_groups_data.get(f"n_{i}", i)
+        g = st.session_state.standing_groups_data.get(f"g_{i}", 0)
         if n > 0 and g > 0:
-            groups_for_calculation.append((n, g, "עומד"))
+            current_standing_groups.append((n, g, "עומד"))
     
-    # Лежачие панели
-    for item in current_groups.get("laying", []):
-        n = item.get("n", 0)
-        g = item.get("g", 0)
+    for i in range(1, st.session_state.laying_rows + 1):
+        n = st.session_state.laying_groups_data.get(f"n_{i}", i if i <= 4 else 0)
+        g = st.session_state.laying_groups_data.get(f"g_{i}", 0)
         if n > 0 and g > 0:
-            groups_for_calculation.append((n, g, "שוכב"))
+            current_laying_groups.append((n, g, "שוכב"))
+    
+    all_groups = current_standing_groups + current_laying_groups
     
     # Сброс состояния
     st.session_state.koshrot_qty = None
@@ -840,8 +743,8 @@ if st.button("חשב", type="primary", use_container_width=True, key="calculate_
     st.session_state.manual_rails_prev = {}
     st.session_state.manual_form_version += 1
     
-    if groups_for_calculation:
-        st.session_state.calc_result = do_calculation(panel, groups_for_calculation)
+    if all_groups:
+        st.session_state.calc_result = do_calculation(panel, all_groups)
     else:
         st.session_state.calc_result = {
             "auto_rails": {},
@@ -1189,28 +1092,25 @@ if calc_result is not None:
                     
                     materials_text += f"• {p['name']}: {p['qty']} {unit}\n"
             
-            # Используем текущие данные групп
-            current_groups = st.session_state.get("groups_data", {
-                "standing": [{"n": i, "g": 0} for i in range(1, 9)],
-                "laying": [{"n": i, "g": 0} for i in range(1, 5)]
-            })
+            # Используем актуальные группы для расчета
+            current_standing_groups = []
+            current_laying_groups = []
             
-            valid_groups = []
-            
-            # Стоячие панели
-            for i, item in enumerate(current_groups.get("standing", []), 1):
-                n = item.get("n", 0)
-                g = item.get("g", 0)
+            for i in range(1, st.session_state.standing_rows + 1):
+                n = st.session_state.standing_groups_data.get(f"n_{i}", i)
+                g = st.session_state.standing_groups_data.get(f"g_{i}", 0)
                 if n > 0 and g > 0:
-                    valid_groups.append((n, g, "עומד"))
+                    current_standing_groups.append((n, g, "עומד"))
             
-            # Лежачие панели
-            for i, item in enumerate(current_groups.get("laying", []), 1):
-                n = item.get("n", 0)
-                g = item.get("g", 0)
+            for i in range(1, st.session_state.laying_rows + 1):
+                n = st.session_state.laying_groups_data.get(f"n_{i}", i if i <= 4 else 0)
+                g = st.session_state.laying_groups_data.get(f"g_{i}", 0)
                 if n > 0 and g > 0:
-                    valid_groups.append((n, g, "שוכב"))
+                    current_laying_groups.append((n, g, "שוכב"))
             
+            current_all_groups = current_standing_groups + current_laying_groups
+            
+            valid_groups = [(n, g, o) for n, g, o in current_all_groups if n > 0 and g > 0]
             whatsapp_msg = format_whatsapp_message(
                 project_name=project_name,
                 panel_name=panel_name,
