@@ -75,8 +75,8 @@ st.markdown("""
     }
     
     /* Скрываем заголовки у всех инпутов в группах */
-    .compact-row div[data-testid="stNumberInput"] label,
-    .compact-row div[data-testid="column"] label {
+    .compact-row div[data-testid="stNumberInput"] > div > label,
+    .compact-row div[data-testid="column"] > label {
         display: none !important;
     }
     
@@ -84,6 +84,7 @@ st.markdown("""
     .compact-row div[data-testid="stNumberInput"] > div {
         width: 100% !important;
         min-width: 0 !important;
+        margin-bottom: 0 !important;
     }
     
     .compact-row div[data-baseweb="input"] {
@@ -91,34 +92,39 @@ st.markdown("""
         border-radius: 8px !important;
         border: none !important;
         min-width: 0 !important;
+        height: 42px !important;
     }
     
     .compact-row input {
         background: transparent !important;
         text-align: center !important;
-        padding: 8px 12px !important;
-        font-size: 14px !important;
+        padding: 10px 12px !important;
+        font-size: 15px !important;
         border: none !important;
         min-width: 0 !important;
+        color: var(--text-color) !important;
     }
     
     /* Кнопки +/- в стиле Streamlit */
     .compact-row div[data-baseweb="input"] button {
         background: #F0F2F6 !important;
         border: none !important;
-        width: 32px !important;
+        width: 34px !important;
         height: 100% !important;
         border-radius: 0 !important;
         margin: 0 !important;
+        color: var(--text-color) !important;
     }
     
     .compact-row div[data-baseweb="input"] button:hover {
         background: #EC5953 !important;
+        color: white !important;
     }
     
     .compact-row div[data-baseweb="input"] button:first-child {
         border-top-right-radius: 8px !important;
         border-bottom-right-radius: 8px !important;
+        border-left: 1px solid rgba(0,0,0,0.1) !important;
     }
     
     .compact-row div[data-baseweb="input"] button:last-child {
@@ -152,38 +158,19 @@ st.markdown("""
         
         .compact-row input {
             padding: 8px 6px !important;
-            font-size: 13px !important;
+            font-size: 14px !important;
         }
         
         .compact-row div[data-baseweb="input"] button {
-            width: 28px !important;
+            width: 30px !important;
         }
     }
     
     /* Темная тема */
-    @media (prefers-color-scheme: dark) {
-        .compact-row div[data-baseweb="input"] {
-            background: #1E293B !important;
-        }
-        
-        .compact-row div[data-baseweb="input"] > div {
-            background: #1E293B !important;
-        }
-        
-        .compact-row div[data-baseweb="input"] button {
-            background: #1E293B !important;
-        }
-        
-        .compact-row input {
-            color: white !important;
-        }
-    }
-    
-    /* Кнопка "עוד שורה" */
-    .add-row-btn {
-        margin-top: 12px !important;
-        width: auto !important;
-        align-self: flex-start !important;
+    .stApp[data-theme="dark"] .compact-row div[data-baseweb="input"],
+    .stApp[data-theme="dark"] .compact-row div[data-baseweb="input"] > div,
+    .stApp[data-theme="dark"] .compact-row div[data-baseweb="input"] button {
+        background: #1E293B !important;
     }
     
     /* CSS переменные */
@@ -239,13 +226,25 @@ if "show_funny_message" not in st.session_state:
     st.session_state.show_funny_message = {"rows": False, "panels": False}
 if "funny_message_text" not in st.session_state:
     st.session_state.funny_message_text = ""
+if "standing_groups_data" not in st.session_state:
+    st.session_state.standing_groups_data = {}
+if "laying_groups_data" not in st.session_state:
+    st.session_state.laying_groups_data = {}
 
 # Группы для стоячих и лежачих панелей
 if "standing_rows" not in st.session_state:
     st.session_state.standing_rows = 8
+    # Инициализируем значения для стоячих
+    for i in range(1, 9):
+        st.session_state.standing_groups_data[f"n_{i}"] = i  # פאנלים: 1, 2, 3... 8
+        st.session_state.standing_groups_data[f"g_{i}"] = 0  # שורות: 0
 
 if "laying_rows" not in st.session_state:
     st.session_state.laying_rows = 4
+    # Инициализируем значения для лежачих
+    for i in range(1, 5):
+        st.session_state.laying_groups_data[f"n_{i}"] = i  # פאנלים: 1, 2, 3, 4
+        st.session_state.laying_groups_data[f"g_{i}"] = 0  # שורות: 0
 
 # ---------- LOAD DATABASES ----------
 @st.cache_data
@@ -496,39 +495,53 @@ with st.expander("עומד", expanded=True):
         with col1:
             # פאנלים - предустановленные значения 1-8
             default_n = i
-            n_key = f"standing_n_{i}"
+            current_n = st.session_state.standing_groups_data.get(f"n_{i}", default_n)
+            
+            # Создаем уникальный ключ для виджета
+            widget_key = f"standing_n_widget_{i}"
+            
             n = st.number_input(
                 "פאנלים",
                 0,
                 99,
-                value=st.session_state.get(n_key, default_n),
-                key=n_key,
+                value=current_n,
+                key=widget_key,
                 label_visibility="collapsed"
             )
-            st.session_state[n_key] = n
             
+            # Сохраняем значение в session_state
+            st.session_state.standing_groups_data[f"n_{i}"] = n
+            
+            # Проверяем лимиты
             if n > 99:
                 check_and_show_funny_message(n, "panels")
-                st.session_state[n_key] = 99
+                st.session_state.standing_groups_data[f"n_{i}"] = 99
                 st.rerun()
         
         with col2:
             # שורות - 0 по умолчанию
             default_g = 0
-            g_key = f"standing_g_{i}"
+            current_g = st.session_state.standing_groups_data.get(f"g_{i}", default_g)
+            
+            # Создаем уникальный ключ для виджета
+            widget_key = f"standing_g_widget_{i}"
+            
             g = st.number_input(
                 "שורות",
                 0,
                 99,
-                value=st.session_state.get(g_key, default_g),
-                key=g_key,
+                value=current_g,
+                key=widget_key,
                 label_visibility="collapsed"
             )
-            st.session_state[g_key] = g
             
+            # Сохраняем значение в session_state
+            st.session_state.standing_groups_data[f"g_{i}"] = g
+            
+            # Проверяем лимиты
             if g > 99:
                 check_and_show_funny_message(g, "rows")
-                st.session_state[g_key] = 99
+                st.session_state.standing_groups_data[f"g_{i}"] = 99
                 st.rerun()
         
         if n > 0 and g > 0:
@@ -537,6 +550,10 @@ with st.expander("עומד", expanded=True):
     # Кнопка добавить строку
     if st.button("עוד שורה", key="add_standing_row"):
         st.session_state.standing_rows += 1
+        # Инициализируем новые значения
+        i = st.session_state.standing_rows
+        st.session_state.standing_groups_data[f"n_{i}"] = 0
+        st.session_state.standing_groups_data[f"g_{i}"] = 0
         st.rerun()
     
     all_groups.extend(standing_groups)
@@ -560,39 +577,53 @@ with st.expander("שוכב", expanded=False):
         with col1:
             # פאנלים - предустановленные значения 1-4
             default_n = i if i <= 4 else 0
-            n_key = f"laying_n_{i}"
+            current_n = st.session_state.laying_groups_data.get(f"n_{i}", default_n)
+            
+            # Создаем уникальный ключ для виджета
+            widget_key = f"laying_n_widget_{i}"
+            
             n = st.number_input(
                 "פאנלים",
                 0,
                 99,
-                value=st.session_state.get(n_key, default_n),
-                key=n_key,
+                value=current_n,
+                key=widget_key,
                 label_visibility="collapsed"
             )
-            st.session_state[n_key] = n
             
+            # Сохраняем значение в session_state
+            st.session_state.laying_groups_data[f"n_{i}"] = n
+            
+            # Проверяем лимиты
             if n > 99:
                 check_and_show_funny_message(n, "panels")
-                st.session_state[n_key] = 99
+                st.session_state.laying_groups_data[f"n_{i}"] = 99
                 st.rerun()
         
         with col2:
             # שורות - 0 по умолчанию
             default_g = 0
-            g_key = f"laying_g_{i}"
+            current_g = st.session_state.laying_groups_data.get(f"g_{i}", default_g)
+            
+            # Создаем уникальный ключ для виджета
+            widget_key = f"laying_g_widget_{i}"
+            
             g = st.number_input(
                 "שורות",
                 0,
                 99,
-                value=st.session_state.get(g_key, default_g),
-                key=g_key,
+                value=current_g,
+                key=widget_key,
                 label_visibility="collapsed"
             )
-            st.session_state[g_key] = g
             
+            # Сохраняем значение в session_state
+            st.session_state.laying_groups_data[f"g_{i}"] = g
+            
+            # Проверяем лимиты
             if g > 99:
                 check_and_show_funny_message(g, "rows")
-                st.session_state[g_key] = 99
+                st.session_state.laying_groups_data[f"g_{i}"] = 99
                 st.rerun()
         
         if n > 0 and g > 0:
@@ -601,6 +632,10 @@ with st.expander("שוכב", expanded=False):
     # Кнопка добавить строку
     if st.button("עוד שורה", key="add_laying_row"):
         st.session_state.laying_rows += 1
+        # Инициализируем новые значения
+        i = st.session_state.laying_rows
+        st.session_state.laying_groups_data[f"n_{i}"] = 0
+        st.session_state.laying_groups_data[f"g_{i}"] = 0
         st.rerun()
     
     all_groups.extend(laying_groups)
@@ -618,14 +653,14 @@ if st.button("חשב", type="primary", use_container_width=True):
     current_laying_groups = []
     
     for i in range(1, st.session_state.standing_rows + 1):
-        n = st.session_state.get(f"standing_n_{i}", i)
-        g = st.session_state.get(f"standing_g_{i}", 0)
+        n = st.session_state.standing_groups_data.get(f"n_{i}", i)
+        g = st.session_state.standing_groups_data.get(f"g_{i}", 0)
         if n > 0 and g > 0:
             current_standing_groups.append((n, g, "עומד"))
     
     for i in range(1, st.session_state.laying_rows + 1):
-        n = st.session_state.get(f"laying_n_{i}", i if i <= 4 else 0)
-        g = st.session_state.get(f"laying_g_{i}", 0)
+        n = st.session_state.laying_groups_data.get(f"n_{i}", i if i <= 4 else 0)
+        g = st.session_state.laying_groups_data.get(f"g_{i}", 0)
         if n > 0 and g > 0:
             current_laying_groups.append((n, g, "שוכב"))
     
@@ -994,14 +1029,14 @@ if calc_result is not None:
             current_laying_groups = []
             
             for i in range(1, st.session_state.standing_rows + 1):
-                n = st.session_state.get(f"standing_n_{i}", i)
-                g = st.session_state.get(f"standing_g_{i}", 0)
+                n = st.session_state.standing_groups_data.get(f"n_{i}", i)
+                g = st.session_state.standing_groups_data.get(f"g_{i}", 0)
                 if n > 0 and g > 0:
                     current_standing_groups.append((n, g, "עומד"))
             
             for i in range(1, st.session_state.laying_rows + 1):
-                n = st.session_state.get(f"laying_n_{i}", i if i <= 4 else 0)
-                g = st.session_state.get(f"laying_g_{i}", 0)
+                n = st.session_state.laying_groups_data.get(f"n_{i}", i if i <= 4 else 0)
+                g = st.session_state.laying_groups_data.get(f"g_{i}", 0)
                 if n > 0 and g > 0:
                     current_laying_groups.append((n, g, "שוכב"))
             
