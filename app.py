@@ -6,6 +6,9 @@ import json
 
 # ---------- SESSION STATE INIT (required) ----------
 st.session_state.setdefault("fasteners", None)
+# Инициализация для групп панелей
+st.session_state.setdefault("vertical_rows", 8)  # Для вертикальных панелей
+st.session_state.setdefault("horizontal_rows", 4)  # Для горизонтальных панелей
 
 # ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
 
@@ -72,14 +75,15 @@ panels["name"] = panels["name"].astype(str)
 if "calc_result" not in st.session_state:
     st.session_state.calc_result = None
 
-
 if "just_calculated" not in st.session_state:
     st.session_state.just_calculated = False
 
-if "group_rows" not in st.session_state:
-    # Отдельные счетчики для вертикальных и горизонтальных панелей
-    st.session_state.vertical_rows = 8
-    st.session_state.horizontal_rows = 4
+# Эти ключи уже инициализированы выше с помощью setdefault
+# if "vertical_rows" not in st.session_state:
+#     st.session_state.vertical_rows = 8
+# 
+# if "horizontal_rows" not in st.session_state:
+#     st.session_state.horizontal_rows = 4
 
 if "channel_order" not in st.session_state:
     st.session_state.channel_order = {}
@@ -90,11 +94,9 @@ if "extra_parts" not in st.session_state:
 if "manual_rows" not in st.session_state:
     st.session_state.manual_rows = 1
 
-
 # bump this to force manual rails widgets to reset
 if "manual_form_version" not in st.session_state:
     st.session_state.manual_form_version = 0
-
 
 # bump this to force קושרות quantity boxes to reset
 if "koshrot_boxes_version" not in st.session_state:
@@ -114,7 +116,6 @@ if "project_name" not in st.session_state:
 
 if "manual_deleted_rows" not in st.session_state:
     st.session_state.manual_deleted_rows = set()
-
 
 # snapshot of manual rails to compute deltas
 if "manual_rails_prev" not in st.session_state:
@@ -316,26 +317,27 @@ panel = panel_rows.iloc[0]
 
 groups = []
 
+# CSS для стрелок спойлера (добавляем глобально)
+st.markdown("""
+    <style>
+    /* Стрелки для expander: закрыт - вниз, открыт - влево */
+    .streamlit-expanderHeader svg {
+        transform: rotate(0deg);
+        transition: transform 0.3s;
+    }
+    .streamlit-expanderHeader[aria-expanded="true"] svg {
+        transform: rotate(-90deg);
+    }
+    /* Выравнивание заголовка по правому краю */
+    .streamlit-expanderHeader {
+        text-align: right;
+        direction: rtl;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # Секция вертикальных панелей (первые 8 строк) - עומדים
 with st.expander("**עומדים**", expanded=True):
-    # CSS для стрелок спойлера
-    st.markdown("""
-        <style>
-        /* Стрелки для expander: закрыт - вниз, открыт - влево */
-        .streamlit-expanderHeader svg {
-            transform: rotate(0deg);
-            transition: transform 0.3s;
-        }
-        .streamlit-expanderHeader[aria-expanded="true"] svg {
-            transform: rotate(-90deg);
-        }
-        /* Выравнивание заголовка по правому краю */
-        .streamlit-expanderHeader {
-            text-align: right;
-            direction: rtl;
-        }
-        </style>
-    """, unsafe_allow_html=True)
     
     # Добавляем заголовки колонок внутри спойлера
     vh = st.columns(2)
@@ -346,12 +348,19 @@ with st.expander("**עומדים**", expanded=True):
     for i in range(1, vertical_rows + 1):
         c0, c1 = st.columns(2)
         
+        # Определяем предустановленные значения
+        if i <= 8:
+            default_g = 1
+            default_n = i
+        else:
+            default_g = 0
+            default_n = 0
+        
         g = c0.number_input(
             "",
             0,
             50,
-            # Для первых 8 строк устанавливаем предустановленные значения
-            1 if i <= 8 else 0,
+            default_g,
             key=f"g_g_vertical_{i}",
             label_visibility="collapsed",
         )
@@ -360,8 +369,7 @@ with st.expander("**עומדים**", expanded=True):
             "",
             0,
             100,
-            # Для первых 8 строк: 1 для строки 1, 2 для строки 2 и т.д.
-            i if i <= 8 else 0,
+            default_n,
             key=f"g_n_vertical_{i}",
             label_visibility="collapsed",
         )
@@ -385,19 +393,23 @@ with st.expander("**שוכבים**", expanded=True):
     for i in range(1, horizontal_rows + 1):
         c0, c1 = st.columns(2)
         
+        # Определяем предустановленные значения
+        if i <= 4:
+            default_g = 1
+            default_n = i
+        else:
+            default_g = 0
+            default_n = 0
+        
         g = c0.number_input(
             "",
             0,
             50,
-            # Для первых 4 строк устанавливаем предустановленные значения
-            1 if i <= 4 else 0,
+            default_g,
             key=f"g_g_horizontal_{i}",
             label_visibility="collapsed",
         )
 
-        # Для горизонтальных панелей предустановленные значения: 1 для строки 1, 2 для строки 2 и т.д.
-        default_n = i if i <= 4 else 0
-        
         n = c1.number_input(
             "",
             0,
@@ -580,7 +592,7 @@ def build_html_report(calc_result, project_name, panel_name, channel_order, extr
         for length in sorted(rails_total.keys(), key=length_sort_key, reverse=True):
             html += f"<p dir='rtl' style='text-align:right;'>{rails_total[length]} × {length}</p>"
 
-    # --- פרזול в отчёте ---
+    # --- פרזול בסקירה ---
     fasteners = [
         ("מהדק הארקה", ear),
         ("מהדק אמצע", mid),
@@ -814,7 +826,7 @@ if calc_result is not None:
         if st.session_state.koshrot_qty:
             # Визуально как תעלות/פרזול: название (жирно, справа), под ним бокс количества
             for length in sorted(st.session_state.koshrot_qty.keys(), key=length_sort_key, reverse=True):
-                st.markdown(right_label(length), unsafe_allow_html=True)
+                st.markdown(right_label(f"אורך: {length} ס״מ"), unsafe_allow_html=True)
 
                 qty_key = f"koshrot_qty_{st.session_state.koshrot_boxes_version}_{length}"
                 default_val = int(st.session_state.koshrot_qty.get(length, 0))
