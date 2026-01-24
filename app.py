@@ -812,14 +812,14 @@ st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 # ---------- BUTTON: CALCULATE ----------
 if st.button("חשב", type="primary", use_container_width=True):
     
-    # ПРОСТОЙ способ получить данные: используем JavaScript для alert и ручного ввода
+    # ПРОСТОЙ способ получить данные
     get_data_js = '''
     <script>
     // Получаем текущие данные из компоненты
     function collectGroupsData() {
         const groups = [];
         
-        // Стоячие панели (до 20 строк)
+        // Стоячие панели
         for (let i = 1; i <= 20; i++) {
             const nInput = document.getElementById('standing_n_' + i);
             const gInput = document.getElementById('standing_g_' + i);
@@ -833,7 +833,7 @@ if st.button("חשב", type="primary", use_container_width=True):
             }
         }
         
-        // Лежачие панели (до 20 строк)
+        // Лежачие панели
         for (let i = 1; i <= 20; i++) {
             const nInput = document.getElementById('laying_n_' + i);
             const gInput = document.getElementById('laying_g_' + i);
@@ -852,13 +852,12 @@ if st.button("חשב", type="primary", use_container_width=True):
     
     // Собираем данные
     const groupsData = collectGroupsData();
-    console.log('Собраны группы:', groupsData);
     
     // Показываем в alert для проверки
     if (groupsData.length > 0) {
         let message = 'Найдено групп: ' + groupsData.length + '\\n';
         groupsData.forEach((g, i) => {
-            message += `Группа ${i+1}: ${g[0]} панелей, ${g[1]} строк (${g[2]})\\n`;
+            message += 'Группа ' + (i+1) + ': ' + g[0] + ' панелей, ' + g[1] + ' строк (' + g[2] + ')\\n';
         });
         alert(message);
     } else {
@@ -877,7 +876,7 @@ if st.button("חשב", type="primary", use_container_width=True):
     // Записываем данные
     dataDiv.setAttribute('data-groups', JSON.stringify(groupsData));
     
-    // Инициируем отправку в Streamlit
+    // Отправляем в Streamlit
     window.parent.postMessage({
         type: 'streamlit_groups_data',
         data: groupsData
@@ -887,19 +886,17 @@ if st.button("חשב", type="primary", use_container_width=True):
     
     components.html(get_data_js, height=0)
     
-    # Ждем немного и пробуем получить данные
+    # Ждем немного
     import time
-    time.sleep(0.5)  # Даем время JavaScript выполниться
+    time.sleep(0.5)
     
-    # Пробуем получить данные через JavaScript
+    # Пробуем получить данные
     get_data_js2 = '''
     <script>
-    // Проверяем, есть ли данные
     const dataDiv = document.getElementById('streamlit-groups-data');
     if (dataDiv && dataDiv.getAttribute('data-groups')) {
         const groupsJson = dataDiv.getAttribute('data-groups');
         
-        // Создаем скрытое поле для Streamlit
         let hiddenInput = document.getElementById('hidden-groups-json');
         if (!hiddenInput) {
             hiddenInput = document.createElement('input');
@@ -911,23 +908,20 @@ if st.button("חשב", type="primary", use_container_width=True):
         
         hiddenInput.value = groupsJson;
         
-        // Имитируем ввод
         const event = new Event('input', { bubbles: true });
         hiddenInput.dispatchEvent(event);
-        
-        console.log('Данные подготовлены:', JSON.parse(groupsJson));
     }
     </script>
     '''
     
     components.html(get_data_js2, height=0)
     
-    # Создаем поле для ввода данных
+    # Поле для ручного ввода (на всякий случай)
     groups_json_input = st.text_input(
         "Введите данные групп (JSON)",
         key="groups_json_input",
         label_visibility="collapsed",
-        placeholder='Пример: [[3,2,"עומד"],[2,1,"שוכב"]]'
+        placeholder='[[3,2,"עומד"],[2,1,"שוכב"]]'
     )
     
     # Пробуем распарсить
@@ -940,12 +934,12 @@ if st.button("חשב", type="primary", use_container_width=True):
         except:
             st.error("Ошибка парсинга JSON")
     
-    # Если нет данных в поле, используем тестовые данные для проверки
+    # Если нет данных, используем тестовые
     if not groups_list:
-        st.warning("Использую тестовые данные для проверки расчета")
-        groups_list = [[3, 2, "עומד"], [2, 1, "שוכב"]]  # Тестовые данные
+        st.warning("Использую тестовые данные для проверки")
+        groups_list = [[3, 2, "עומד"], [2, 1, "שוכב"]]
     
-    # Сохраняем для отображения
+    # Сохраняем
     st.session_state.groups_data_received = groups_list
     
     # Сброс состояния
@@ -979,21 +973,11 @@ if st.button("חשב", type="primary", use_container_width=True):
     st.session_state.just_calculated = True
     st.rerun()
 
-# Отладочная информация
-with st.expander("🔧 Отладка передачи данных", expanded=False):
-    st.write("**Текущие данные групп:**")
-    st.write(st.session_state.get("groups_data_received", []))
-    
-    st.write("**Результат расчета:**")
-    st.write(st.session_state.get("calc_result", {}))
-    
-    # Кнопка для теста с фиксированными данными
-    if st.button("Тест с фиксированными данными (3x2 стоячие, 2x1 лежачие)"):
-        test_groups = [[3, 2, "עומד"], [2, 1, "שוכב"]]
-        st.session_state.calc_result = do_calculation(panel, test_groups)
-        st.session_state.groups_data_received = test_groups
-        st.success(f"Тестовый расчет выполнен! Панелей: {st.session_state.calc_result['total_panels']}")
-        st.rerun()
+if st.session_state.get("just_calculated"):
+    st.success("החישוב עודכן!")
+    st.session_state.just_calculated = False
+
+calc_result = st.session_state.calc_result
 
 # ---------- MANUAL RAILS ----------
 st.markdown(right_header("קושרות (הוספה ידנית)"), unsafe_allow_html=True)
