@@ -235,7 +235,7 @@ if "unit" not in parts.columns:
 if st.sidebar.button("להוסיף פריט"):
     if lib_new_name:
         if lib_new_name in parts["name"].values:
-            st.sidebar.warning("הפריט הזה כבר קיים, не נוסף כפילוּל.")
+            st.sidebar.warning("הפריט הזה כבר קיים, לא נוסף כפילוּל.")
         else:
             parts.loc[len(parts)] = [lib_new_name, unit]
             parts.to_csv("parts.csv", index=False)
@@ -298,28 +298,23 @@ panel = panel_rows.iloc[0]
 # ---------- GROUPS ----------
 groups = []
 
-# Ключевое исправление: упрощенный CSS для правильного отображения
+# CSS только для стрелок и кнопки
 st.markdown("""
     <style>
-    /* Основное исправление: выравнивание заголовков спойлеров по правому краю */
-    .streamlit-expanderHeader {
-        direction: rtl;
-    }
-    
-    .streamlit-expanderHeader span {
-        text-align: right;
-        width: 100%;
-        display: inline-block;
-    }
-    
-    /* Исправление стрелок: закрыт - вниз, открыт - вправо */
+    /* Стрелки: закрыт - вниз, открыт - вверх */
     .streamlit-expanderHeader svg {
-        transform: rotate(0deg);
         transition: transform 0.3s;
     }
-    
     .streamlit-expanderHeader[aria-expanded="true"] svg {
-        transform: rotate(-90deg);
+        transform: rotate(180deg);
+    }
+    
+    /* Кнопка "חשב" на всю ширину */
+    div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:has(button[kind="primary"]) {
+        width: 100%;
+    }
+    div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]:has(button[kind="primary"]) button {
+        width: 100%;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -512,18 +507,26 @@ def do_calculation(panel_row, groups_list):
 def build_html_report(calc_result, project_name, panel_name, channel_order, extra_parts, manual_rails):
     auto_rails = calc_result.get("auto_rails", {})
     rails_total = {}
+    
+    # Берем значения из автоматического расчета
     for length, qty in auto_rails.items():
         rails_total[length] = rails_total.get(length, 0) + qty
+    
+    # Берем значения из ручного добавления
     for length, qty in manual_rails.items():
         rails_total[length] = rails_total.get(length, 0) + qty
 
+    # Применяем пользовательские правки из UI
     try:
         k_over = getattr(st.session_state, "koshrot_qty", None)
     except Exception:
         k_over = None
 
     if k_over:
-        rails_total = {normalize_length_key(k): int(v) for k, v in k_over.items() if int(v) > 0}
+        for k, v in k_over.items():
+            if int(v) > 0:
+                norm_key = normalize_length_key(k)
+                rails_total[norm_key] = int(v)
 
     ear = calc_result.get("ear", 0)
     mid = calc_result.get("mid", 0)
@@ -572,6 +575,7 @@ def build_html_report(calc_result, project_name, panel_name, channel_order, extr
         for length in sorted(rails_total.keys(), key=length_sort_key, reverse=True):
             html += f"<p dir='rtl' style='text-align:right;'>{rails_total[length]} × {length}</p>"
 
+    # Значения для פרזול берем из автоматического расчета
     fasteners = [
         ("מהדק הארקה", ear),
         ("מהדק אמצע", mid),
@@ -582,22 +586,11 @@ def build_html_report(calc_result, project_name, panel_name, channel_order, extr
         ("בורג M8", m8_count),
         ("אום M8", m8_count),
     ]
-    
-    overrides = None
-    try:
-        overrides = st.session_state.get("fasteners")
-    except Exception:
-        overrides = None
-    if overrides:
-        fasteners = [(lbl, overrides.get(lbl, val)) for (lbl, val) in fasteners]
-
-    inc_map = st.session_state.get('fasteners_include', {})
-    visible_fasteners = [(lbl, val) for lbl, val in fasteners if val > 0 and bool(inc_map.get(lbl, True))]
 
     html += "<h2>פרזול</h2>"
-    if visible_fasteners:
+    if fasteners:
         html += "<table style='direction:rtl; text-align:right; border:none;'><tbody>"
-        for lbl, val in visible_fasteners:
+        for lbl, val in fasteners:
             html += (
                 "<tr style='border:none;'>"
                 f"<td style='text-align:right; white-space:nowrap; border:none;'>{lbl}</td>"
@@ -642,56 +635,97 @@ def build_html_report(calc_result, project_name, panel_name, channel_order, extr
 
 
 # ---------- BUTTON: CALCULATE ----------
-# ВОССТАНОВЛЕН ПРАВИЛЬНЫЙ СБРОС КАК БЫЛО
-if st.button("חשב", type="primary"):
-    # Сбрасываем все ручные значения к автоматическим
-    st.session_state.koshrot_qty = None
-    st.session_state.koshrot_boxes_version += 1
-    
-    # Сбрасываем ручные добавления рельс
-    st.session_state.manual_rows = 1
-    st.session_state.manual_deleted_rows = set()
-    st.session_state.manual_rails = {}
-    st.session_state.manual_rails_prev = {}
-    st.session_state.manual_form_version += 1
-
-    # Сбрасываем значения для первой строки ручного ввода
-    st.session_state['m_len_1'] = 0
-    st.session_state['m_qty_1'] = 0
-
-    # Выполняем расчет
-    if groups:
-        st.session_state.calc_result = do_calculation(panel, groups)
-    else:
-        st.session_state.calc_result = {
-            "auto_rails": {},
-            "conn": 0,
-            "ear": 0,
-            "mid": 0,
-            "edge": 0,
-            "total_panels": 0,
-        }
-    
-    # Сбрасываем значения креплений
-    st.session_state["fasteners"] = None
-    st.session_state["fasteners_include"] = None
-
-    # Очищаем старые ключи виджетов
-    for j in range(1, 51):
-        st.session_state.pop(f"m_len_{st.session_state.manual_form_version-1}_{j}", None)
-        st.session_state.pop(f"m_qty_{st.session_state.manual_form_version-1}_{j}", None)
-    
-    st.session_state.just_calculated = True
-    st.rerun()
+# Кнопка на всю ширину
+calc_col1, calc_col2, calc_col3 = st.columns([1, 2, 1])
+with calc_col2:
+    if st.button("**חשב**", type="primary", use_container_width=True):
+        # Сбрасываем только автоматически рассчитываемые значения
+        st.session_state.koshrot_qty = None
+        st.session_state.koshrot_boxes_version += 1
+        
+        # Ручные добавления рельс НЕ сбрасываем (оставляем как есть)
+        # st.session_state.manual_rows = 1  # УБРАНО
+        # st.session_state.manual_rails = {}  # УБРАНО
+        
+        # Сбрасываем snapshot ручных рельс для синхронизации
+        st.session_state.manual_rails_prev = {}
+        
+        # Выполняем расчет
+        if groups:
+            st.session_state.calc_result = do_calculation(panel, groups)
+        else:
+            st.session_state.calc_result = {
+                "auto_rails": {},
+                "conn": 0,
+                "ear": 0,
+                "mid": 0,
+                "edge": 0,
+                "total_panels": 0,
+            }
+        
+        # Fasteners (פרזול) НЕ сбрасываем - оставляем пользовательские правки
+        # st.session_state["fasteners"] = None  # УБРАНО
+        # st.session_state["fasteners_include"] = None  # УБРАНО
+        
+        st.session_state.just_calculated = True
+        st.rerun()
 
 if st.session_state.get("just_calculated"):
     success_box("החישוב עודכן")
     st.session_state.just_calculated = False
 
-
 calc_result = st.session_state.calc_result
 
+# ---------- SHOW CALC RESULT ----------
+if calc_result is not None:
+    auto_rails = calc_result["auto_rails"]
+    manual_rails = st.session_state.manual_rails
+
+    st.write(f"סה\"כ פאנלים: {calc_result['total_panels']}")
+
+    # ----- קושרות (автоматические) -----
+    with st.expander("**קושרות**", expanded=True):
+        # Базовые количества только из автоматического расчета
+        rails_base = {}
+        for length, qty in auto_rails.items():
+            klen = normalize_length_key(length)
+            rails_base[klen] = rails_base.get(klen, 0) + int(qty)
+
+        # Инициализация пользовательских правок
+        if st.session_state.koshrot_qty is None:
+            st.session_state.koshrot_qty = dict(rails_base)
+        else:
+            # Добавляем новые длины из автоматического расчета
+            for length, qty in rails_base.items():
+                if length not in st.session_state.koshrot_qty:
+                    st.session_state.koshrot_qty[length] = qty
+            # Удаляем только те длины, которых нет ни в авто, ни в ручном
+            for length in list(st.session_state.koshrot_qty.keys()):
+                if length not in rails_base and length not in [normalize_length_key(k) for k in manual_rails.keys()]:
+                    del st.session_state.koshrot_qty[length]
+
+        if st.session_state.koshrot_qty:
+            for length in sorted(st.session_state.koshrot_qty.keys(), key=length_sort_key, reverse=True):
+                st.markdown(right_label(f"אורך: {length} ס״מ"), unsafe_allow_html=True)
+
+                qty_key = f"koshrot_qty_{st.session_state.koshrot_boxes_version}_{length}"
+                default_val = int(st.session_state.koshrot_qty.get(length, 0))
+
+                qty_val = st.number_input(
+                    "",
+                    min_value=0,
+                    value=default_val,
+                    step=1,
+                    key=qty_key,
+                    label_visibility="collapsed",
+                )
+
+                st.session_state.koshrot_qty[length] = int(qty_val)
+        else:
+            st.write("אין קושרות מחושבות")
+
 # ---------- MANUAL RAILS ----------
+# ПЕРЕМЕЩЕНО: теперь после автоматических קושרות и перед פרזול
 with st.expander("**קושרות (הוספה ידנית)**", expanded=True):
     mh = st.columns(2)
     mh[0].markdown(right_label("אורך (ס״מ)"), unsafe_allow_html=True)
@@ -723,81 +757,27 @@ with st.expander("**קושרות (הוספה ידנית)**", expanded=True):
         st.rerun()
 
 # Обработка данных ручного добавления
-manual_rails_dict = {}
-for j in range(1, st.session_state.manual_rows + 1):
-    if j in st.session_state.manual_deleted_rows:
-        continue
-    length = st.session_state.get(f"m_len_{st.session_state.manual_form_version}_{j}", 0)
-    qty = st.session_state.get(f"m_qty_{st.session_state.manual_form_version}_{j}", 0)
-    if length and qty:
-        manual_rails_dict[length] = manual_rails_dict.get(length, 0) + qty
-st.session_state.manual_rails = manual_rails_dict
-
-# Синхронизация с редактируемыми полями
-prev_manual = st.session_state.get("manual_rails_prev", {})
-curr_manual = st.session_state.manual_rails
-
-if st.session_state.get("koshrot_qty") is not None:
-    for length in set(list(prev_manual.keys()) + list(curr_manual.keys())):
-        prev_q = int(prev_manual.get(length, 0) or 0)
-        curr_q = int(curr_manual.get(length, 0) or 0)
-        d = curr_q - prev_q
-        if d == 0:
-            continue
-        k = normalize_length_key(length)
-        new_val = max(int(st.session_state.koshrot_qty.get(k, 0) or 0) + d, 0)
-        st.session_state.koshrot_qty[k] = new_val
-        st.session_state[f"koshrot_qty_{st.session_state.koshrot_boxes_version}_{k}"] = new_val
-
-st.session_state.manual_rails_prev = dict(curr_manual)
-
-# ---------- SHOW CALC RESULT ----------
 if calc_result is not None:
-    auto_rails = calc_result["auto_rails"]
-    manual_rails = st.session_state.manual_rails
+    manual_rails_dict = {}
+    for j in range(1, st.session_state.manual_rows + 1):
+        if j in st.session_state.manual_deleted_rows:
+            continue
+        length = st.session_state.get(f"m_len_{st.session_state.manual_form_version}_{j}", 0)
+        qty = st.session_state.get(f"m_qty_{st.session_state.manual_form_version}_{j}", 0)
+        if length and qty:
+            manual_rails_dict[length] = manual_rails_dict.get(length, 0) + qty
+    st.session_state.manual_rails = manual_rails_dict
 
-    st.write(f"סה\"כ פאנלים: {calc_result['total_panels']}")
+    # Синхронизация с редактируемыми полями קושרות
+    if st.session_state.get("koshrot_qty") is not None:
+        for length, qty in manual_rails_dict.items():
+            k = normalize_length_key(length)
+            # Добавляем ручные значения к автоматическим
+            current_val = st.session_state.koshrot_qty.get(k, 0)
+            st.session_state.koshrot_qty[k] = current_val + qty
 
-    # ----- קושרות -----
-    with st.expander("**קושרות**", expanded=True):
-        rails_base = {}
-        for length, qty in auto_rails.items():
-            klen = normalize_length_key(length)
-            rails_base[klen] = rails_base.get(klen, 0) + int(qty)
-        for length, qty in manual_rails.items():
-            klen = normalize_length_key(length)
-            rails_base[klen] = rails_base.get(klen, 0) + int(qty)
-
-        if st.session_state.koshrot_qty is None:
-            st.session_state.koshrot_qty = dict(rails_base)
-        else:
-            for length, qty in rails_base.items():
-                if length not in st.session_state.koshrot_qty:
-                    st.session_state.koshrot_qty[length] = qty
-            for length in list(st.session_state.koshrot_qty.keys()):
-                if length not in rails_base:
-                    del st.session_state.koshrot_qty[length]
-
-        if st.session_state.koshrot_qty:
-            for length in sorted(st.session_state.koshrot_qty.keys(), key=length_sort_key, reverse=True):
-                st.markdown(right_label(f"אורך: {length} ס״מ"), unsafe_allow_html=True)
-
-                qty_key = f"koshrot_qty_{st.session_state.koshrot_boxes_version}_{length}"
-                default_val = int(st.session_state.koshrot_qty.get(length, 0))
-
-                qty_val = st.number_input(
-                    "",
-                    min_value=0,
-                    value=default_val,
-                    step=1,
-                    key=qty_key,
-                    label_visibility="collapsed",
-                )
-
-                st.session_state.koshrot_qty[length] = int(qty_val)
-        else:
-            st.write("אין קושרות מחושבות")
-
+# ---------- ПРОДОЛЖЕНИЕ SHOW CALC RESULT ----------
+if calc_result is not None:
     # ----- פרזול -----
     with st.expander("**פרזול**", expanded=True):
         ear = calc_result["ear"]
@@ -806,25 +786,20 @@ if calc_result is not None:
         conn = calc_result["conn"]
         total_panels = calc_result["total_panels"]
 
-        rails_total = {}
+        # Расчет M8 зависит от суммарной длины (авто + ручные)
+        rails_total_length = 0
         for length, qty in auto_rails.items():
-            rails_total[length] = rails_total.get(length, 0) + qty
-        for length, qty in manual_rails.items():
-            rails_total[length] = rails_total.get(length, 0) + qty
-
-        total_length_cm = 0
-        for length, qty in rails_total.items():
-            try:
-                total_length_cm += float(length) * qty
-            except Exception:
-                pass
+            rails_total_length += float(length) * qty
+        for length, qty in st.session_state.manual_rails.items():
+            rails_total_length += float(length) * qty
 
         screws_iso = round_up_to_tens(conn * 4 + total_panels)
         m8_count = 0
-        if total_length_cm > 0:
-            m8_base = total_length_cm / 140.0
+        if rails_total_length > 0:
+            m8_base = rails_total_length / 140.0
             m8_count = round_up_to_tens(m8_base)
 
+        # Базовые (авто) значения
         fasteners_base = [
             ("מהדק הארקה", ear),
             ("מהדק אמצע", mid),
@@ -836,6 +811,11 @@ if calc_result is not None:
             ("M8 אום", m8_count),
         ]
         
+        # Инициализация fasteners если еще нет
+        if st.session_state.get("fasteners") is None:
+            st.session_state["fasteners"] = {lbl: int(val) for (lbl, val) in fasteners_base}
+        
+        # Инициализация include flags если еще нет
         if st.session_state.get("fasteners_include") is None:
             st.session_state["fasteners_include"] = {name: True for name, _ in fasteners_base}
         else:
@@ -843,11 +823,10 @@ if calc_result is not None:
                 if name not in st.session_state["fasteners_include"]:
                     st.session_state["fasteners_include"][name] = True
 
-        if st.session_state.get("fasteners") is None:
-            st.session_state["fasteners"] = {lbl: int(val) for (lbl, val) in fasteners_base}
-
+        # Показываем UI с текущими значениями (не сбрасываем при חשב)
         new_fasteners = {}
         for i, (lbl, base_val) in enumerate(fasteners_base):
+            # Берем значение из session_state если есть, иначе базовое
             current_val = int(st.session_state["fasteners"].get(lbl, base_val) or 0)
 
             if int(base_val) == 0 and current_val == 0:
@@ -889,7 +868,7 @@ with st.expander("**תעלות עם מכסים (מטר)**", expanded=True):
         q = st.number_input(
             "",
             min_value=0.0,
-            value=0.0,
+            value=float(st.session_state.channel_order.get(name, 0.0)),
             step=step_value,
             format="%g",
             key=f"channel_{i}",
@@ -909,16 +888,30 @@ with st.expander("**הוסף פריט**", expanded=True):
 
         for i in range(1, extra_rows + 1):
             st.markdown(right_label("פריט"), unsafe_allow_html=True)
+            # Сохраняем предыдущий выбор если есть
+            default_idx = 0
+            if i <= len(st.session_state.extra_parts):
+                prev_name = st.session_state.extra_parts[i-1]["name"]
+                if prev_name in names_list:
+                    default_idx = names_list.index(prev_name)
+            
             part = st.selectbox(
                 "",
                 names_list,
+                index=default_idx,
                 key=f"extra_name_{i}",
                 label_visibility="collapsed",
             )
             st.markdown(right_label("כמות"), unsafe_allow_html=True)
+            # Сохраняем предыдущее количество если есть
+            prev_qty = 0
+            if i <= len(st.session_state.extra_parts):
+                prev_qty = st.session_state.extra_parts[i-1]["qty"]
+            
             qty = st.number_input(
                 "",
                 min_value=0,
+                value=prev_qty,
                 step=1,
                 key=f"extra_qty_{i}",
                 label_visibility="collapsed",
