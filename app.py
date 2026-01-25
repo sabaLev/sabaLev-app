@@ -79,7 +79,7 @@ if "channel_order" not in st.session_state:
     st.session_state.channel_order = {}
 
 if "extra_parts" not in st.session_state:
-    st.session_state.extra_parts = []  # [{name, qty}]
+    st.session_state.extra_parts = []
 
 if "manual_rows" not in st.session_state:
     st.session_state.manual_rows = 1
@@ -104,9 +104,6 @@ if "project_name" not in st.session_state:
 
 if "manual_deleted_rows" not in st.session_state:
     st.session_state.manual_deleted_rows = set()
-
-if "fasteners_reset_version" not in st.session_state:
-    st.session_state.fasteners_reset_version = 0
 
 
 def round_up_to_tens(x: float) -> int:
@@ -140,7 +137,6 @@ def length_sort_key(length_key: str) -> float:
 
 
 def format_qty(q):
-    # формат числа для отчёта (без .0 у целых)
     try:
         qf = float(q)
         if qf.is_integer():
@@ -196,7 +192,6 @@ if st.sidebar.button("להוסיף פאנל חדש"):
     st.sidebar.success("הפאנל נוסף")
     st.rerun()
 
-# список панелей с ❌
 if not panels.empty:
     for idx, row in panels.iterrows():
         c1, c2 = st.sidebar.columns([3, 1])
@@ -239,7 +234,7 @@ if "unit" not in parts.columns:
 if st.sidebar.button("להוסיף פריט"):
     if lib_new_name:
         if lib_new_name in parts["name"].values:
-            st.sidebar.warning("הפריט הזה כבר קיים, не נוסף כפילוּל.")
+            st.sidebar.warning("הפריט הזה כבר קיים, לא נוסף כפילוּל.")
         else:
             parts.loc[len(parts)] = [lib_new_name, unit]
             parts.to_csv("parts.csv", index=False)
@@ -302,7 +297,6 @@ panel = panel_rows.iloc[0]
 # ---------- GROUPS ----------
 groups = []
 
-# CSS для стрелок спойлера
 st.markdown("""
     <style>
     .streamlit-expanderHeader svg {
@@ -330,11 +324,9 @@ with st.expander("**עומדים**", expanded=True):
     for i in range(1, vertical_rows + 1):
         c0, c1 = st.columns(2)
         
-        # שורות: 0 по умолчанию
-        # פאנלים: 1,2,3...8 по умолчанию для первых 8 строк
-        default_g = 0  # שורות - нолики
+        default_g = 0
         if i <= 8:
-            default_n = i  # פאנלים - 1,2,3...8
+            default_n = i
         else:
             default_n = 0
         
@@ -373,11 +365,9 @@ with st.expander("**שוכבים**", expanded=True):
     for i in range(1, horizontal_rows + 1):
         c0, c1 = st.columns(2)
         
-        # שורות: 0 по умолчанию
-        # פאנלים: 1,2,3,4 по умолчанию для первых 4 строк
-        default_g = 0  # שורות - нолики
+        default_g = 0
         if i <= 4:
-            default_n = i  # פאנלים - 1,2,3,4
+            default_n = i
         else:
             default_n = 0
         
@@ -511,19 +501,8 @@ def build_html_report(calc_result, project_name, panel_name, channel_order, extr
     rails_total = {}
     for length, qty in auto_rails.items():
         rails_total[length] = rails_total.get(length, 0) + qty
-    # добавляем ручные рельсы в отчет
     for length, qty in manual_rails.items():
         rails_total[length] = rails_total.get(length, 0) + qty
-
-    # применяем пользовательские правки из интерфейса (если есть)
-    try:
-        k_over = getattr(st.session_state, "koshrot_qty", None)
-    except Exception:
-        k_over = None
-
-    if k_over:
-        # приводим ключи к строке как в UI
-        rails_total = {normalize_length_key(k): int(v) for k, v in k_over.items() if int(v) > 0}
 
     ear = calc_result.get("ear", 0)
     mid = calc_result.get("mid", 0)
@@ -583,12 +562,8 @@ def build_html_report(calc_result, project_name, panel_name, channel_order, extr
         ("M8 בורג", m8_count),
         ("M8 אום", m8_count),
     ]
-    # apply user overrides from UI (if any)
-    overrides = None
-    try:
-        overrides = st.session_state.get("fasteners")
-    except Exception:
-        overrides = None
+    
+    overrides = st.session_state.get("fasteners")
     if overrides:
         fasteners = [(lbl, overrides.get(lbl, val)) for (lbl, val) in fasteners]
 
@@ -644,18 +619,23 @@ def build_html_report(calc_result, project_name, panel_name, channel_order, extr
 
 # ---------- BUTTON: CALCULATE ----------
 if st.button("חשב", type="primary", use_container_width=True):
-    # Сбрасываем קושרות (הוספה ידנית) форму (нули в интерфейсе)
+    # Удаляем ВСЕ ключи виджетов פרזול чтобы форсировать сброс
+    for key in list(st.session_state.keys()):
+        if key.startswith("fast_inc_") or key.startswith("fastener_qty_"):
+            del st.session_state[key]
+    
+    # Сбрасываем קושרות (הוספה ידנית)
     st.session_state.manual_rows = 1
     st.session_state.manual_deleted_rows = set()
-    st.session_state.manual_rails = {}  # очищаем сохраненные ручные рельсы
+    st.session_state.manual_rails = {}
     st.session_state.manual_form_version += 1
     
-    # clear widget keys for previous rows
+    # Удаляем старые ключи ручных рельсов
     for j in range(1, 51):
         st.session_state.pop(f"m_len_{st.session_state.manual_form_version}_{j}", None)
         st.session_state.pop(f"m_qty_{st.session_state.manual_form_version}_{j}", None)
     
-    # perform calculation
+    # Расчет
     if groups:
         st.session_state.calc_result = do_calculation(panel, groups)
     else:
@@ -668,14 +648,13 @@ if st.button("חשב", type="primary", use_container_width=True):
             "total_panels": 0,
         }
     
-    # reset קושרות quantities to automatic values only
+    # Сбрасываем קושרות
     st.session_state.koshrot_qty = None
     st.session_state.koshrot_boxes_version += 1
 
-    # reset פרזול completely - увеличиваем версию для сброса
+    # Сбрасываем פרזול ПОЛНОСТЬЮ
     st.session_state["fasteners"] = None
     st.session_state["fasteners_include"] = None
-    st.session_state.fasteners_reset_version += 1
 
     st.session_state.just_calculated = True
     st.rerun()
@@ -696,7 +675,7 @@ if calc_result is not None:
 
     # ----- קושרות -----
     with st.expander("**קושרות**", expanded=True):
-        # автоматические + ручные значения
+        # Базовые значения: авто + ручные
         rails_base = {}
         for length, qty in auto_rails.items():
             klen = normalize_length_key(length)
@@ -705,14 +684,14 @@ if calc_result is not None:
             klen = normalize_length_key(length)
             rails_base[klen] = rails_base.get(klen, 0) + int(qty)
 
-        # инициализация пользовательских правок (авто + ручные)
+        # Инициализируем или обновляем koshrot_qty
         if st.session_state.koshrot_qty is None:
             st.session_state.koshrot_qty = dict(rails_base)
         else:
-            # обновляем значения
+            # Обновляем существующие значения
             for length, qty in rails_base.items():
                 st.session_state.koshrot_qty[length] = qty
-            # убираем длины, которых больше нет
+            # Удаляем устаревшие длины
             for length in list(st.session_state.koshrot_qty.keys()):
                 if length not in rails_base:
                     del st.session_state.koshrot_qty[length]
@@ -770,7 +749,7 @@ if calc_result is not None:
             st.session_state.manual_rows += 1
             st.rerun()
     
-    # Собираем ручные добавления (обновляем после каждого изменения)
+    # Собираем ручные рельсы
     manual_rails_dict = {}
     for j in range(1, st.session_state.manual_rows + 1):
         if j in st.session_state.manual_deleted_rows:
@@ -780,6 +759,7 @@ if calc_result is not None:
         if length and qty:
             manual_rails_dict[length] = manual_rails_dict.get(length, 0) + qty
     
+    # ОБЯЗАТЕЛЬНО обновляем manual_rails
     st.session_state.manual_rails = manual_rails_dict
 
     # ----- פרזול -----
@@ -790,7 +770,7 @@ if calc_result is not None:
         conn = calc_result["conn"]
         total_panels = calc_result["total_panels"]
 
-        # расчёт M8 и прочего зависит от суммарной длины קושרות (авто + ручные)
+        # Расчет длины для M8: авто + ручные
         rails_total = {}
         for length, qty in auto_rails.items():
             rails_total[length] = rails_total.get(length, 0) + qty
@@ -810,7 +790,7 @@ if calc_result is not None:
             m8_base = total_length_cm / 140.0
             m8_count = round_up_to_tens(m8_base)
 
-        # Базовые (авто) значения
+        # Базовые значения
         fasteners_base = [
             ("מהדק הארקה", ear),
             ("מהדק אמצע", mid),
@@ -822,27 +802,32 @@ if calc_result is not None:
             ("M8 אום", m8_count),
         ]
         
-        # init include flags for report (default: all True) - СБРАСЫВАЕМ КАЖДЫЙ РАЗ
-        reset_version_key = f"fasteners_include_reset_{st.session_state.fasteners_reset_version}"
-        if st.session_state.get("fasteners_include") is None or reset_version_key not in st.session_state:
+        # Инициализация чекбоксов - ВСЕ TRUE
+        if st.session_state.get("fasteners_include") is None:
             st.session_state["fasteners_include"] = {name: True for name, _ in fasteners_base}
-            st.session_state[reset_version_key] = True
+        else:
+            for name, _ in fasteners_base:
+                if name not in st.session_state["fasteners_include"]:
+                    st.session_state["fasteners_include"][name] = True
 
-        # Инициализация значений (после нового расчёта fasteners сбрасывается в None)
+        # Инициализация значений
         if st.session_state.get("fasteners") is None:
             st.session_state["fasteners"] = {lbl: int(val) for (lbl, val) in fasteners_base}
 
-        # UI - используем версию для сброса виджетов
+        # UI
         new_fasteners = {}
         for i, (lbl, base_val) in enumerate(fasteners_base):
             current_val = int(st.session_state["fasteners"].get(lbl, base_val) or 0)
 
+            # Не показываем позиции с 0 значением
             if int(base_val) == 0 and current_val == 0:
                 continue
+                
             c_chk, c_val, c_name = st.columns([0.8, 1.6, 5])
             with c_chk:
-                inc_key = f"fast_inc_{st.session_state.fasteners_reset_version}_{lbl}"
-                inc_default = bool(st.session_state["fasteners_include"].get(lbl, True))
+                inc_key = f"fast_inc_{lbl}"
+                # ВСЕГДА True при инициализации
+                inc_default = True if st.session_state["fasteners_include"].get(lbl) is None else st.session_state["fasteners_include"][lbl]
                 inc_val = st.checkbox("", value=inc_default, key=inc_key, label_visibility="collapsed")
                 st.session_state["fasteners_include"][lbl] = bool(inc_val)
             with c_val:
@@ -851,7 +836,7 @@ if calc_result is not None:
                     min_value=0,
                     value=int(current_val),
                     step=1,
-                    key=f"fastener_qty_{st.session_state.fasteners_reset_version}_{i}_{lbl}",
+                    key=f"fastener_qty_{i}_{lbl}",
                     label_visibility="collapsed",
                 )
             with c_name:
@@ -873,7 +858,6 @@ with st.expander("**תעלות עם מכסים (מטר)**", expanded=True):
             step_value = 1.0
 
         st.markdown(right_label(name), unsafe_allow_html=True)
-        # Сохраняем предыдущее значение или 0
         current_value = st.session_state.channel_order.get(name, 0.0)
         q = st.number_input(
             "",
@@ -887,7 +871,6 @@ with st.expander("**תעלות עם מכסים (מטר)**", expanded=True):
         if q > 0:
             channel_order[name] = q
         elif name in st.session_state.channel_order:
-            # Если пользователь поставил 0, удаляем из заказа
             channel_order[name] = 0
     st.session_state.channel_order = {k: v for k, v in channel_order.items() if v > 0}
 
@@ -901,7 +884,6 @@ with st.expander("**הוסף פריט**", expanded=True):
 
         for i in range(1, extra_rows + 1):
             st.markdown(right_label("פריט"), unsafe_allow_html=True)
-            # Сохраняем предыдущий выбор или первый элемент
             prev_extra = None
             if i-1 < len(st.session_state.extra_parts):
                 prev_extra = st.session_state.extra_parts[i-1]["name"]
@@ -918,7 +900,6 @@ with st.expander("**הוסף פריט**", expanded=True):
                 label_visibility="collapsed",
             )
             st.markdown(right_label("כמות"), unsafe_allow_html=True)
-            # Сохраняем предыдущее количество или 0
             prev_qty = 0
             if i-1 < len(st.session_state.extra_parts):
                 prev_qty = st.session_state.extra_parts[i-1]["qty"]
