@@ -970,3 +970,6 @@ with st.expander("**ייצוא (HTML להדפסה ל-PDF)**", expanded=True):
 
     else:
         info_box('קודם יש לחשב, ואז ניתן לייצא דו"ח')
+st.divider()
+st.subheader("DEBUG STATE")
+st.write(dict(st.session_state))
