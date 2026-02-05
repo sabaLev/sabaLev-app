@@ -762,6 +762,22 @@ if calc_result is not None:
     # ОБЯЗАТЕЛЬНО обновляем manual_rails
     st.session_state.manual_rails = manual_rails_dict
 
+# --- SAFE INIT ---
+calc_result = st.session_state.get("calc_result")
+
+if not calc_result:
+    calc_result = {
+        "auto_rails": {},
+        "conn": 0,
+        "ear": 0,
+        "mid": 0,
+        "edge": 0,
+        "total_panels": 0,
+    }
+
+auto_rails = calc_result.get("auto_rails", {})
+manual_rails = st.session_state.get("manual_rails", {})
+
 # ----- פרזול -----
 with st.expander("**פרזול**", expanded=True):
     ear = calc_result["ear"]
