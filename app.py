@@ -98,7 +98,7 @@ def success_box(text: str):
 
 # ---------- ФУНКЦИЯ СБРОСА ТОЛЬКО АВТОМАТИЧЕСКИХ ЗНАЧЕНИЙ ----------
 def reset_auto_values_only():
-    """Сбрасывает ТОЛЬКО автоматически рассчитанные значения"""
+    """Сбрасывает ТОЛЬКО автоматически рассчитанные значения и ручные рельсы"""
     
     # Увеличиваем счетчик расчетов для сброса виджетов
     st.session_state.calculation_counter = st.session_state.get("calculation_counter", 0) + 1
@@ -120,7 +120,7 @@ def reset_auto_values_only():
             del st.session_state[key]
     
     # Сбрасываем квотированные рельсы к ИСХОДНЫМ расчетным значениям
-    if st.session_state.initial_calc_result and st.session_state.koshrot_qty:
+    if st.session_state.initial_calc_result:
         auto_rails = st.session_state.initial_calc_result.get("auto_rails", {})
         rails_base = {}
         for length, qty in auto_rails.items():
@@ -128,9 +128,7 @@ def reset_auto_values_only():
             rails_base[klen] = rails_base.get(klen, 0) + int(qty)
         
         # Восстанавливаем только автоматические значения
-        for length in list(st.session_state.koshrot_qty.keys()):
-            if length in rails_base:
-                st.session_state.koshrot_qty[length] = rails_base[length]
+        st.session_state.koshrot_qty = dict(rails_base)
     
     # Сбрасываем fasteners к ИСХОДНЫМ значениям расчета
     if st.session_state.initial_fasteners:
@@ -707,7 +705,7 @@ if st.button("חשב", type="primary", use_container_width=True):
         st.session_state.fasteners = st.session_state.initial_fasteners.copy()
         st.session_state.fasteners_include = st.session_state.initial_fasteners_include.copy()
         
-        # Инициализируем koshrot_qty
+        # Инициализируем koshrot_qty ТОЛЬКО автоматическими значениями
         auto_rails = new_calc_result.get("auto_rails", {})
         rails_base = {}
         for length, qty in auto_rails.items():
@@ -740,24 +738,29 @@ if calc_result is not None:
     
     # ----- קושרות -----
     with st.expander("**קושרות**", expanded=True):
-        # Создаем базовые значения (авто + ручные)
+        # Важно: В этом разделе должны быть ТОЛЬКО автоматически рассчитанные значения
+        # НЕ добавляем ручные рельсы (manual_rails)!
         rails_base = {}
         for length, qty in auto_rails.items():
             klen = normalize_length_key(length)
             rails_base[klen] = rails_base.get(klen, 0) + int(qty)
         
-        for length, qty in manual_rails.items():
-            klen = normalize_length_key(length)
-            rails_base[klen] = rails_base.get(klen, 0) + int(qty)
-        
-        # Инициализируем koshrot_qty если нужно
+        # Инициализируем koshrot_qty если нужно (ТОЛЬКО авто значения)
         if not st.session_state.koshrot_qty:
             st.session_state.koshrot_qty = dict(rails_base)
         else:
-            # Добавляем новые длины из расчета
+            # Проверяем, что в koshrot_qty только авто значения
+            # Если есть какие-то длины, которых нет в авто расчете, удаляем их
+            current_keys = set(st.session_state.koshrot_qty.keys())
+            auto_keys = set(rails_base.keys())
+            
+            # Удаляем длины, которых нет в авто расчете
+            for key in current_keys - auto_keys:
+                del st.session_state.koshrot_qty[key]
+            
+            # Обновляем существующие авто значения
             for length, qty in rails_base.items():
-                if length not in st.session_state.koshrot_qty:
-                    st.session_state.koshrot_qty[length] = qty
+                st.session_state.koshrot_qty[length] = qty
         
         if st.session_state.koshrot_qty:
             for length in sorted(st.session_state.koshrot_qty.keys(), key=length_sort_key, reverse=True):
@@ -840,7 +843,7 @@ if calc_result is not None:
         conn = calc_result["conn"]
         total_panels = calc_result["total_panels"]
         
-        # Расчет для M8
+        # Расчет для M8: учитываем и авто и ручные рельсы
         rails_total = {}
         for length, qty in auto_rails.items():
             rails_total[length] = rails_total.get(length, 0) + qty
