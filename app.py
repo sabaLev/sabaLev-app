@@ -762,88 +762,96 @@ if calc_result is not None:
     # ОБЯЗАТЕЛЬНО обновляем manual_rails
     st.session_state.manual_rails = manual_rails_dict
 
-    # ----- פרזול -----
-    with st.expander("**פרזול**", expanded=True):
-        ear = calc_result["ear"]
-        mid = calc_result["mid"]
-        edge = calc_result["edge"]
-        conn = calc_result["conn"]
-        total_panels = calc_result["total_panels"]
+# ----- פרזול -----
+with st.expander("**פרזול**", expanded=True):
+    ear = calc_result["ear"]
+    mid = calc_result["mid"]
+    edge = calc_result["edge"]
+    conn = calc_result["conn"]
+    total_panels = calc_result["total_panels"]
 
-        # Расчет длины для M8: авто + ручные
-        rails_total = {}
-        for length, qty in auto_rails.items():
-            rails_total[length] = rails_total.get(length, 0) + qty
-        for length, qty in manual_rails.items():
-            rails_total[length] = rails_total.get(length, 0) + qty
+    # расчет длины для M8: авто + ручные
+    rails_total = {}
+    for length, qty in auto_rails.items():
+        rails_total[length] = rails_total.get(length, 0) + qty
+    for length, qty in manual_rails.items():
+        rails_total[length] = rails_total.get(length, 0) + qty
 
-        total_length_cm = 0
-        for length, qty in rails_total.items():
-            try:
-                total_length_cm += float(length) * qty
-            except Exception:
-                pass
+    total_length_cm = 0
+    for length, qty in rails_total.items():
+        try:
+            total_length_cm += float(length) * qty
+        except Exception:
+            pass
 
-        screws_iso = round_up_to_tens(conn * 4 + total_panels)
-        m8_count = 0
-        if total_length_cm > 0:
-            m8_base = total_length_cm / 140.0
-            m8_count = round_up_to_tens(m8_base)
+    screws_iso = round_up_to_tens(conn * 4 + total_panels)
 
-        # Базовые значения
-        fasteners_base = [
-            ("מהדק הארקה", ear),
-            ("מהדק אמצע", mid),
-            ("מהדק קצה", edge),
-            ("פקק לקושרות", edge),
-            ("מחברי קושרות", conn),
-            ("בורג איסכורית 3,5", screws_iso),
-            ("M8 בורג", m8_count),
-            ("M8 אום", m8_count),
-        ]
-        
-        # Инициализация чекбоксов - ВСЕ TRUE
-        if st.session_state.get("fasteners_include") is None:
-            st.session_state["fasteners_include"] = {name: True for name, _ in fasteners_base}
-        else:
-            for name, _ in fasteners_base:
-                if name not in st.session_state["fasteners_include"]:
-                    st.session_state["fasteners_include"][name] = True
+    m8_count = 0
+    if total_length_cm > 0:
+        m8_base = total_length_cm / 140.0
+        m8_count = round_up_to_tens(m8_base)
 
-        # Инициализация значений
-        if st.session_state.get("fasteners") is None:
-            st.session_state["fasteners"] = {lbl: int(val) for (lbl, val) in fasteners_base}
+    # базовые значения
+    fasteners_base = [
+        ("מהדק הארקה", ear),
+        ("מהדק אמצע", mid),
+        ("מהדק קצה", edge),
+        ("פקק לקושרות", edge),
+        ("מחברי קושרות", conn),
+        ("בורג איסכורית 3,5", screws_iso),
+        ("M8 בורג", m8_count),
+        ("M8 אום", m8_count),
+    ]
 
-        # UI
-        new_fasteners = {}
-        for i, (lbl, base_val) in enumerate(fasteners_base):
-            current_val = int(st.session_state["fasteners"].get(lbl, base_val) or 0)
+    # инициализация
+    if st.session_state.get("fasteners") is None:
+        st.session_state["fasteners"] = {lbl: int(val) for lbl, val in fasteners_base}
 
-            # Не показываем позиции с 0 значением
-            if int(base_val) == 0 and current_val == 0:
-                continue
-                
-            c_chk, c_val, c_name = st.columns([0.8, 1.6, 5])
-            with c_chk:
-                inc_key = f"fast_inc_{lbl}"
-                # ВСЕГДА True при инициализации
-                inc_default = True if st.session_state["fasteners_include"].get(lbl) is None else st.session_state["fasteners_include"][lbl]
-                inc_val = st.checkbox("", value=inc_default, key=inc_key, label_visibility="collapsed")
-                st.session_state["fasteners_include"][lbl] = bool(inc_val)
-            with c_val:
-                v = st.number_input(
-                    "",
-                    min_value=0,
-                    value=int(current_val),
-                    step=1,
-                    key=f"fastener_qty_{i}_{lbl}",
-                    label_visibility="collapsed",
-                )
-            with c_name:
-                st.markdown(right_label(lbl), unsafe_allow_html=True)
-            new_fasteners[lbl] = int(v)
+    if st.session_state.get("fasteners_include") is None:
+        st.session_state["fasteners_include"] = {lbl: True for lbl, _ in fasteners_base}
 
-        st.session_state["fasteners"] = new_fasteners
+    overrides = st.session_state["fasteners"]
+    include_map = st.session_state["fasteners_include"]
+
+    new_fasteners = {}
+    new_include = {}
+
+    for i, (lbl, base_val) in enumerate(fasteners_base):
+        current_val = int(overrides.get(lbl, base_val))
+
+        # не показываем нули
+        if base_val == 0 and current_val == 0:
+            continue
+
+        c_chk, c_val, c_name = st.columns([0.8, 1.6, 5])
+
+        with c_chk:
+            inc = st.checkbox(
+                "",
+                value=bool(include_map.get(lbl, True)),
+                key=f"fast_inc_{i}",
+                label_visibility="collapsed",
+            )
+
+        with c_val:
+            val = st.number_input(
+                "",
+                min_value=0,
+                value=int(current_val),
+                step=1,
+                key=f"fast_val_{i}",
+                label_visibility="collapsed",
+            )
+
+        with c_name:
+            st.markdown(right_label(lbl), unsafe_allow_html=True)
+
+        new_fasteners[lbl] = int(val)
+        new_include[lbl] = bool(inc)
+
+    st.session_state["fasteners"] = new_fasteners
+    st.session_state["fasteners_include"] = new_include
+
 
 # ---------- CHANNELS ----------
 with st.expander("**תעלות עם מכסים (מטר)**", expanded=True):
@@ -970,6 +978,3 @@ with st.expander("**ייצוא (HTML להדפסה ל-PDF)**", expanded=True):
 
     else:
         info_box('קודם יש לחשב, ואז ניתן לייצא דו"ח')
-st.divider()
-st.subheader("DEBUG STATE")
-st.write(dict(st.session_state))
