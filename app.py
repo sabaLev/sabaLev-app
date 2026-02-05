@@ -632,6 +632,7 @@ if st.button("חשב", type="primary", use_container_width=True):
     # сброс данных פרזול
     st.session_state["fasteners"] = None
     st.session_state["fasteners_include"] = None
+    st.session_state["force_fasteners_reset"] = True
 
     
     # Сбрасываем קושרות (הוספה ידנית)
@@ -790,13 +791,22 @@ manual_rails = st.session_state.get("manual_rails", {})
 
 # ----- פרזול -----
 with st.expander("**פרזול**", expanded=True):
+
+    # если только что был расчет — сбрасываем ВСЁ
+    if st.session_state.get("force_fasteners_reset", False):
+        for key in list(st.session_state.keys()):
+            if key.startswith("fast_inc_") or key.startswith("fast_val_"):
+                del st.session_state[key]
+        st.session_state["fasteners"] = None
+        st.session_state["fasteners_include"] = None
+        st.session_state["force_fasteners_reset"] = False
+
     ear = calc_result["ear"]
     mid = calc_result["mid"]
     edge = calc_result["edge"]
     conn = calc_result["conn"]
     total_panels = calc_result["total_panels"]
 
-    # расчет длины для M8: авто + ручные
     rails_total = {}
     for length, qty in auto_rails.items():
         rails_total[length] = rails_total.get(length, 0) + qty
@@ -817,7 +827,6 @@ with st.expander("**פרזול**", expanded=True):
         m8_base = total_length_cm / 140.0
         m8_count = round_up_to_tens(m8_base)
 
-    # базовые значения
     fasteners_base = [
         ("מהדק הארקה", ear),
         ("מהדק אמצע", mid),
@@ -829,7 +838,7 @@ with st.expander("**פרזול**", expanded=True):
         ("M8 אום", m8_count),
     ]
 
-    # инициализация
+    # жёсткая переинициализация
     if st.session_state.get("fasteners") is None:
         st.session_state["fasteners"] = {lbl: int(val) for lbl, val in fasteners_base}
 
@@ -845,7 +854,6 @@ with st.expander("**פרזול**", expanded=True):
     for i, (lbl, base_val) in enumerate(fasteners_base):
         current_val = int(overrides.get(lbl, base_val))
 
-        # не показываем нули
         if base_val == 0 and current_val == 0:
             continue
 
