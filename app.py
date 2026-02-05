@@ -619,10 +619,16 @@ def build_html_report(calc_result, project_name, panel_name, channel_order, extr
 
 # ---------- BUTTON: CALCULATE ----------
 if st.button("חשב", type="primary", use_container_width=True):
-    # Удаляем ВСЕ ключи виджетов פרזול чтобы форсировать сброс
+
+    # 🔥 СБРОС ВСЕХ WIDGET-КЛЮЧЕЙ פרזול
     for key in list(st.session_state.keys()):
-        if key.startswith("fast_inc_") or key.startswith("fastener_qty_"):
+        if key.startswith("fast_inc_") or key.startswith("fast_val_"):
             del st.session_state[key]
+
+    # сброс данных פרזול
+    st.session_state["fasteners"] = None
+    st.session_state["fasteners_include"] = None
+
     
     # Сбрасываем קושרות (הוספה ידנית)
     st.session_state.manual_rows = 1
