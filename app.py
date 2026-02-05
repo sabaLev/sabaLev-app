@@ -51,6 +51,8 @@ if "manual_rails_reset_version" not in st.session_state:
     st.session_state.manual_rails_reset_version = 0
 if "report_needs_update" not in st.session_state:
     st.session_state.report_needs_update = True
+if "previous_groups_hash" not in st.session_state:
+    st.session_state.previous_groups_hash = None
 
 # ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
 def right_label(text: str) -> str:
@@ -97,6 +99,12 @@ def success_box(text: str):
         """,
         unsafe_allow_html=True,
     )
+
+def groups_hash(groups_list):
+    """Создает хэш для групп, чтобы отслеживать изменения"""
+    if not groups_list:
+        return "empty"
+    return hash(tuple(sorted(groups_list)))
 
 # ---------- ФУНКЦИЯ СБРОСА ТОЛЬКО АВТОМАТИЧЕСКИХ ЗНАЧЕНИЙ ----------
 def reset_auto_values_only():
@@ -167,14 +175,20 @@ def normalize_length_key(length) -> str:
     """Normalize a rail length key so 550, 550.0, '550', '550.0' map to '550'."""
     if length is None:
         return ""
+    
+    # Преобразуем в строку и убираем лишние символы
     s = str(length).strip().replace(",", ".")
+    
     if s == "":
         return ""
+    
     try:
         f = float(s)
+        # Если это целое число, возвращаем как целое
         if f.is_integer():
             return str(int(f))
-        return f"{f}".rstrip("0").rstrip(".")
+        # Иначе возвращаем как есть
+        return str(f)
     except Exception:
         return s
 
@@ -194,6 +208,20 @@ def format_qty(q):
         return s
     except Exception:
         return str(q)
+
+def format_length_for_display(length):
+    """Форматирует длину для отображения без лишних десятичных знаков"""
+    try:
+        f = float(length)
+        if f.is_integer():
+            return str(int(f))
+        # Проверяем, заканчивается ли на .0
+        s = str(f)
+        if s.endswith('.0'):
+            return s[:-2]
+        return s
+    except Exception:
+        return str(length)
 
 # ---------- PROJECT NAME ----------
 st.markdown(right_label("שם פרויקט"), unsafe_allow_html=True)
@@ -528,8 +556,9 @@ def build_html_report(calc_result, project_name, panel_name, channel_order, extr
     if st.session_state.koshrot_qty:
         for length_str, qty in st.session_state.koshrot_qty.items():
             try:
-                length = float(length_str)
-                auto_rails_actual[length] = qty
+                # Используем форматированную длину для отображения
+                length_display = format_length_for_display(length_str)
+                auto_rails_actual[length_display] = qty
             except:
                 auto_rails_actual[length_str] = qty
     
@@ -541,7 +570,8 @@ def build_html_report(calc_result, project_name, panel_name, channel_order, extr
     
     # Добавляем ручные рельсы
     for length, qty in manual_rails.items():
-        rails_total[length] = rails_total.get(length, 0) + qty
+        length_display = format_length_for_display(length)
+        rails_total[length_display] = rails_total.get(length_display, 0) + qty
     
     ear = calc_result.get("ear", 0)
     mid = calc_result.get("mid", 0)
@@ -549,10 +579,21 @@ def build_html_report(calc_result, project_name, panel_name, channel_order, extr
     conn = calc_result.get("conn", 0)
     total_panels = calc_result.get("total_panels", 0)
     
+    # Расчет общей длины для M8 болтов
     total_length_cm = 0
-    for length, qty in rails_total.items():
+    # Используем числовые значения для расчета
+    if st.session_state.koshrot_qty:
+        for length_str, qty in st.session_state.koshrot_qty.items():
+            try:
+                length_num = float(length_str)
+                total_length_cm += length_num * qty
+            except:
+                pass
+    
+    for length, qty in manual_rails.items():
         try:
-            total_length_cm += float(length) * qty
+            length_num = float(length)
+            total_length_cm += length_num * qty
         except:
             pass
     
@@ -602,7 +643,7 @@ def build_html_report(calc_result, project_name, panel_name, channel_order, extr
     
     html += "<h2>קושרות (כמות × אורך)</h2>"
     if rails_total:
-        for length in sorted(rails_total.keys(), key=length_sort_key, reverse=True):
+        for length in sorted(rails_total.keys(), key=lambda x: float(str(x).replace(",", ".")) if str(x).replace(",", ".").replace(".", "").isdigit() else 0, reverse=True):
             html += f"<p dir='rtl' style='text-align:right;'>{rails_total[length]} × {length}</p>"
     
     # --- פרזול בסקירה ---
@@ -619,7 +660,14 @@ def build_html_report(calc_result, project_name, panel_name, channel_order, extr
     
     overrides = st.session_state.get("fasteners")
     if overrides:
-        fasteners = [(lbl, overrides.get(lbl, val)) for (lbl, val) in fasteners]
+        # Обновляем только те значения, которые были изменены
+        updated_fasteners = []
+        for lbl, base_val in fasteners:
+            if lbl in overrides:
+                updated_fasteners.append((lbl, overrides[lbl]))
+            else:
+                updated_fasteners.append((lbl, base_val))
+        fasteners = updated_fasteners
     
     inc_map = st.session_state.get('fasteners_include', {})
     visible_fasteners = [(lbl, val) for lbl, val in fasteners if val > 0 and bool(inc_map.get(lbl, True))]
@@ -673,7 +721,10 @@ def build_html_report(calc_result, project_name, panel_name, channel_order, extr
 
 # ---------- BUTTON: CALCULATE ----------
 if st.button("חשב", type="primary", use_container_width=True):
-    # 1. Сохраняем текущий расчет как ИСХОДНЫЙ (только если это первый расчет)
+    # 1. Вычисляем хэш текущих групп
+    current_groups_hash = groups_hash(groups)
+    
+    # 2. Сохраняем текущий расчет
     if groups:
         new_calc_result = do_calculation(panel, groups)
     else:
@@ -686,8 +737,11 @@ if st.button("חשב", type="primary", use_container_width=True):
             "total_panels": 0,
         }
     
-    # 2. Если это ПЕРВЫЙ расчет или расчет с новыми данными
-    if st.session_state.initial_calc_result is None:
+    # 3. Проверяем, изменились ли группы
+    groups_changed = st.session_state.previous_groups_hash != current_groups_hash
+    
+    # 4. Если группы изменились ИЛИ это первый расчет
+    if groups_changed or st.session_state.initial_calc_result is None:
         # Сохраняем как исходный расчет
         st.session_state.initial_calc_result = new_calc_result.copy()
         
@@ -735,13 +789,16 @@ if st.button("חשב", type="primary", use_container_width=True):
             rails_base[klen] = rails_base.get(klen, 0) + int(qty)
         st.session_state.koshrot_qty = dict(rails_base)
     
-    # 3. Обновляем текущий результат расчета
+    # 5. Сохраняем хэш групп
+    st.session_state.previous_groups_hash = current_groups_hash
+    
+    # 6. Обновляем текущий результат расчета
     st.session_state.calc_result = new_calc_result
     
-    # 4. Сбрасываем ТОЛЬКО автоматические значения + רועי ידנית
+    # 7. Сбрасываем ТОЛЬКО автоматические значения + רועי ידנית
     reset_auto_values_only()
     
-    # 5. Устанавливаем флаг
+    # 8. Устанавливаем флаг
     st.session_state.just_calculated = True
     st.session_state.report_needs_update = True
     st.rerun()
@@ -793,7 +850,9 @@ if calc_result is not None:
         
         if st.session_state.koshrot_qty:
             for length in sorted(st.session_state.koshrot_qty.keys(), key=length_sort_key, reverse=True):
-                st.markdown(right_label(f"אורך: {length} ס״מ"), unsafe_allow_html=True)
+                # Форматируем длину для отображения
+                display_length = format_length_for_display(length)
+                st.markdown(right_label(f"אורך: {display_length} ס״מ"), unsafe_allow_html=True)
                 
                 # Используем уникальный ключ
                 qty_key = f"koshrot_qty_{length}_{st.session_state.koshrot_boxes_version}_{st.session_state.calculation_counter}"
@@ -918,7 +977,7 @@ if calc_result is not None:
             m8_base = total_length_cm / 140.0
             m8_count = round_up_to_tens(m8_base)
         
-        # Базовые значения
+        # Базовые значения (обновляются всегда при расчете)
         fasteners_base = [
             ("מהדק הארקה", ear),
             ("מהדק אמצע", mid),
@@ -930,12 +989,37 @@ if calc_result is not None:
             ("M8 אום", m8_count),
         ]
         
-        # Инициализируем если нужно
-        if not st.session_state.fasteners:
-            st.session_state.fasteners = {lbl: int(val) for (lbl, val) in fasteners_base}
+        # Создаем базовые значения для текущего расчета
+        current_base_fasteners = {lbl: int(val) for (lbl, val) in fasteners_base}
         
+        # Если fasteners не инициализированы или расчет изменился, используем новые значения
+        if not st.session_state.fasteners or st.session_state.fasteners.keys() != current_base_fasteners.keys():
+            # Проверяем, есть ли уже сохраненные значения пользователя
+            if st.session_state.fasteners:
+                # Сохраняем пользовательские изменения, если они есть
+                updated_fasteners = {}
+                for lbl, base_val in current_base_fasteners.items():
+                    if lbl in st.session_state.fasteners:
+                        # Сохраняем пользовательское значение, если оно было изменено
+                        user_val = st.session_state.fasteners[lbl]
+                        if user_val != 0:  # Сохраняем ненулевые пользовательские значения
+                            updated_fasteners[lbl] = user_val
+                        else:
+                            updated_fasteners[lbl] = base_val
+                    else:
+                        updated_fasteners[lbl] = base_val
+                st.session_state.fasteners = updated_fasteners
+            else:
+                st.session_state.fasteners = current_base_fasteners
+        
+        # Инициализируем fasteners_include если нужно
         if not st.session_state.fasteners_include:
-            st.session_state.fasteners_include = {lbl: True for (lbl, _) in fasteners_base}
+            st.session_state.fasteners_include = {lbl: True for lbl in current_base_fasteners.keys()}
+        else:
+            # Добавляем новые позиции, если они появились
+            for lbl in current_base_fasteners.keys():
+                if lbl not in st.session_state.fasteners_include:
+                    st.session_state.fasteners_include[lbl] = True
         
         # UI для каждого fastener
         new_fasteners = {}
@@ -946,8 +1030,8 @@ if calc_result is not None:
             current_val = st.session_state.fasteners.get(lbl, base_val)
             current_val = int(current_val) if current_val is not None else int(base_val)
             
-            # Не показываем нулевые значения
-            if int(base_val) == 0 and current_val == 0:
+            # Показываем только если значение > 0 или если пользователь уже изменял его
+            if int(base_val) == 0 and current_val == 0 and lbl not in st.session_state.fasteners:
                 continue
             
             c_chk, c_val, c_name = st.columns([0.8, 1.6, 5])
