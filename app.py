@@ -49,6 +49,8 @@ if "initial_fasteners_include" not in st.session_state:
     st.session_state.initial_fasteners_include = {}
 if "manual_rails_reset_version" not in st.session_state:
     st.session_state.manual_rails_reset_version = 0
+if "report_needs_update" not in st.session_state:
+    st.session_state.report_needs_update = True
 
 # ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
 def right_label(text: str) -> str:
@@ -146,6 +148,9 @@ def reset_auto_values_only():
     for key in list(st.session_state.keys()):
         if key.startswith("m_len_") or key.startswith("m_qty_"):
             del st.session_state[key]
+    
+    # Отметим, что отчет нужно обновить
+    st.session_state.report_needs_update = True
 
 # ---------- LOAD DATABASES ----------
 panels = pd.read_csv("panels.csv")
@@ -515,12 +520,26 @@ def do_calculation(panel_row, groups_list):
     }
 
 def build_html_report(calc_result, project_name, panel_name, channel_order, extra_parts, manual_rails):
-    auto_rails = calc_result.get("auto_rails", {})
+    # Используем актуальные значения из koshrot_qty для автоматических рельсов
+    # и manual_rails для ручных рельсов
+    auto_rails_actual = {}
+    
+    # Получаем актуальные значения из koshrot_qty (включая ручные изменения)
+    if st.session_state.koshrot_qty:
+        for length_str, qty in st.session_state.koshrot_qty.items():
+            try:
+                length = float(length_str)
+                auto_rails_actual[length] = qty
+            except:
+                auto_rails_actual[length_str] = qty
+    
     rails_total = {}
     
-    for length, qty in auto_rails.items():
+    # Добавляем актуальные значения автоматических рельсов
+    for length, qty in auto_rails_actual.items():
         rails_total[length] = rails_total.get(length, 0) + qty
     
+    # Добавляем ручные рельсы
     for length, qty in manual_rails.items():
         rails_total[length] = rails_total.get(length, 0) + qty
     
@@ -532,7 +551,10 @@ def build_html_report(calc_result, project_name, panel_name, channel_order, extr
     
     total_length_cm = 0
     for length, qty in rails_total.items():
-        total_length_cm += float(length) * qty
+        try:
+            total_length_cm += float(length) * qty
+        except:
+            pass
     
     screws_iso = round_up_to_tens(conn * 4 + total_panels)
     
@@ -721,6 +743,7 @@ if st.button("חשב", type="primary", use_container_width=True):
     
     # 5. Устанавливаем флаг
     st.session_state.just_calculated = True
+    st.session_state.report_needs_update = True
     st.rerun()
 
 if st.session_state.get("just_calculated"):
@@ -760,7 +783,13 @@ if calc_result is not None:
             
             # Обновляем существующие авто значения
             for length, qty in rails_base.items():
-                st.session_state.koshrot_qty[length] = qty
+                # Обновляем только если значение не было изменено пользователем
+                # или если это новый расчет
+                if length not in st.session_state.koshrot_qty:
+                    st.session_state.koshrot_qty[length] = qty
+        
+        # Создаем временный словарь для хранения значений из виджетов
+        temp_koshrot_qty = {}
         
         if st.session_state.koshrot_qty:
             for length in sorted(st.session_state.koshrot_qty.keys(), key=length_sort_key, reverse=True):
@@ -770,6 +799,7 @@ if calc_result is not None:
                 qty_key = f"koshrot_qty_{length}_{st.session_state.koshrot_boxes_version}_{st.session_state.calculation_counter}"
                 default_val = int(st.session_state.koshrot_qty.get(length, 0))
                 
+                # Получаем значение из виджета
                 qty_val = st.number_input(
                     "",
                     min_value=0,
@@ -778,8 +808,17 @@ if calc_result is not None:
                     key=qty_key,
                     label_visibility="collapsed",
                 )
-                st.session_state.koshrot_qty[length] = int(qty_val)
-        else:
+                
+                # Сохраняем во временный словарь
+                temp_koshrot_qty[length] = int(qty_val)
+        
+        # Обновляем основной koshrot_qty значениями из виджетов
+        for length, qty in temp_koshrot_qty.items():
+            if st.session_state.koshrot_qty.get(length) != qty:
+                st.session_state.koshrot_qty[length] = qty
+                st.session_state.report_needs_update = True
+        
+        if not st.session_state.koshrot_qty:
             st.write("אין קושרות מחושבות")
     
     # ----- קושרות (הוספה ידנית) -----
@@ -820,8 +859,10 @@ if calc_result is not None:
             st.session_state.manual_rows += 1
             st.rerun()
         
-        # Собираем ручные рельсы
+        # Собираем ручные рельсы и проверяем изменения
         manual_rails_dict = {}
+        manual_rails_changed = False
+        
         for j in range(1, st.session_state.manual_rows + 1):
             length_key = f"m_len_{j}_{st.session_state.manual_rails_reset_version}"
             qty_key = f"m_qty_{j}_{st.session_state.manual_rails_reset_version}"
@@ -832,7 +873,12 @@ if calc_result is not None:
             if length and qty:
                 manual_rails_dict[length] = manual_rails_dict.get(length, 0) + qty
         
-        st.session_state.manual_rails = manual_rails_dict
+        # Проверяем, изменились ли ручные рельсы
+        if manual_rails_dict != st.session_state.manual_rails:
+            st.session_state.manual_rails = manual_rails_dict
+            st.session_state.report_needs_update = True
+        else:
+            st.session_state.manual_rails = manual_rails_dict
     
     # ----- פרזול -----
     with st.expander("**פרזול**", expanded=True):
@@ -845,8 +891,17 @@ if calc_result is not None:
         
         # Расчет для M8: учитываем и авто и ручные рельсы
         rails_total = {}
-        for length, qty in auto_rails.items():
-            rails_total[length] = rails_total.get(length, 0) + qty
+        
+        # Используем актуальные значения из koshrot_qty
+        if st.session_state.koshrot_qty:
+            for length_str, qty in st.session_state.koshrot_qty.items():
+                try:
+                    length = float(length_str)
+                    rails_total[length] = rails_total.get(length, 0) + qty
+                except:
+                    rails_total[length_str] = rails_total.get(length_str, 0) + qty
+        
+        # Добавляем ручные рельсы
         for length, qty in manual_rails.items():
             rails_total[length] = rails_total.get(length, 0) + qty
         
@@ -884,6 +939,8 @@ if calc_result is not None:
         
         # UI для каждого fastener
         new_fasteners = {}
+        fasteners_changed = False
+        
         for i, (lbl, base_val) in enumerate(fasteners_base):
             # Получаем текущее значение
             current_val = st.session_state.fasteners.get(lbl, base_val)
@@ -900,7 +957,12 @@ if calc_result is not None:
                 inc_key = f"fast_inc_{lbl}_{st.session_state.calculation_counter}"
                 inc_default = st.session_state.fasteners_include.get(lbl, True)
                 inc_val = st.checkbox("", value=inc_default, key=inc_key, label_visibility="collapsed")
-                st.session_state.fasteners_include[lbl] = bool(inc_val)
+                
+                if inc_val != st.session_state.fasteners_include.get(lbl, True):
+                    st.session_state.fasteners_include[lbl] = bool(inc_val)
+                    st.session_state.report_needs_update = True
+                else:
+                    st.session_state.fasteners_include[lbl] = bool(inc_val)
             
             with c_val:
                 # Уникальный ключ
@@ -913,13 +975,21 @@ if calc_result is not None:
                     key=val_key,
                     label_visibility="collapsed",
                 )
+                
+                if v != current_val:
+                    fasteners_changed = True
             
             with c_name:
                 st.markdown(right_label(lbl), unsafe_allow_html=True)
             
             new_fasteners[lbl] = int(v)
         
-        st.session_state.fasteners = new_fasteners
+        # Обновляем fasteners если были изменения
+        if fasteners_changed:
+            st.session_state.fasteners = new_fasteners
+            st.session_state.report_needs_update = True
+        else:
+            st.session_state.fasteners = new_fasteners
 
 # ---------- CHANNELS ----------
 with st.expander("**תעלות עם מכסים (מטר)**", expanded=True):
@@ -949,7 +1019,13 @@ with st.expander("**תעלות עם מכסים (מטר)**", expanded=True):
         elif name in st.session_state.channel_order:
             channel_order[name] = 0
     
-    st.session_state.channel_order = {k: v for k, v in channel_order.items() if v > 0}
+    # Проверяем изменения в каналах
+    new_channel_order = {k: v for k, v in channel_order.items() if v > 0}
+    if new_channel_order != st.session_state.channel_order:
+        st.session_state.channel_order = new_channel_order
+        st.session_state.report_needs_update = True
+    else:
+        st.session_state.channel_order = new_channel_order
 
 # ---------- EXTRA PARTS ----------
 with st.expander("**הוסף פריט**", expanded=True):
@@ -1001,7 +1077,14 @@ with st.expander("**הוסף פריט**", expanded=True):
         for name, qty in chosen_entries:
             agg[name] = agg.get(name, 0) + qty
         
-        st.session_state.extra_parts = [{"name": n, "qty": q} for n, q in agg.items()]
+        new_extra_parts = [{"name": n, "qty": q} for n, q in agg.items()]
+        
+        # Проверяем изменения в дополнительных частях
+        if new_extra_parts != st.session_state.extra_parts:
+            st.session_state.extra_parts = new_extra_parts
+            st.session_state.report_needs_update = True
+        else:
+            st.session_state.extra_parts = new_extra_parts
     else:
         info_box("אין פריטים בקובץ parts.csv – נא להוסיף פריט חדש בצד שמאל")
 
@@ -1014,14 +1097,23 @@ with st.expander("**ייצוא (HTML להדפסה ל-PDF)**", expanded=True):
     
     calc_result = st.session_state.calc_result
     if calc_result is not None:
-        html_report = build_html_report(
-            calc_result=calc_result,
-            project_name=st.session_state.project_name,
-            panel_name=panel_name,
-            channel_order=st.session_state.channel_order,
-            extra_parts=st.session_state.extra_parts,
-            manual_rails=st.session_state.manual_rails,
-        )
+        # Автоматически обновляем отчет при любых изменениях
+        if st.session_state.get("report_needs_update", True):
+            # Генерируем новый отчет
+            html_report = build_html_report(
+                calc_result=calc_result,
+                project_name=st.session_state.project_name,
+                panel_name=panel_name,
+                channel_order=st.session_state.channel_order,
+                extra_parts=st.session_state.extra_parts,
+                manual_rails=st.session_state.manual_rails,
+            )
+            # Сохраняем сгенерированный отчет
+            st.session_state.last_html_report = html_report
+            st.session_state.report_needs_update = False
+        
+        # Используем сохраненный отчет
+        html_report = st.session_state.get("last_html_report", "")
         
         c_left, c_right = st.columns(2)
         with c_left:
