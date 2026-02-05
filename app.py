@@ -367,7 +367,7 @@ if st.button("חשב", type="primary", use_container_width=True):
     calc_result = st.session_state.calc_result
 
     # 2️⃣ Сброс ручных рельсов
-    st.session_state.manual_rails = {}  # пусто
+    st.session_state.manual_rails.clear()  # <-- очистка существующего словаря
     st.session_state.manual_rows = 1
     st.session_state.manual_form_version += 1
 
@@ -408,8 +408,8 @@ if st.button("חשב", type="primary", use_container_width=True):
         ("M8 אום", m8_count),
     ]
 
-    st.session_state["fasteners"] = {lbl: int(val) for lbl, val in fasteners_base}
-    st.session_state["fasteners_include"] = {lbl: True for lbl, _ in fasteners_base}
+    st.session_state.fasteners = {lbl: int(val) for lbl, val in fasteners_base}
+    st.session_state.fasteners_include = {lbl: True for lbl, _ in fasteners_base}  # <-- все галочки включены
 
     # 5️⃣ Флаг для интерфейса
     st.session_state.just_calculated = True
