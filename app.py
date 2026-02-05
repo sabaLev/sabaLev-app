@@ -349,16 +349,9 @@ def do_calculation(panel_row, groups_list):
             edge += ed
     return {"auto_rails": auto_rails, "conn": conn, "ear": ear, "mid": mid, "edge": edge, "total_panels": total_panels}
 
-# ---------- BUTTON CALCULATE ----------
+# ---------- BUTTON: CALCULATE ----------
 if st.button("חשב", type="primary", use_container_width=True):
-    st.session_state["fasteners"] = None
-    st.session_state["fasteners_include"] = None
-    st.session_state.force_fasteners_reset = True
-    st.session_state.manual_rows = 1
-    st.session_state.manual_deleted_rows = set()
-    st.session_state.manual_rails = {}
-    st.session_state.manual_form_version += 1
-    st.session_state.koshrot_boxes_version += 1
+    # 1️⃣ Расчет
     if groups:
         st.session_state.calc_result = do_calculation(panel, groups)
     else:
@@ -370,16 +363,58 @@ if st.button("חשב", type="primary", use_container_width=True):
             "edge": 0,
             "total_panels": 0,
         }
+
+    calc_result = st.session_state.calc_result
+
+    # 2️⃣ Сброс ручных рельсов
+    st.session_state.manual_rails = {}  # пусто
+    st.session_state.manual_rows = 1
+    st.session_state.manual_form_version += 1
+
+    # 3️⃣ Обновляем кошроты на авто-значения
+    auto_rails = calc_result.get("auto_rails", {})
+    rails_base = {}
+    for length, qty in auto_rails.items():
+        klen = normalize_length_key(length)
+        rails_base[klen] = rails_base.get(klen, 0) + int(qty)
+    st.session_state.koshrot_qty = dict(rails_base)
+    st.session_state.koshrot_boxes_version += 1
+
+    # 4️⃣ Сброс fasteners и галочек
+    ear = calc_result.get("ear", 0)
+    mid = calc_result.get("mid", 0)
+    edge = calc_result.get("edge", 0)
+    conn = calc_result.get("conn", 0)
+    total_panels = calc_result.get("total_panels", 0)
+
+    total_length_cm = 0
+    for length, qty in auto_rails.items():
+        try:
+            total_length_cm += float(length) * qty
+        except Exception:
+            pass
+
+    screws_iso = round_up_to_tens(conn * 4 + total_panels)
+    m8_count = round_up_to_tens(total_length_cm / 140.0) if total_length_cm > 0 else 0
+
+    fasteners_base = [
+        ("מהדק הארקה", ear),
+        ("מהדק אמצע", mid),
+        ("מהדק קצה", edge),
+        ("פקק לקושרות", edge),
+        ("מחברי קושרות", conn),
+        ("בורג איסכורית 3,5", screws_iso),
+        ("M8 בורג", m8_count),
+        ("M8 אום", m8_count),
+    ]
+
+    st.session_state["fasteners"] = {lbl: int(val) for lbl, val in fasteners_base}
+    st.session_state["fasteners_include"] = {lbl: True for lbl, _ in fasteners_base}
+
+    # 5️⃣ Флаг для интерфейса
     st.session_state.just_calculated = True
     st.rerun()
 
-if st.session_state.just_calculated:
-    success_box("החישוב עודכן")
-    st.session_state.just_calculated = False
-
-calc_result = st.session_state.calc_result  # безопасно, всегда словарь
-auto_rails = calc_result.get("auto_rails", {})
-manual_rails = st.session_state.get("manual_rails", {})
 
 # ---------- EXPORT и BUILD HTML REPORT ----------
 def build_html_report(calc_result, project_name, panel_name, channel_order, extra_parts, manual_rails):
