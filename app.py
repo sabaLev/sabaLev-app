@@ -47,6 +47,8 @@ if "initial_fasteners" not in st.session_state:
     st.session_state.initial_fasteners = None
 if "initial_fasteners_include" not in st.session_state:
     st.session_state.initial_fasteners_include = {}
+if "manual_rails_reset_version" not in st.session_state:
+    st.session_state.manual_rails_reset_version = 0
 
 # ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
 def right_label(text: str) -> str:
@@ -104,12 +106,17 @@ def reset_auto_values_only():
     # Сбрасываем версию для квотированных рельсов
     st.session_state.koshrot_boxes_version = st.session_state.get("koshrot_boxes_version", 0) + 1
     
-    # Удаляем КЛЮЧИ ВИДЖЕТОВ, но сохраняем сами данные
+    # Сбрасываем версию для ручных рельсов (הוספה ידנית)
+    st.session_state.manual_rails_reset_version = st.session_state.get("manual_rails_reset_version", 0) + 1
+    
+    # Удаляем КЛЮЧИ ВИДЖЕТОВ для сброса интерфейса
     for key in list(st.session_state.keys()):
-        # Удаляем ключи виджетов для сброса интерфейса, но НЕ удаляем данные
+        # Удаляем ключи виджетов для сброса интерфейса
         if (key.startswith("fast_inc_") or 
             key.startswith("fastener_qty_") or
-            key.startswith("koshrot_qty_")):
+            key.startswith("koshrot_qty_") or
+            key.startswith("m_len_") or  # Удаляем ключи ручных рельсов
+            key.startswith("m_qty_")):
             del st.session_state[key]
     
     # Сбрасываем квотированные рельсы к ИСХОДНЫМ расчетным значениям
@@ -130,8 +137,17 @@ def reset_auto_values_only():
         st.session_state.fasteners = st.session_state.initial_fasteners.copy()
     
     # Сбрасываем галочки к ИСХОДНОМУ состоянию (все включены)
-    if st.session_state.initial_fasteners:
-        st.session_state.fasteners_include = {lbl: True for lbl in st.session_state.initial_fasteners.keys()}
+    if st.session_state.initial_fasteners_include:
+        st.session_state.fasteners_include = st.session_state.initial_fasteners_include.copy()
+    
+    # Сбрасываем ручные рельсы (הוספה ידנית) - полностью очищаем
+    st.session_state.manual_rows = 1
+    st.session_state.manual_rails = {}
+    
+    # Удаляем все сохраненные значения ручных рельсов
+    for key in list(st.session_state.keys()):
+        if key.startswith("m_len_") or key.startswith("m_qty_"):
+            del st.session_state[key]
 
 # ---------- LOAD DATABASES ----------
 panels = pd.read_csv("panels.csv")
@@ -702,7 +718,7 @@ if st.button("חשב", type="primary", use_container_width=True):
     # 3. Обновляем текущий результат расчета
     st.session_state.calc_result = new_calc_result
     
-    # 4. Сбрасываем ТОЛЬКО автоматические значения
+    # 4. Сбрасываем ТОЛЬКО автоматические значения + רועי ידנית
     reset_auto_values_only()
     
     # 5. Устанавливаем флаг
@@ -773,19 +789,17 @@ if calc_result is not None:
         for j in range(1, manual_rows + 1):
             cols = st.columns(2)
             
-            length_key = f"m_len_{j}"
-            qty_key = f"m_qty_{j}"
+            # Уникальный ключ с версией сброса
+            length_key = f"m_len_{j}_{st.session_state.manual_rails_reset_version}"
+            qty_key = f"m_qty_{j}_{st.session_state.manual_rails_reset_version}"
             
-            # Сохраняем предыдущие значения если есть
-            prev_length = st.session_state.get(length_key, 0)
-            prev_qty = st.session_state.get(qty_key, 0)
-            
+            # Начинаем с нулевых значений (форма сброшена)
             length = cols[0].number_input(
                 "",
                 min_value=0,
                 max_value=10000,
                 step=10,
-                value=prev_length,
+                value=0,  # Всегда начинаем с 0 после сброса
                 key=length_key,
                 label_visibility="collapsed",
             )
@@ -794,7 +808,7 @@ if calc_result is not None:
                 min_value=0,
                 max_value=1000,
                 step=1,
-                value=prev_qty,
+                value=0,  # Всегда начинаем с 0 после сброса
                 key=qty_key,
                 label_visibility="collapsed",
             )
@@ -806,8 +820,8 @@ if calc_result is not None:
         # Собираем ручные рельсы
         manual_rails_dict = {}
         for j in range(1, st.session_state.manual_rows + 1):
-            length_key = f"m_len_{j}"
-            qty_key = f"m_qty_{j}"
+            length_key = f"m_len_{j}_{st.session_state.manual_rails_reset_version}"
+            qty_key = f"m_qty_{j}_{st.session_state.manual_rails_reset_version}"
             
             length = st.session_state.get(length_key, 0)
             qty = st.session_state.get(qty_key, 0)
