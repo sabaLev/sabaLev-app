@@ -1,4 +1,91 @@
 import streamlit as st
+import pandas as pd
+import math
+
+panels = pd.read_csv("panels.csv")
+channels = pd.read_csv("channels.csv")
+parts = pd.read_csv("parts.csv")
+
+st.sidebar.header("Панели")
+new_name = st.sidebar.text_input("Имя панели")
+new_w = st.sidebar.number_input("Ширина (см)",0.0)
+new_h = st.sidebar.number_input("Длина (см)",0.0)
+if st.sidebar.button("Добавить панель"):
+    panels.loc[len(panels)] = [new_name,new_w,new_h]
+    panels.to_csv("panels.csv",index=False)
+    st.sidebar.success("Панель добавлена")
+
+st.title("Solar Configurator")
+
+panel_name = st.selectbox("Тип панели", panels["name"])
+panel = panels[panels["name"]==panel_name].iloc[0]
+
+st.subheader("Группы")
+groups=[]
+for i in range(1,6):
+    c=st.columns(3)
+    n=c[0].number_input(f"Панелей в группе {i}",0,100,0,key=f"n{i}")
+    g=c[1].number_input(f"Кол-во групп {i}",0,50,0,key=f"g{i}")
+    o=c[2].selectbox("Ориентация",["Вертикально","Горизонтально"],key=f"o{i}")
+    if n>0 and g>0:
+        groups.append((n,g,o))
+
+def calc_group(N,orientation):
+    if orientation=="Вертикально":
+        base=panel["width"]*N
+    else:
+        base=panel["height"]*N
+
+    pairs=N//2
+    raw=base+pairs*2
+    final=math.ceil((raw+10)/10)*10
+
+    segs=[]
+    r=final
+    while r>550:
+        segs.append(550)
+        r-=550
+    segs.append(r)
+
+    connectors=len(segs)-1
+
+    earthing=pairs
+    middle=pairs
+    if pairs>1:
+        middle+=(pairs-1)*2
+    if N%2==1:
+        earthing+=1
+        middle+=1
+
+    return segs,connectors,earthing,middle,4
+
+if st.button("Рассчитать"):
+    rails={}
+    conn=ear=mid=edge=0
+
+    for n,g,o in groups:
+        for _ in range(g):
+            segs,c,e,m,ed=calc_group(n,o)
+            for s in segs:
+                rails[s]=rails.get(s,0)+1
+            conn+=c
+            ear+=e
+            mid+=m
+            edge+=ed
+
+    st.subheader("Кошרות")
+    for k in sorted(rails):
+        st.write(f"{rails[k]} × {k} см")
+
+    st.subheader("Каналы")
+    for i,r in channels.iterrows():
+        q=st.number_input(r["name"],0.0,key=f"ch{i}")
+        if q>0:
+            st.write(r["name"],q)
+
+    st.success("Готово")
+
+import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
 import math
