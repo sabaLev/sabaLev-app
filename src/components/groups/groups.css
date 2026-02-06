@@ -1,0 +1,25 @@
+.space-y-4 > * + * {
+  margin-top: var(--spacing-4);
+}
+
+.space-y-3 > * + * {
+  margin-top: var(--spacing-3);
+}
+
+input[type="number"] {
+  width: 100%;
+  min-height: 38px;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+@media (max-width: 480px) {
+  .grid {
+    gap: 8px !important;
+  }
+
+  input {
+    font-size: 16px;
+    min-height: 44px;
+  }
+}

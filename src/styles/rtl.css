@@ -1,0 +1,107 @@
+/* RTL Support for Hebrew */
+
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir="rtl"] input,
+[dir="rtl"] select,
+[dir="rtl"] textarea {
+  text-align: right;
+  direction: rtl;
+}
+
+[dir="rtl"] button {
+  text-align: center;
+}
+
+[dir="rtl"] .flex {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .flex-col {
+  flex-direction: column;
+}
+
+[dir="rtl"] .justify-between {
+  justify-content: space-between;
+}
+
+/* Grid adjustments */
+[dir="rtl"] .grid {
+  direction: rtl;
+}
+
+/* Utilities */
+.text-right {
+  text-align: right;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+/* Space utilities for RTL */
+.space-y-2 > * + * { margin-top: var(--spacing-2); }
+.space-y-3 > * + * { margin-top: var(--spacing-3); }
+.space-y-4 > * + * { margin-top: var(--spacing-4); }
+.space-y-6 > * + * { margin-top: var(--spacing-6); }
+
+.space-x-2 > * + * { margin-right: var(--spacing-2); }
+.space-x-3 > * + * { margin-right: var(--spacing-3); }
+.space-x-4 > * + * { margin-right: var(--spacing-4); }
+
+[dir="ltr"] .space-x-2 > * + * { margin-left: var(--spacing-2); margin-right: 0; }
+[dir="ltr"] .space-x-3 > * + * { margin-left: var(--spacing-3); margin-right: 0; }
+[dir="ltr"] .space-x-4 > * + * { margin-left: var(--spacing-4); margin-right: 0; }
+
+/* Margins */
+.mr-auto { margin-right: auto; }
+.ml-auto { margin-left: auto; }
+
+[dir="rtl"] .mr-auto { margin-right: 0; margin-left: auto; }
+[dir="rtl"] .ml-auto { margin-left: 0; margin-right: auto; }
+
+/* Padding for inputs in RTL */
+[dir="rtl"] input[type="number"]::placeholder,
+[dir="rtl"] input[type="text"]::placeholder {
+  text-align: right;
+}
+
+/* Flexbox children alignment */
+[dir="rtl"] .gap-2 { gap: var(--spacing-2); }
+[dir="rtl"] .gap-3 { gap: var(--spacing-3); }
+[dir="rtl"] .gap-4 { gap: var(--spacing-4); }
+
+/* Table support for RTL */
+[dir="rtl"] table {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir="rtl"] table td {
+  text-align: right;
+}
+
+[dir="rtl"] table td.number {
+  text-align: left;
+}
+
+/* Expandable sections */
+[dir="rtl"] .expander-header {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .expander-icon {
+  margin-right: 0;
+  margin-left: var(--spacing-2);
+}
+
+[dir="rtl"] .rotate-180 {
+  transform: rotate(180deg);
+}
