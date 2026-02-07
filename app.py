@@ -2,142 +2,117 @@ import streamlit as st
 
 st.markdown("""
 <style>
-/* ФИКСИРУЕМ ширину колонок НАВСЕГДА */
-.fixed-row {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    margin-bottom: 10px !important;
-    width: 100% !important;
+/* СБРАСЫВАЕМ ВСЕ СТИЛИ STREAMLIT ДЛЯ КОЛОНОК */
+div[data-testid="column"] {
+    width: auto !important;
+    min-width: auto !important;
+    max-width: none !important;
+    flex: none !important;
+    padding: 0 !important;
 }
 
-/* Левая колонка - поле ввода (очень узкое) */
-.fixed-input-col {
+/* Наш контейнер для строки */
+.panel-row-container {
+    display: flex !important;
+    width: 100% !important;
+    margin-bottom: 15px !important;
+}
+
+/* Контейнер для поля ввода (фиксированная ширина) */
+.input-wrapper {
     width: 80px !important;
     min-width: 80px !important;
     max-width: 80px !important;
     flex: 0 0 80px !important;
-    padding-right: 10px !important;
+    margin-right: 10px !important;
 }
 
-/* Правая колонка - текст (занимает остальное пространство) */
-.fixed-text-col {
+/* Контейнер для текста */
+.text-wrapper {
     flex: 1 !important;
-    text-align: right !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
     padding-right: 15px !important;
 }
 
-/* Делаем поле ввода компактным */
-.compact-input input {
-    width: 100% !important;
-    min-width: 80px !important;
-    max-width: 80px !important;
-}
-
-/* Для мобильных еще уменьшаем отступы */
+/* Мобильная адаптация */
 @media (max-width: 768px) {
-    .fixed-input-col {
+    .input-wrapper {
         width: 70px !important;
         min-width: 70px !important;
         max-width: 70px !important;
         flex: 0 0 70px !important;
-        padding-right: 8px !important;
-    }
-    
-    .compact-input input {
-        width: 100% !important;
-        min-width: 70px !important;
-        max-width: 70px !important;
-        font-size: 16px !important;
-        height: 44px !important;
-    }
-    
-    .fixed-text-col {
-        padding-right: 10px !important;
-        font-size: 16px !important;
+        margin-right: 8px !important;
     }
 }
 
 /* Заголовки */
-.table-header {
+.header-row {
     display: flex !important;
-    flex-direction: row !important;
+    width: 100% !important;
     margin-bottom: 10px !important;
     font-weight: bold !important;
 }
 
-.header-left {
+.header-input {
     width: 80px !important;
     min-width: 80px !important;
     max-width: 80px !important;
-    padding-right: 10px !important;
+    flex: 0 0 80px !important;
+    margin-right: 10px !important;
     text-align: right !important;
 }
 
-.header-right {
+.header-text {
     flex: 1 !important;
     text-align: right !important;
     padding-right: 15px !important;
 }
 
 @media (max-width: 768px) {
-    .header-left {
+    .header-input {
         width: 70px !important;
         min-width: 70px !important;
         max-width: 70px !important;
-        padding-right: 8px !important;
-    }
-    
-    .header-right {
-        padding-right: 10px !important;
+        flex: 0 0 70px !important;
+        margin-right: 8px !important;
     }
 }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("Тест с фиксированной шириной")
+st.title("Тест с абсолютным контролем")
 
 # Заголовки
-st.markdown('<div class="table-header">', unsafe_allow_html=True)
-st.markdown('<div class="header-left">שורות</div>', unsafe_allow_html=True)
-st.markdown('<div class="header-right">פאנלים</div>', unsafe_allow_html=True)
+st.markdown('<div class="header-row">', unsafe_allow_html=True)
+st.markdown('<div class="header-input">שורות</div>', unsafe_allow_html=True)
+st.markdown('<div class="header-text">פאנלים</div>', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Строка 1
-st.markdown('<div class="fixed-row">', unsafe_allow_html=True)
+st.markdown('<div class="panel-row-container">', unsafe_allow_html=True)
 
-# Левая колонка - поле ввода (фиксированная ширина)
-st.markdown('<div class="fixed-input-col">', unsafe_allow_html=True)
-st.markdown('<div class="compact-input">', unsafe_allow_html=True)
-st.number_input("", 0, 50, 0, key="test1", label_visibility="collapsed")
-st.markdown('</div>', unsafe_allow_html=True)
+# Контейнер для поля ввода
+st.markdown('<div class="input-wrapper">', unsafe_allow_html=True)
+# Используем with st.container() чтобы изолировать
+with st.container():
+    st.number_input("", 0, 50, 0, key="r1", label_visibility="collapsed")
 st.markdown('</div>', unsafe_allow_html=True)
 
-# Правая колонка - текст
-st.markdown('<div class="fixed-text-col">', unsafe_allow_html=True)
-st.markdown('<div style="height:45px; display:flex; align-items:center; justify-content:flex-end;">1</div>', unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
+# Контейнер для текста
+st.markdown('<div class="text-wrapper">1</div>', unsafe_allow_html=True)
 
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Строка 2
-st.markdown('<div class="fixed-row">', unsafe_allow_html=True)
+st.markdown('<div class="panel-row-container">', unsafe_allow_html=True)
 
-# Левая колонка - поле ввода
-st.markdown('<div class="fixed-input-col">', unsafe_allow_html=True)
-st.markdown('<div class="compact-input">', unsafe_allow_html=True)
-st.number_input("", 0, 50, 0, key="test2", label_visibility="collapsed")
-st.markdown('</div>', unsafe_allow_html=True)
+st.markdown('<div class="input-wrapper">', unsafe_allow_html=True)
+with st.container():
+    st.number_input("", 0, 50, 0, key="r2", label_visibility="collapsed")
 st.markdown('</div>', unsafe_allow_html=True)
 
-# Правая колонка - текст
-st.markdown('<div class="fixed-text-col">', unsafe_allow_html=True)
-st.markdown('<div style="height:45px; display:flex; align-items:center; justify-content:flex-end;">2</div>', unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
+st.markdown('<div class="text-wrapper">2</div>', unsafe_allow_html=True)
 
 st.markdown('</div>', unsafe_allow_html=True)
-
-st.markdown("---")
-st.write("**На десктопе:** Левая колонка = 80px, правая = остальное")
-st.write("**На мобильных:** Левая колонка = 70px, правая = остальное")
-st.write("Поле ввода всегда компактное, цифра всегда справа от него")
