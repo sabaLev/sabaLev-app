@@ -1,20 +1,18 @@
 import streamlit as st
 import pandas as pd
 
-st.title("Адаптивная таблица")
+st.title("Таблица с динамической высотой")
 
-df = pd.DataFrame({
-    'Левый столбец': ['Текст 1', 'Текст 2', 'Текст 3'],
-    'Правый столбец': ['Значение 1', 'Значение 2', 'Значение 3']
-})
+# Больше данных для скролла
+data = {
+    'Параметр': [f'Параметр {i}' for i in range(1, 51)],
+    'Значение': [f'Значение {i}' for i in range(1, 51)]
+}
+df = pd.DataFrame(data)
 
-# Редактируемая таблица с настройкой ширины
-edited_df = st.data_editor(
+# Таблица с высотой и шириной
+st.dataframe(
     df,
     use_container_width=True,
-    hide_index=True,
-    column_config={
-        'Левый столбец': st.column_config.Column(width="large"),
-        'Правый столбец': st.column_config.Column(width="large")
-    }
+    height=400  # Фиксированная высота со скроллом
 )
