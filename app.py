@@ -380,7 +380,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Секция вертикальных панелей - עומדים
-with st.expander("**עומדים**", expanded=True):
+# ИЗМЕНЕНИЕ 2: Все спойлеры по умолчанию показывать закрытыми
+with st.expander("**עומדים**", expanded=False):
     vh = st.columns(2)
     vh[0].markdown(right_label("שורות"), unsafe_allow_html=True)
     vh[1].markdown(right_label("פאנלים"), unsafe_allow_html=True)
@@ -415,7 +416,8 @@ with st.expander("**עומדים**", expanded=True):
         st.rerun()
 
 # Секция горизонтальных панелей - שוכבים
-with st.expander("**שוכבים**", expanded=True):
+# ИЗМЕНЕНИЕ 2: Все спойлеры по умолчанию показывать закрытыми
+with st.expander("**שוכבים**", expanded=False):
     hh = st.columns(2)
     hh[0].markdown(right_label("שורות"), unsafe_allow_html=True)
     hh[1].markdown(right_label("פאנלים"), unsafe_allow_html=True)
@@ -817,7 +819,8 @@ if calc_result is not None:
     st.write(f"סה\"כ פאנלים: {calc_result['total_panels']}")
     
     # ----- קושרות -----
-    with st.expander("**קושרות**", expanded=True):
+    # ИЗМЕНЕНИЕ 2: Все спойлеры по умолчанию показывать закрытыми
+    with st.expander("**קושרות**", expanded=False):
         # Важно: В этом разделе должны быть ТОЛЬКО автоматически рассчитанные значения
         # НЕ добавляем ручные рельсы (manual_rails)!
         rails_base = {}
@@ -881,7 +884,8 @@ if calc_result is not None:
             st.write("אין קושרות מחושבות")
     
     # ----- קושרות (הוספה ידנית) -----
-    with st.expander("**קושרות (הוספה ידנית)**", expanded=True):
+    # ИЗМЕНЕНИЕ 2: Все спойлеры по умолчанию показывать закрытыми
+    with st.expander("**קושרות (הוספה ידנית)**", expanded=False):
         mh = st.columns(2)
         mh[0].markdown(right_label("אורך (ס״מ)"), unsafe_allow_html=True)
         mh[1].markdown(right_label("כמות"), unsafe_allow_html=True)
@@ -940,7 +944,8 @@ if calc_result is not None:
             st.session_state.manual_rails = manual_rails_dict
     
     # ----- פרזול -----
-    with st.expander("**פרזול**", expanded=True):
+    # ИЗМЕНЕНИЕ 2: Все спойлеры по умолчанию показывать закрытыми
+    with st.expander("**פרזול**", expanded=False):
         # Базовые значения из расчета
         ear = calc_result["ear"]
         mid = calc_result["mid"]
@@ -1034,22 +1039,33 @@ if calc_result is not None:
             if int(base_val) == 0 and current_val == 0 and lbl not in st.session_state.fasteners:
                 continue
             
-            c_chk, c_val, c_name = st.columns([0.8, 1.6, 5])
+            # ИЗМЕНЕНИЕ 3: Сделать наименование позиций подписью к чекбоксу
+            # Создаем контейнер для чекбокса и подписи
+            st.markdown(f"""
+                <div style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-end;
+                    direction: rtl;
+                    margin-bottom: 0.5rem;
+                ">
+                    <div style="margin-left: 10px;">
+                        {lbl}
+                    </div>
+                    <div style="margin-left: 10px;">
+            """, unsafe_allow_html=True)
             
-            with c_chk:
-                # Уникальный ключ
-                inc_key = f"fast_inc_{lbl}_{st.session_state.calculation_counter}"
-                inc_default = st.session_state.fasteners_include.get(lbl, True)
-                inc_val = st.checkbox("", value=inc_default, key=inc_key, label_visibility="collapsed")
-                
-                if inc_val != st.session_state.fasteners_include.get(lbl, True):
-                    st.session_state.fasteners_include[lbl] = bool(inc_val)
-                    st.session_state.report_needs_update = True
-                else:
-                    st.session_state.fasteners_include[lbl] = bool(inc_val)
+            # Уникальный ключ для чекбокса
+            inc_key = f"fast_inc_{lbl}_{st.session_state.calculation_counter}"
+            inc_default = st.session_state.fasteners_include.get(lbl, True)
+            inc_val = st.checkbox("", value=inc_default, key=inc_key, label_visibility="collapsed")
             
-            with c_val:
-                # Уникальный ключ
+            st.markdown("</div>", unsafe_allow_html=True)
+            
+            # Поле ввода количества
+            col_val = st.columns([1])[0]
+            with col_val:
+                # Уникальный ключ для поля ввода
                 val_key = f"fastener_qty_{lbl}_{st.session_state.calculation_counter}"
                 v = st.number_input(
                     "",
@@ -1059,12 +1075,17 @@ if calc_result is not None:
                     key=val_key,
                     label_visibility="collapsed",
                 )
-                
-                if v != current_val:
-                    fasteners_changed = True
             
-            with c_name:
-                st.markdown(right_label(lbl), unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+            
+            if inc_val != st.session_state.fasteners_include.get(lbl, True):
+                st.session_state.fasteners_include[lbl] = bool(inc_val)
+                st.session_state.report_needs_update = True
+            else:
+                st.session_state.fasteners_include[lbl] = bool(inc_val)
+            
+            if v != current_val:
+                fasteners_changed = True
             
             new_fasteners[lbl] = int(v)
         
@@ -1076,7 +1097,8 @@ if calc_result is not None:
             st.session_state.fasteners = new_fasteners
 
 # ---------- CHANNELS ----------
-with st.expander("**תעלות עם מכסים (מטר)**", expanded=True):
+# ИЗМЕНЕНИЕ 2: Все спойлеры по умолчанию показывать закрытыми
+with st.expander("**תעלות עם מכסים (מטר)**", expanded=False):
     channel_order = {}
     for i, r in channels.iterrows():
         name = r["name"]
@@ -1112,7 +1134,8 @@ with st.expander("**תעלות עם מכסים (מטר)**", expanded=True):
         st.session_state.channel_order = new_channel_order
 
 # ---------- EXTRA PARTS ----------
-with st.expander("**הוסף פריט**", expanded=True):
+# ИЗМЕНЕНИЕ 2: Все спойлеры по умолчанию показывать закрытыми
+with st.expander("**הוסף פריט**", expanded=False):
     if not parts.empty:
         extra_rows = st.session_state.extra_rows
         chosen_entries = []
@@ -1175,7 +1198,8 @@ with st.expander("**הוסף פריט**", expanded=True):
 success_box("מוכן לייצוא (HTML → PDF דרך הדפסה)")
 
 # ---------- EXPORT ----------
-with st.expander("**ייצוא (HTML להדפסה ל-PDF)**", expanded=True):
+# ИЗМЕНЕНИЕ 2: Все спойлеры по умолчанию показывать закрытыми
+with st.expander("**ייצוא (HTML להדפסה ל-PDF)**", expanded=False):
     if "show_report" not in st.session_state:
         st.session_state.show_report = False
     
