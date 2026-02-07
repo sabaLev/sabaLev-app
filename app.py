@@ -1,20 +1,14 @@
-st.title("Тест лазейки №3: st.empty() как плейсхолдер")
+st.title("Тест лазейки №4: Beta-функции")
 
-# Создаем "дырки" для наших элементов
-placeholder1 = st.empty()
-placeholder2 = st.empty()
-
-# Заполняем их ВРУЧНУЮ
-with placeholder1.container():
-    col1, col2 = st.columns([1, 3])
+try:
+    # Пробуем использовать vertical_alignment
+    col1, col2 = st.columns([1, 3], vertical_alignment="center")
+    
     with col1:
-        st.checkbox("", key="cb_empty1", label_visibility="collapsed")
+        cb = st.checkbox("", key="cb_beta", label_visibility="collapsed")
+    
     with col2:
-        st.markdown("מהדק הארקה")
-
-with placeholder2.container():
-    col1, col2 = st.columns([1, 3])
-    with col1:
-        st.checkbox("", key="cb_empty2", label_visibility="collapsed")
-    with col2:
-        st.markdown("מהדק אמצע")
+        st.markdown('<div style="text-align:right; padding:10px 0;">מהדק קצה</div>', unsafe_allow_html=True)
+        
+except Exception as e:
+    st.error(f"Не поддерживается: {e}")
