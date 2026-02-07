@@ -53,6 +53,28 @@ if "report_needs_update" not in st.session_state:
     st.session_state.report_needs_update = True
 if "previous_groups_hash" not in st.session_state:
     st.session_state.previous_groups_hash = None
+if "show_add_dialog_vertical" not in st.session_state:
+    st.session_state.show_add_dialog_vertical = False
+if "show_add_dialog_horizontal" not in st.session_state:
+    st.session_state.show_add_dialog_horizontal = False
+if "new_panel_value_vertical" not in st.session_state:
+    st.session_state.new_panel_value_vertical = 9
+if "new_panel_value_horizontal" not in st.session_state:
+    st.session_state.new_panel_value_horizontal = 5
+if "delete_row_confirm" not in st.session_state:
+    st.session_state.delete_row_confirm = None
+if "vertical_panel_values" not in st.session_state:
+    st.session_state.vertical_panel_values = list(range(1, 9))
+if "horizontal_panel_values" not in st.session_state:
+    st.session_state.horizontal_panel_values = list(range(1, 5))
+if "vertical_group_values" not in st.session_state:
+    st.session_state.vertical_group_values = [0] * 8
+if "horizontal_group_values" not in st.session_state:
+    st.session_state.horizontal_group_values = [0] * 4
+if "vertical_custom_rows" not in st.session_state:
+    st.session_state.vertical_custom_rows = []
+if "horizontal_custom_rows" not in st.session_state:
+    st.session_state.horizontal_custom_rows = []
 
 # ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
 def right_label(text: str) -> str:
@@ -93,6 +115,25 @@ def success_box(text: str):
             border-radius:6px;
             text-align:right;
             border:1px solid #4caf50;
+        ">
+            {text}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def warning_box(text: str):
+    text = clean_text(text)
+    st.markdown(
+        f"""
+        <div style="
+            background-color:#3d2b1f;
+            color:white;
+            padding:12px;
+            border-radius:6px;
+            text-align:right;
+            border:1px solid #ff9800;
+            margin-bottom:10px;
         ">
             {text}
         </div>
@@ -360,6 +401,149 @@ if panel_rows.empty:
 
 panel = panel_rows.iloc[0]
 
+# ---------- ФУНКЦИИ ДЛЯ ДИАЛОГОВЫХ ОКОН ----------
+def show_add_dialog(section_type):
+    """Показывает диалог добавления панелей"""
+    if section_type == "vertical":
+        title = "הוספת פאנלים - עומדים"
+        current_values = st.session_state.vertical_panel_values + [row["panel_value"] for row in st.session_state.vertical_custom_rows]
+        show_dialog = st.session_state.show_add_dialog_vertical
+        value_key = "new_panel_value_vertical"
+    else:
+        title = "הוספת פאנלים - שוכבים"
+        current_values = st.session_state.horizontal_panel_values + [row["panel_value"] for row in st.session_state.horizontal_custom_rows]
+        show_dialog = st.session_state.show_add_dialog_horizontal
+        value_key = "new_panel_value_horizontal"
+    
+    if show_dialog:
+        # Создаем контейнер для диалога
+        dialog_html = f"""
+        <div style="
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+            min-width: 300px;
+            max-width: 90%;
+            border: 2px solid #4a86e8;
+        ">
+            <h3 style="text-align: right; margin-top: 0; color: #2c3e50;">{title}</h3>
+            <div style="text-align: right; margin-bottom: 20px; color: #555;">
+                כמה פאנלים להוסיף?
+            </div>
+        """
+        
+        st.markdown(dialog_html, unsafe_allow_html=True)
+        
+        # Поле ввода
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            new_value = st.number_input(
+                "",
+                min_value=1,
+                max_value=99,
+                value=st.session_state[value_key],
+                key=f"dialog_input_{section_type}",
+                label_visibility="collapsed",
+                help="הכנס מספר בין 1 ל-99"
+            )
+        
+        # Проверка на дубликат
+        error_message = None
+        if new_value in current_values:
+            error_message = "שורה עם ערך זה כבר קיימת"
+        
+        if error_message:
+            warning_box(error_message)
+        
+        # Кнопки
+        col1, col2, col3 = st.columns([1, 1, 2])
+        with col1:
+            if st.button("אישור", key=f"confirm_{section_type}", use_container_width=True, disabled=error_message is not None):
+                if section_type == "vertical":
+                    st.session_state.vertical_custom_rows.append({
+                        "group_value": 1,
+                        "panel_value": new_value
+                    })
+                    st.session_state.show_add_dialog_vertical = False
+                else:
+                    st.session_state.horizontal_custom_rows.append({
+                        "group_value": 1,
+                        "panel_value": new_value
+                    })
+                    st.session_state.show_add_dialog_horizontal = False
+                st.rerun()
+        
+        with col2:
+            if st.button("ביטול", key=f"cancel_{section_type}", use_container_width=True):
+                if section_type == "vertical":
+                    st.session_state.show_add_dialog_vertical = False
+                else:
+                    st.session_state.show_add_dialog_horizontal = False
+                st.rerun()
+        
+        # Закрываем HTML div
+        st.markdown("</div>", unsafe_allow_html=True)
+
+def show_delete_confirm_dialog(row_index, section_type):
+    """Показывает диалог подтверждения удаления"""
+    if st.session_state.delete_row_confirm == f"{section_type}_{row_index}":
+        dialog_html = """
+        <div style="
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+            min-width: 300px;
+            max-width: 90%;
+            border: 2px solid #e74c3c;
+        ">
+            <h3 style="text-align: right; margin-top: 0; color: #c0392b;">מחיקת שורה</h3>
+            <div style="text-align: right; margin-bottom: 20px; color: #555;">
+                האם אתה בטוח שברצונך למחוק שורה זו?
+            </div>
+        """
+        
+        st.markdown(dialog_html, unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns([1, 1, 2])
+        with col1:
+            if st.button("כן", key=f"delete_yes_{section_type}_{row_index}", use_container_width=True):
+                if section_type == "vertical":
+                    if row_index < 8:
+                        st.session_state.vertical_group_values[row_index] = 0
+                    else:
+                        custom_index = row_index - 8
+                        if custom_index < len(st.session_state.vertical_custom_rows):
+                            st.session_state.vertical_custom_rows.pop(custom_index)
+                else:
+                    if row_index < 4:
+                        st.session_state.horizontal_group_values[row_index] = 0
+                    else:
+                        custom_index = row_index - 4
+                        if custom_index < len(st.session_state.horizontal_custom_rows):
+                            st.session_state.horizontal_custom_rows.pop(custom_index)
+                
+                st.session_state.delete_row_confirm = None
+                st.rerun()
+        
+        with col2:
+            if st.button("לא", key=f"delete_no_{section_type}_{row_index}", use_container_width=True):
+                st.session_state.delete_row_confirm = None
+                st.rerun()
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+
 # ---------- GROUPS ----------
 groups = []
 
@@ -376,79 +560,228 @@ st.markdown("""
         text-align: right;
         direction: rtl;
     }
+    .readonly-input {
+        background-color: #f0f2f6;
+        border: 1px solid #d0d0d0;
+        border-radius: 4px;
+        padding: 8px 12px;
+        color: #31333F;
+        font-family: inherit;
+        font-size: 14px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .delete-button {
+        background-color: #ff6b6b;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 4px 8px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+    .delete-button:hover {
+        background-color: #ff5252;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 # Секция вертикальных панелей - עומדים
-# ИЗМЕНЕНИЕ 2: Все спойлеры по умолчанию показывать закрытыми
 with st.expander("**עומדים**", expanded=False):
+    # Показываем диалог добавления если нужно
+    show_add_dialog("vertical")
+    
+    # Показываем диалог удаления если нужно
+    if st.session_state.delete_row_confirm and st.session_state.delete_row_confirm.startswith("vertical_"):
+        row_index = int(st.session_state.delete_row_confirm.split("_")[1])
+        show_delete_confirm_dialog(row_index, "vertical")
+    
     vh = st.columns(2)
     vh[0].markdown(right_label("שורות"), unsafe_allow_html=True)
     vh[1].markdown(right_label("פאנלים"), unsafe_allow_html=True)
     
-    vertical_rows = st.session_state.vertical_rows
-    for i in range(1, vertical_rows + 1):
+    # Предустановленные строки (1-8)
+    for i in range(8):
         c0, c1 = st.columns(2)
-        default_g = 0
-        if i <= 8:
-            default_n = i
-        else:
-            default_n = 0
         
-        g = c0.number_input(
-            "",
-            0, 50, default_g,
-            key=f"g_g_vertical_{i}",
-            label_visibility="collapsed",
-        )
-        n = c1.number_input(
-            "",
-            0, 100, default_n,
-            key=f"g_n_vertical_{i}",
-            label_visibility="collapsed",
-        )
+        with c0:
+            # Поле для ввода количества рядов
+            group_key = f"g_g_vertical_{i}"
+            current_value = st.session_state.vertical_group_values[i]
+            
+            # Проверяем, не установлено ли значение 0
+            if current_value == 0 and f"prev_{group_key}" in st.session_state:
+                # Пользователь попытался установить 0 - показываем диалог удаления
+                if not st.session_state.delete_row_confirm:
+                    st.session_state.delete_row_confirm = f"vertical_{i}"
+                st.session_state[f"prev_{group_key}"] = 1
+                current_value = 1
+            
+            g = st.number_input(
+                "",
+                0, 50, current_value,
+                key=group_key,
+                label_visibility="collapsed",
+            )
+            
+            # Сохраняем предыдущее значение для отслеживания изменений
+            if g != st.session_state.get(f"prev_{group_key}", current_value):
+                st.session_state[f"prev_{group_key}"] = g
+                st.session_state.vertical_group_values[i] = g
         
-        if n > 0 and g > 0:
-            groups.append((n, g, "עומד"))
+        with c1:
+            # Не редактируемое поле для панелей (предустановленное значение)
+            panel_value = i + 1
+            st.markdown(
+                f'<div class="readonly-input" style="padding: 8px 12px; text-align: center;">{panel_value}</div>',
+                unsafe_allow_html=True
+            )
+        
+        if g > 0:
+            groups.append((panel_value, g, "עומד"))
     
+    # Кастомные строки (добавленные пользователем)
+    for i, row in enumerate(st.session_state.vertical_custom_rows):
+        c0, c1 = st.columns(2)
+        row_index = 8 + i
+        
+        with c0:
+            group_key = f"g_g_vertical_custom_{i}"
+            current_value = row["group_value"]
+            
+            # Проверяем, не установлено ли значение 0
+            if current_value == 0 and f"prev_{group_key}" in st.session_state:
+                # Пользователь попытался установить 0 - показываем диалог удаления
+                if not st.session_state.delete_row_confirm:
+                    st.session_state.delete_row_confirm = f"vertical_{row_index}"
+                st.session_state[f"prev_{group_key}"] = 1
+                current_value = 1
+            
+            g = st.number_input(
+                "",
+                0, 50, current_value,
+                key=group_key,
+                label_visibility="collapsed",
+            )
+            
+            # Обновляем значение в списке
+            if g != st.session_state.get(f"prev_{group_key}", current_value):
+                st.session_state[f"prev_{group_key}"] = g
+                st.session_state.vertical_custom_rows[i]["group_value"] = g
+        
+        with c1:
+            # Не редактируемое поле для панелей (пользовательское значение)
+            panel_value = row["panel_value"]
+            st.markdown(
+                f'<div class="readonly-input" style="padding: 8px 12px; text-align: center;">{panel_value}</div>',
+                unsafe_allow_html=True
+            )
+        
+        if g > 0:
+            groups.append((panel_value, g, "עומד"))
+    
+    # Кнопка добавления
     if st.button("להוסיף פאנלים", key="add_panels_vertical"):
-        st.session_state.vertical_rows += 1
+        st.session_state.show_add_dialog_vertical = True
         st.rerun()
 
 # Секция горизонтальных панелей - שוכבים
-# ИЗМЕНЕНИЕ 2: Все спойлеры по умолчанию показывать закрытыми
 with st.expander("**שוכבים**", expanded=False):
+    # Показываем диалог добавления если нужно
+    show_add_dialog("horizontal")
+    
+    # Показываем диалог удаления если нужно
+    if st.session_state.delete_row_confirm and st.session_state.delete_row_confirm.startswith("horizontal_"):
+        row_index = int(st.session_state.delete_row_confirm.split("_")[1])
+        show_delete_confirm_dialog(row_index, "horizontal")
+    
     hh = st.columns(2)
     hh[0].markdown(right_label("שורות"), unsafe_allow_html=True)
     hh[1].markdown(right_label("פאנלים"), unsafe_allow_html=True)
     
-    horizontal_rows = st.session_state.horizontal_rows
-    for i in range(1, horizontal_rows + 1):
+    # Предустановленные строки (1-4)
+    for i in range(4):
         c0, c1 = st.columns(2)
-        default_g = 0
-        if i <= 4:
-            default_n = i
-        else:
-            default_n = 0
         
-        g = c0.number_input(
-            "",
-            0, 50, default_g,
-            key=f"g_g_horizontal_{i}",
-            label_visibility="collapsed",
-        )
-        n = c1.number_input(
-            "",
-            0, 100, default_n,
-            key=f"g_n_horizontal_{i}",
-            label_visibility="collapsed",
-        )
+        with c0:
+            # Поле для ввода количества рядов
+            group_key = f"g_g_horizontal_{i}"
+            current_value = st.session_state.horizontal_group_values[i]
+            
+            # Проверяем, не установлено ли значение 0
+            if current_value == 0 and f"prev_{group_key}" in st.session_state:
+                # Пользователь попытался установить 0 - показываем диалог удаления
+                if not st.session_state.delete_row_confirm:
+                    st.session_state.delete_row_confirm = f"horizontal_{i}"
+                st.session_state[f"prev_{group_key}"] = 1
+                current_value = 1
+            
+            g = st.number_input(
+                "",
+                0, 50, current_value,
+                key=group_key,
+                label_visibility="collapsed",
+            )
+            
+            # Сохраняем предыдущее значение для отслеживания изменений
+            if g != st.session_state.get(f"prev_{group_key}", current_value):
+                st.session_state[f"prev_{group_key}"] = g
+                st.session_state.horizontal_group_values[i] = g
         
-        if n > 0 and g > 0:
-            groups.append((n, g, "שוכב"))
+        with c1:
+            # Не редактируемое поле для панелей (предустановленное значение)
+            panel_value = i + 1
+            st.markdown(
+                f'<div class="readonly-input" style="padding: 8px 12px; text-align: center;">{panel_value}</div>',
+                unsafe_allow_html=True
+            )
+        
+        if g > 0:
+            groups.append((panel_value, g, "שוכב"))
     
+    # Кастомные строки (добавленные пользователем)
+    for i, row in enumerate(st.session_state.horizontal_custom_rows):
+        c0, c1 = st.columns(2)
+        row_index = 4 + i
+        
+        with c0:
+            group_key = f"g_g_horizontal_custom_{i}"
+            current_value = row["group_value"]
+            
+            # Проверяем, не установлено ли значение 0
+            if current_value == 0 and f"prev_{group_key}" in st.session_state:
+                # Пользователь попытался установить 0 - показываем диалог удаления
+                if not st.session_state.delete_row_confirm:
+                    st.session_state.delete_row_confirm = f"horizontal_{row_index}"
+                st.session_state[f"prev_{group_key}"] = 1
+                current_value = 1
+            
+            g = st.number_input(
+                "",
+                0, 50, current_value,
+                key=group_key,
+                label_visibility="collapsed",
+            )
+            
+            # Обновляем значение в списке
+            if g != st.session_state.get(f"prev_{group_key}", current_value):
+                st.session_state[f"prev_{group_key}"] = g
+                st.session_state.horizontal_custom_rows[i]["group_value"] = g
+        
+        with c1:
+            # Не редактируемое поле для панелей (пользовательское значение)
+            panel_value = row["panel_value"]
+            st.markdown(
+                f'<div class="readonly-input" style="padding: 8px 12px; text-align: center;">{panel_value}</div>',
+                unsafe_allow_html=True
+            )
+        
+        if g > 0:
+            groups.append((panel_value, g, "שוכב"))
+    
+    # Кнопка добавления
     if st.button("להוסיף פאנלים", key="add_panels_horizontal"):
-        st.session_state.horizontal_rows += 1
+        st.session_state.show_add_dialog_horizontal = True
         st.rerun()
 
 # ---------- ENGINE ----------
@@ -819,7 +1152,6 @@ if calc_result is not None:
     st.write(f"סה\"כ פאנלים: {calc_result['total_panels']}")
     
     # ----- קושרות -----
-    # ИЗМЕНЕНИЕ 2: Все спойлеры по умолчанию показывать закрытыми
     with st.expander("**קושרות**", expanded=False):
         # Важно: В этом разделе должны быть ТОЛЬКО автоматически рассчитанные значения
         # НЕ добавляем ручные рельсы (manual_rails)!
@@ -884,7 +1216,6 @@ if calc_result is not None:
             st.write("אין קושרות מחושבות")
     
     # ----- קושרות (הוספה ידנית) -----
-    # ИЗМЕНЕНИЕ 2: Все спойлеры по умолчанию показывать закрытыми
     with st.expander("**קושרות (הוספה ידנית)**", expanded=False):
         mh = st.columns(2)
         mh[0].markdown(right_label("אורך (ס״מ)"), unsafe_allow_html=True)
@@ -944,7 +1275,6 @@ if calc_result is not None:
             st.session_state.manual_rails = manual_rails_dict
     
     # ----- פרזול -----
-    # ИЗМЕНЕНИЕ 2: Все спойлеры по умолчанию показывать закрытыми
     with st.expander("**פרזול**", expanded=False):
         # Базовые значения из расчета
         ear = calc_result["ear"]
@@ -1026,7 +1356,7 @@ if calc_result is not None:
                 if lbl not in st.session_state.fasteners_include:
                     st.session_state.fasteners_include[lbl] = True
         
-        # UI для каждого fastener
+        # UI для каждого fastener - ИЗМЕНЕННЫЙ LAYOUT
         new_fasteners = {}
         fasteners_changed = False
         
@@ -1039,33 +1369,11 @@ if calc_result is not None:
             if int(base_val) == 0 and current_val == 0 and lbl not in st.session_state.fasteners:
                 continue
             
-            # ИЗМЕНЕНИЕ 3: Сделать наименование позиций подписью к чекбоксу
-            # Создаем контейнер для чекбокса и подписи
-            st.markdown(f"""
-                <div style="
-                    display: flex;
-                    align-items: center;
-                    justify-content: flex-end;
-                    direction: rtl;
-                    margin-bottom: 0.5rem;
-                ">
-                    <div style="margin-left: 10px;">
-                        {lbl}
-                    </div>
-                    <div style="margin-left: 10px;">
-            """, unsafe_allow_html=True)
+            # НОВЫЙ LAYOUT: [Поле ввода] [Чекбокс с подписью]
+            col1, col2 = st.columns([1, 3])
             
-            # Уникальный ключ для чекбокса
-            inc_key = f"fast_inc_{lbl}_{st.session_state.calculation_counter}"
-            inc_default = st.session_state.fasteners_include.get(lbl, True)
-            inc_val = st.checkbox("", value=inc_default, key=inc_key, label_visibility="collapsed")
-            
-            st.markdown("</div>", unsafe_allow_html=True)
-            
-            # Поле ввода количества
-            col_val = st.columns([1])[0]
-            with col_val:
-                # Уникальный ключ для поля ввода
+            with col1:
+                # Поле ввода количества - СЛЕВА
                 val_key = f"fastener_qty_{lbl}_{st.session_state.calculation_counter}"
                 v = st.number_input(
                     "",
@@ -1076,7 +1384,29 @@ if calc_result is not None:
                     label_visibility="collapsed",
                 )
             
-            st.markdown("</div>", unsafe_allow_html=True)
+            with col2:
+                # Чекбокс с подписью - СПРАВА
+                # Используем HTML для правильного отображения текста справа от чекбокса
+                inc_key = f"fast_inc_{lbl}_{st.session_state.calculation_counter}"
+                inc_default = st.session_state.fasteners_include.get(lbl, True)
+                
+                # Создаем контейнер для чекбокса с текстом
+                st.markdown(
+                    f"""
+                    <div style="display: flex; align-items: center; justify-content: flex-end; direction: rtl;">
+                        <span style="margin-right: 8px; font-weight: normal;">{lbl}</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+                
+                # Чекбокс без видимой метки (метка уже в HTML выше)
+                inc_val = st.checkbox(
+                    "",
+                    value=inc_default,
+                    key=inc_key,
+                    label_visibility="collapsed"
+                )
             
             if inc_val != st.session_state.fasteners_include.get(lbl, True):
                 st.session_state.fasteners_include[lbl] = bool(inc_val)
@@ -1097,7 +1427,6 @@ if calc_result is not None:
             st.session_state.fasteners = new_fasteners
 
 # ---------- CHANNELS ----------
-# ИЗМЕНЕНИЕ 2: Все спойлеры по умолчанию показывать закрытыми
 with st.expander("**תעלות עם מכסים (מטר)**", expanded=False):
     channel_order = {}
     for i, r in channels.iterrows():
@@ -1134,7 +1463,6 @@ with st.expander("**תעלות עם מכסים (מטר)**", expanded=False):
         st.session_state.channel_order = new_channel_order
 
 # ---------- EXTRA PARTS ----------
-# ИЗМЕНЕНИЕ 2: Все спойлеры по умолчанию показывать закрытыми
 with st.expander("**הוסף פריט**", expanded=False):
     if not parts.empty:
         extra_rows = st.session_state.extra_rows
@@ -1198,7 +1526,6 @@ with st.expander("**הוסף פריט**", expanded=False):
 success_box("מוכן לייצוא (HTML → PDF דרך הדפסה)")
 
 # ---------- EXPORT ----------
-# ИЗМЕНЕНИЕ 2: Все спойлеры по умолчанию показывать закрытыми
 with st.expander("**ייצוא (HTML להדפסה ל-PDF)**", expanded=False):
     if "show_report" not in st.session_state:
         st.session_state.show_report = False
