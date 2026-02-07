@@ -2,114 +2,122 @@ import streamlit as st
 
 st.markdown("""
 <style>
-/* Контейнер с горизонтальным скроллом */
-.horizontal-scroll-container {
-    min-width: 1000px;  /* Фиксированная минимальная ширина */
-    overflow-x: auto;   /* Горизонтальный скролл */
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 10px;
-    margin: 10px 0;
+/* Контейнер для горизонтальных табов */
+.horizontal-tabs {
+    display: flex;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 10px 0;
+    margin: 20px 0;
+    border-bottom: 2px solid #e0e0e0;
+    min-width: 600px;
 }
 
-/* Для мобильных - включаем скролл */
+/* Индивидуальные табы */
+.horizontal-tab {
+    padding: 10px 20px;
+    margin-right: 5px;
+    background: #f0f2f6;
+    border-radius: 5px 5px 0 0;
+    cursor: pointer;
+    border: 1px solid #ddd;
+    border-bottom: none;
+    min-width: 150px;
+    text-align: center;
+}
+
+.horizontal-tab.active {
+    background: white;
+    border-color: #262730;
+    font-weight: bold;
+}
+
+/* Контент табов */
+.tab-content {
+    min-width: 600px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 5px 5px;
+}
+
+/* Поддержка touch-скролла */
 @media (max-width: 640px) {
-    .horizontal-scroll-container {
-        min-width: 800px;
-        overflow-x: scroll;
-        -webkit-overflow-scrolling: touch; /* Плавный скролл на iOS */
+    .horizontal-tabs {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
     }
     
-    /* Подсказка пользователю */
-    .scroll-hint {
-        display: block;
-        text-align: center;
-        color: #666;
-        font-style: italic;
-        margin: 10px 0;
+    .tab-content {
+        min-width: 550px;
     }
-}
-
-/* Широкие элементы внутри контейнера */
-.wide-content {
-    display: flex;
-    gap: 20px;
-    min-width: 900px;
-}
-
-.wide-column {
-    min-width: 280px;
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
-    border: 1px solid #ddd;
 }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("📊 Панель управления с горизонтальным скроллом")
+st.title("📱 Горизонтальные табы с прокруткой")
 
-# Подсказка для мобильных пользователей
-st.markdown(
-    '<p class="scroll-hint">📱 На мобильных: проведите пальцем вправо/влево для прокрутки</p>', 
-    unsafe_allow_html=True
+# Инициализация состояния
+if 'active_tab' not in st.session_state:
+    st.session_state.active_tab = "tab1"
+
+# HTML для табов
+tabs_html = """
+<div class="horizontal-tabs">
+    <div class="horizontal-tab %s" onclick="setActiveTab('tab1')">📊 Дашборд</div>
+    <div class="horizontal-tab %s" onclick="setActiveTab('tab2')">📈 Аналитика</div>
+    <div class="horizontal-tab %s" onclick="setActiveTab('tab3')">👥 Пользователи</div>
+    <div class="horizontal-tab %s" onclick="setActiveTab('tab4')">⚙️ Настройки</div>
+    <div class="horizontal-tab %s" onclick="setActiveTab('tab5')">📋 Отчеты</div>
+    <div class="horizontal-tab %s" onclick="setActiveTab('tab6')">🔧 Инструменты</div>
+</div>
+
+<script>
+function setActiveTab(tabName) {
+    window.parent.postMessage({
+        type: 'streamlit:setComponentValue',
+        value: tabName
+    }, '*');
+}
+</script>
+""" % (
+    "active" if st.session_state.active_tab == "tab1" else "",
+    "active" if st.session_state.active_tab == "tab2" else "",
+    "active" if st.session_state.active_tab == "tab3" else "",
+    "active" if st.session_state.active_tab == "tab4" else "",
+    "active" if st.session_state.active_tab == "tab5" else "",
+    "active" if st.session_state.active_tab == "tab6" else ""
 )
 
-# Контейнер с горизонтальным скроллом
-with st.container():
-    st.markdown('<div class="horizontal-scroll-container">', unsafe_allow_html=True)
+# Отображаем табы
+st.components.v1.html(tabs_html, height=100)
+
+# Обработка выбора таба через session_state
+tab_input = st.text_input("", key="tab_selector", label_visibility="collapsed")
+if tab_input in ["tab1", "tab2", "tab3", "tab4", "tab5", "tab6"]:
+    st.session_state.active_tab = tab_input
+    st.rerun()
+
+# Контент активного таба
+st.markdown('<div class="tab-content">', unsafe_allow_html=True)
+
+if st.session_state.active_tab == "tab1":
+    st.header("Дашборд")
+    col1, col2, col3 = st.columns(3)
+    with col1: st.metric("Продажи", "₽123,456", "+12%")
+    with col2: st.metric("Посетители", "2,345", "+8%")
+    with col3: st.metric("Конверсия", "4.2%", "+0.5%")
     
-    # Широкий макет из 3 колонок
-    st.markdown('<div class="wide-content">', unsafe_allow_html=True)
-    
-    # Колонка 1
-    st.markdown('<div class="wide-column">', unsafe_allow_html=True)
-    st.header("📈 Аналитика")
-    st.metric("Конверсия", "24%", "+3%")
-    st.metric("Доход", "₽245,678", "+12%")
-    st.metric("Посетители", "1,234", "+23")
-    st.markdown('</div>')
-    
-    # Колонка 2  
-    st.markdown('<div class="wide-column">', unsafe_allow_html=True)
-    st.header("⚙️ Настройки")
-    st.slider("Целевая температура", 0, 100, 25, key="temp_setting")
-    st.selectbox("Режим работы", ["Авто", "Ручной", "Расписание"], key="mode")
-    st.checkbox("Уведомления", key="notifications")
-    st.checkbox("Автосохранение", key="autosave")
-    st.markdown('</div>')
-    
-    # Колонка 3
-    st.markdown('<div class="wide-column">', unsafe_allow_html=True)
-    st.header("👥 Пользователи")
-    st.text_input("Имя пользователя", key="username")
-    st.text_input("Email", key="email", type="default")
-    st.selectbox("Роль", ["Админ", "Редактор", "Зритель"], key="role")
-    st.button("Сохранить", key="save_user")
-    st.markdown('</div>')
-    
-    # Колонка 4
-    st.markdown('<div class="wide-column">', unsafe_allow_html=True)
-    st.header("📊 Графики")
-    
+elif st.session_state.active_tab == "tab2":
+    st.header("Аналитика")
     import pandas as pd
     import numpy as np
+    data = pd.DataFrame(np.random.randn(20, 3), columns=['A', 'B', 'C'])
+    st.line_chart(data)
     
-    chart_data = pd.DataFrame({
-        'Месяц': ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
-        'Продажи': [100, 200, 150, 300, 250, 400],
-        'Затраты': [50, 80, 60, 120, 100, 150]
-    })
-    
-    st.bar_chart(chart_data.set_index('Месяц'))
-    st.markdown('</div>')
-    
-    st.markdown('</div>')  # закрываем wide-content
-    st.markdown('</div>')  # закрываем horizontal-scroll-container
+elif st.session_state.active_tab == "tab3":
+    st.header("Пользователи")
+    st.text_input("Поиск пользователей", key="user_search")
+    # ... больше контента ...
 
-# Контент вне скролла (всегда видимый)
-st.divider()
-st.write("**Эта часть всегда видна без скролла:**")
-important_info = st.text_area("Важные заметки:", height=100)
-if st.button("Сохранить заметки"):
-    st.success("Заметки сохранены!")
+st.markdown('</div>', unsafe_allow_html=True)
