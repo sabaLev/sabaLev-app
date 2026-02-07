@@ -1,55 +1,78 @@
 import streamlit as st
 
-# CSS для горизонтального скролла
-st.markdown("""
-<style>
-/* Для всего приложения */
-.stApp {
-    min-width: 1000px !important;  /* Минимальная ширина */
-    overflow-x: auto !important;   /* Горизонтальный скролл */
-}
+st.title("Простая таблица 2x2")
 
-/* Убираем вертикальный скролл для маленьких экранов */
-@media (max-width: 640px) {
-    .stApp {
-        min-width: 1000px !important;
-        overflow-x: scroll !important;
-        overflow-y: hidden !important;
-    }
-    
-    /* Делаем элементы не сжимаемыми */
-    .main-content > div {
-        min-width: 300px !important;
-    }
-}
-</style>
-""", unsafe_allow_html=True)
+# Инициализация данных
+if 'table' not in st.session_state:
+    st.session_state.table = [[0, 0], [0, 0]]
 
-# Создаем широкий контент
-st.title("📱 Адаптивная страница с горизонтальным скроллом")
+# Заголовки
+col1, col2 = st.columns(2)
+with col1:
+    st.write("**Колонка 1**")
+with col2:
+    st.write("**Колонка 2**")
 
-# Создаем широкую панель с колонками
-wide_container = st.container()
+st.divider()
 
-with wide_container:
-    # Широкий макет (шире 640px)
-    cols = st.columns(4)  # 4 колонки для широкого экрана
-    
-    for i, col in enumerate(cols, 1):
-        with col:
-            st.header(f"Колонка {i}")
-            st.text_input(f"Ввод {i}", key=f"input_{i}")
-            st.slider(f"Слайдер {i}", 0, 100, 50, key=f"slider_{i}")
-            st.button(f"Кнопка {i}", key=f"btn_{i}")
-    
-    # Еще один широкий элемент
-    st.subheader("Широкая таблица")
-    import pandas as pd
-    import numpy as np
-    
-    # Создаем широкую таблицу
-    wide_data = pd.DataFrame(
-        np.random.randn(5, 8),
-        columns=[f'Колонка {i+1}' for i in range(8)]
-    )
-    st.dataframe(wide_data, use_container_width=False, width=1200)
+# Первая строка
+row1_col1, row1_col2 = st.columns(2)
+
+with row1_col1:
+    st.write("**Строка 1**")
+    col1_1, col1_2, col1_3 = st.columns(3)
+    with col1_1:
+        if st.button("➖", key="r1c1_dec"):
+            st.session_state.table[0][0] -= 1
+            st.rerun()
+    with col1_2:
+        st.write(f"**{st.session_state.table[0][0]}**")
+    with col1_3:
+        if st.button("➕", key="r1c1_inc"):
+            st.session_state.table[0][0] += 1
+            st.rerun()
+
+with row1_col2:
+    col2_1, col2_2, col2_3 = st.columns(3)
+    with col2_1:
+        if st.button("➖", key="r1c2_dec"):
+            st.session_state.table[0][1] -= 1
+            st.rerun()
+    with col2_2:
+        st.write(f"**{st.session_state.table[0][1]}**")
+    with col2_3:
+        if st.button("➕", key="r1c2_inc"):
+            st.session_state.table[0][1] += 1
+            st.rerun()
+
+st.divider()
+
+# Вторая строка
+row2_col1, row2_col2 = st.columns(2)
+
+with row2_col1:
+    st.write("**Строка 2**")
+    col3_1, col3_2, col3_3 = st.columns(3)
+    with col3_1:
+        if st.button("➖", key="r2c1_dec"):
+            st.session_state.table[1][0] -= 1
+            st.rerun()
+    with col3_2:
+        st.write(f"**{st.session_state.table[1][0]}**")
+    with col3_3:
+        if st.button("➕", key="r2c1_inc"):
+            st.session_state.table[1][0] += 1
+            st.rerun()
+
+with row2_col2:
+    col4_1, col4_2, col4_3 = st.columns(3)
+    with col4_1:
+        if st.button("➖", key="r2c2_dec"):
+            st.session_state.table[1][1] -= 1
+            st.rerun()
+    with col4_2:
+        st.write(f"**{st.session_state.table[1][1]}**")
+    with col4_3:
+        if st.button("➕", key="r2c2_inc"):
+            st.session_state.table[1][1] += 1
+            st.rerun()
