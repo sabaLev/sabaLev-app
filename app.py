@@ -1,99 +1,55 @@
 import streamlit as st
-import pandas as pd
 
-st.title("➕➖ Простая интерактивная таблица")
+# CSS для горизонтального скролла
+st.markdown("""
+<style>
+/* Для всего приложения */
+.stApp {
+    min-width: 1000px !important;  /* Минимальная ширина */
+    overflow-x: auto !important;   /* Горизонтальный скролл */
+}
 
-# Инициализация данных
-if 'data' not in st.session_state:
-    st.session_state.data = [
-        {"id": 1, "name": "Товар A", "quantity": 10, "price": 100},
-        {"id": 2, "name": "Товар B", "quantity": 5, "price": 200},
-        {"id": 3, "name": "Товар C", "quantity": 8, "price": 150},
-        {"id": 4, "name": "Товар D", "quantity": 12, "price": 80}
-    ]
-
-st.write("### Таблица товаров")
-
-# Заголовки
-cols = st.columns([1, 2, 2, 2, 1])
-with cols[0]:
-    st.write("**ID**")
-with cols[1]:
-    st.write("**Название**")
-with cols[2]:
-    st.write("**Количество**")
-with cols[3]:
-    st.write("**Цена**")
-with cols[4]:
-    st.write("**Сумма**")
-
-st.divider()
-
-# Отображаем строки
-for idx, item in enumerate(st.session_state.data):
-    row_cols = st.columns([1, 2, 2, 2, 1])
+/* Убираем вертикальный скролл для маленьких экранов */
+@media (max-width: 640px) {
+    .stApp {
+        min-width: 1000px !important;
+        overflow-x: scroll !important;
+        overflow-y: hidden !important;
+    }
     
-    with row_cols[0]:
-        st.write(f"**{item['id']}**")
-    
-    with row_cols[1]:
-        st.write(f"**{item['name']}**")
-    
-    with row_cols[2]:
-        # Ячейка с кнопками для количества
-        col1, col2, col3 = st.columns([1, 2, 1])
-        
-        with col1:
-            if st.button("➖", key=f"dec_{idx}"):
-                st.session_state.data[idx]['quantity'] = max(0, item['quantity'] - 1)
-                st.rerun()
-        
-        with col2:
-            st.write(f"**{item['quantity']}**")
-        
-        with col3:
-            if st.button("➕", key=f"inc_{idx}"):
-                st.session_state.data[idx]['quantity'] = item['quantity'] + 1
-                st.rerun()
-    
-    with row_cols[3]:
-        # Ячейка с кнопками для цены
-        col1, col2, col3 = st.columns([1, 2, 1])
-        
-        with col1:
-            if st.button("−", key=f"price_dec_{idx}"):
-                st.session_state.data[idx]['price'] = max(0, item['price'] - 10)
-                st.rerun()
-        
-        with col2:
-            st.write(f"**{item['price']} ₽**")
-        
-        with col3:
-            if st.button("+", key=f"price_inc_{idx}"):
-                st.session_state.data[idx]['price'] = item['price'] + 10
-                st.rerun()
-    
-    with row_cols[4]:
-        total = item['quantity'] * item['price']
-        st.write(f"**{total} ₽**")
-    
-    if idx < len(st.session_state.data) - 1:
-        st.divider()
+    /* Делаем элементы не сжимаемыми */
+    .main-content > div {
+        min-width: 300px !important;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
 
-# Итоги
-st.write("---")
-total_items = sum(item['quantity'] for item in st.session_state.data)
-total_value = sum(item['quantity'] * item['price'] for item in st.session_state.data)
+# Создаем широкий контент
+st.title("📱 Адаптивная страница с горизонтальным скроллом")
 
-st.metric("Всего товаров", f"{total_items} шт.")
-st.metric("Общая стоимость", f"{total_value} ₽")
+# Создаем широкую панель с колонками
+wide_container = st.container()
 
-# Сброс
-if st.button("🔄 Сбросить все значения"):
-    st.session_state.data = [
-        {"id": 1, "name": "Товар A", "quantity": 10, "price": 100},
-        {"id": 2, "name": "Товар B", "quantity": 5, "price": 200},
-        {"id": 3, "name": "Товар C", "quantity": 8, "price": 150},
-        {"id": 4, "name": "Товар D", "quantity": 12, "price": 80}
-    ]
-    st.rerun()
+with wide_container:
+    # Широкий макет (шире 640px)
+    cols = st.columns(4)  # 4 колонки для широкого экрана
+    
+    for i, col in enumerate(cols, 1):
+        with col:
+            st.header(f"Колонка {i}")
+            st.text_input(f"Ввод {i}", key=f"input_{i}")
+            st.slider(f"Слайдер {i}", 0, 100, 50, key=f"slider_{i}")
+            st.button(f"Кнопка {i}", key=f"btn_{i}")
+    
+    # Еще один широкий элемент
+    st.subheader("Широкая таблица")
+    import pandas as pd
+    import numpy as np
+    
+    # Создаем широкую таблицу
+    wide_data = pd.DataFrame(
+        np.random.randn(5, 8),
+        columns=[f'Колонка {i+1}' for i in range(8)]
+    )
+    st.dataframe(wide_data, use_container_width=False, width=1200)
