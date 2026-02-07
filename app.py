@@ -1,179 +1,108 @@
 import streamlit as st
 import pandas as pd
+from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
-st.title("➕➖ Кнопки прямо в ячейках таблицы")
+st.title("🎯 Продвинутая таблица с Ag-Grid")
 
-# Простой DataFrame
-data = pd.DataFrame({
-    'Понедельник': [5, 3, 7],
-    'Вторник': [8, 4, 6],
-    'Среда': [2, 9, 5],
-    'Четверг': [6, 7, 8],
-    'Пятница': [4, 5, 9]
-}, index=['Задача 1', 'Задача 2', 'Задача 3'])
+# Инициализация данных
+if 'grid_data' not in st.session_state:
+    st.session_state.grid_data = pd.DataFrame({
+        'id': [1, 2, 3],
+        'product': ['Ноутбук', 'Смартфон', 'Планшет'],
+        'stock': [15, 42, 28],
+        'price': [50000, 25000, 15000]
+    })
 
-st.write("### Часы работы по задачам")
+# Настройка Ag-Grid
+gb = GridOptionsBuilder.from_dataframe(st.session_state.grid_data)
 
-# Создаем HTML таблицу с кнопками в каждой ячейке
-html_table = """
-<style>
-.hours-table {
-    border-collapse: collapse;
-    width: 100%;
-    margin: 20px 0;
-}
-
-.hours-table th, .hours-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: center;
-    min-width: 100px;
-}
-
-.hours-table th {
-    background-color: #4CAF50;
-    color: white;
-    position: sticky;
-    top: 0;
-}
-
-.hours-table tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-.hours-table tr:hover {
-    background-color: #f5f5f5;
-}
-
-.cell-controls {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-}
-
-.hour-btn {
-    width: 25px;
-    height: 25px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    background: white;
-    cursor: pointer;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.hour-btn.minus {
-    background: #ffebee;
-    color: #c62828;
-    border-color: #ffcdd2;
-}
-
-.hour-btn.plus {
-    background: #e8f5e8;
-    color: #2e7d32;
-    border-color: #c8e6c9;
-}
-
-.hour-value {
-    font-weight: bold;
-    min-width: 30px;
-    text-align: center;
-}
-</style>
-
-<table class="hours-table">
-    <thead>
-        <tr>
-            <th>Задача / День</th>
-"""
-
-# Заголовки дней
-for day in data.columns:
-    html_table += f'<th>{day}</th>'
-html_table += "</tr></thead><tbody>"
-
-# Тело таблицы
-for task_idx, task_name in enumerate(data.index):
-    html_table += f'<tr><td style="font-weight: bold; text-align: left;">{task_name}</td>'
-    
-    for day_idx, day in enumerate(data.columns):
-        value = data.loc[task_name, day]
-        cell_id = f"{task_idx}_{day_idx}"
+# Настраиваем колонку "stock" с кнопками
+gb.configure_column(
+    'stock',
+    headerName='На складе',
+    cellRenderer='''
+    function(params) {
+        const container = document.createElement('div');
+        container.style.display = 'flex';
+        container.style.alignItems = 'center';
+        container.style.justifyContent = 'center';
+        container.style.gap = '10px';
         
-        html_table += f"""
-        <td>
-            <div class="cell-controls">
-                <button class="hour-btn minus" onclick="updateHour('{cell_id}', -1)">-</button>
-                <span class="hour-value" id="val_{cell_id}">{value}</span>
-                <button class="hour-btn plus" onclick="updateHour('{cell_id}', 1)">+</button>
-            </div>
-            <div style="font-size: 11px; color: #666; margin-top: 3px;">
-                <button onclick="setHour('{cell_id}', 4)" style="padding: 1px 3px; font-size: 10px;">4h</button>
-                <button onclick="setHour('{cell_id}', 8)" style="padding: 1px 3px; font-size: 10px;">8h</button>
-            </div>
-        </td>
-        """
-    
-    html_table += '</tr>'
+        const minusBtn = document.createElement('button');
+        minusBtn.innerText = '-';
+        minusBtn.style.cssText = 'width: 25px; height: 25px; border-radius: 50%; border: none; background: #ff6b6b; color: white; cursor: pointer;';
+        minusBtn.onclick = () => {
+            params.data.stock = Math.max(0, params.data.stock - 1);
+            params.api.applyTransaction({update: [params.data]});
+        };
+        
+        const valueSpan = document.createElement('span');
+        valueSpan.innerText = params.value;
+        valueSpan.style.cssText = 'font-weight: bold; min-width: 30px; text-align: center;';
+        
+        const plusBtn = document.createElement('button');
+        plusBtn.innerText = '+';
+        plusBtn.style.cssText = 'width: 25px; height: 25px; border-radius: 50%; border: none; background: #4ecdc4; color: white; cursor: pointer;';
+        plusBtn.onclick = () => {
+            params.data.stock += 1;
+            params.api.applyTransaction({update: [params.data]});
+        };
+        
+        container.appendChild(minusBtn);
+        container.appendChild(valueSpan);
+        container.appendChild(plusBtn);
+        
+        return container;
+    }
+    ''',
+    editable=False,
+    width=150
+)
 
-html_table += """
-</tbody>
-</table>
+# Настраиваем другие колонки
+gb.configure_column('id', headerName='ID', width=80)
+gb.configure_column('product', headerName='Товар', width=150)
+gb.configure_column('price', headerName='Цена (₽)', width=120)
 
-<div style="margin-top: 20px; padding: 10px; background: #f0f8ff; border-radius: 5px;">
-    <strong>Итого часов:</strong>
-    <span id="total-hours">0</span> ч.
-</div>
+# Включаем обновление данных
+gb.configure_grid_options(
+    enableCellChangeFlash=True,
+    animateRows=True
+)
 
-<script>
-// Обновляем общее количество часов
-function updateTotal() {
-    let total = 0;
-    document.querySelectorAll('.hour-value').forEach(el => {
-        total += parseInt(el.innerText);
-    });
-    document.getElementById('total-hours').innerText = total;
-}
-
-// Функции для изменения часов
-function updateHour(cellId, delta) {
-    const elem = document.getElementById('val_' + cellId);
-    const current = parseInt(elem.innerText);
-    const newValue = Math.max(0, current + delta);
-    elem.innerText = newValue;
-    updateTotal();
-    
-    // Отправляем в Streamlit
-    window.parent.postMessage({
-        type: 'streamlit:setComponentValue',
-        value: cellId + ':' + newValue
-    }, '*');
-}
-
-function setHour(cellId, value) {
-    const elem = document.getElementById('val_' + cellId);
-    elem.innerText = value;
-    updateTotal();
-    
-    window.parent.postMessage({
-        type: 'streamlit:setComponentValue',
-        value: cellId + ':' + value + ':set'
-    }, '*');
-}
-
-// Инициализация
-updateTotal();
-</script>
-"""
+grid_options = gb.build()
 
 # Отображаем таблицу
-st.components.v1.html(html_table, height=500)
+grid_response = AgGrid(
+    st.session_state.grid_data,
+    gridOptions=grid_options,
+    update_mode=GridUpdateMode.VALUE_CHANGED,
+    theme='streamlit',
+    height=250,
+    allow_unsafe_jscode=True
+)
 
-# Получаем обновленные значения
-cell_update = st.text_input("", key="cell_update", label_visibility="collapsed")
-if cell_update:
-    # Можно обработать обновления значений
-    st.write(f"Обновлена ячейка: {cell_update}")
+# Получаем обновленные данные
+if grid_response['data'] is not None:
+    updated_df = pd.DataFrame(grid_response['data'])
+    
+    # Сравниваем с исходными данными
+    if not updated_df.equals(st.session_state.grid_data):
+        st.session_state.grid_data = updated_df
+        st.rerun()
+
+# Показываем итоги
+st.write("### 📊 Итоговая информация")
+total_stock = st.session_state.grid_data['stock'].sum()
+total_value = (st.session_state.grid_data['stock'] * st.session_state.grid_data['price']).sum()
+
+col1, col2 = st.columns(2)
+with col1:
+    st.metric("Всего товаров на складе", f"{total_stock} шт.")
+with col2:
+    st.metric("Общая стоимость", f"{total_value:,.0f} ₽")
+
+# Кнопка сброса
+if st.button("🔄 Сбросить к исходным значениям"):
+    st.session_state.grid_data['stock'] = [15, 42, 28]
+    st.rerun()
