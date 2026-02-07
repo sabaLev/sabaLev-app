@@ -1,147 +1,232 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
 
-st.set_page_config(layout="wide")
-
+# CSS для горизонтального скролла
 st.markdown("""
 <style>
-/* Основной контейнер приложения */
-.stApp {
-    min-width: 1200px !important;
-    overflow-x: auto !important;
+/* Основные стили для двух инпутов */
+.inputs-container {
+    display: flex;
+    gap: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin: 20px 0;
+    min-width: 300px; /* Минимальная ширина для десктопа */
 }
 
-/* Для мобильных устройств */
+/* Каждый инпут в своем блоке */
+.input-block {
+    flex: 1;
+    min-width: 200px; /* Минимальная ширина каждого инпута */
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+/* Мобильная версия с горизонтальным скроллом */
 @media (max-width: 640px) {
-    .stApp {
-        min-width: 1000px !important;
-        overflow-x: scroll !important;
+    .inputs-container {
+        min-width: 500px; /* Ширина больше экрана для скролла */
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch; /* Плавный скролл на iOS */
+        padding-bottom: 10px;
     }
     
-    /* Улучшаем скролл на touch-устройствах */
-    .stApp::-webkit-scrollbar {
-        height: 8px;
-    }
-    
-    .stApp::-webkit-scrollbar-track {
-        background: #f1f1f1;
-    }
-    
-    .stApp::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 4px;
+    .input-block {
+        min-width: 250px; /* Шире для удобства на мобильных */
+        flex-shrink: 0; /* Запрещаем сжиматься */
     }
     
     /* Индикатор скролла */
-    .scroll-indicator {
-        position: fixed;
-        bottom: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0,0,0,0.7);
-        color: white;
-        padding: 5px 15px;
-        border-radius: 20px;
+    .scroll-hint {
+        display: block;
+        text-align: center;
+        color: #666;
         font-size: 12px;
-        z-index: 1000;
+        margin-top: 5px;
+    }
+    
+    /* Стили для скроллбара */
+    .inputs-container::-webkit-scrollbar {
+        height: 6px;
+    }
+    
+    .inputs-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+    
+    .inputs-container::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
     }
 }
 
-/* Контейнер для широкого контента */
-.wide-dashboard {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    min-width: 1000px;
-    padding: 20px;
+/* Десктопная версия */
+@media (min-width: 641px) {
+    .inputs-container {
+        max-width: 800px; /* Ограничиваем ширину на десктопе */
+        overflow-x: hidden; /* Убираем скролл на десктопе */
+    }
+    
+    .scroll-hint {
+        display: none; /* Скрываем подсказку на десктопе */
+    }
 }
 
-.dashboard-card {
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+/* Стили для заголовков инпутов */
+.input-title {
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #262730;
 }
 
-/* Широкая таблица */
-.wide-table {
-    min-width: 800px;
-    overflow-x: auto;
-    margin: 20px 0;
+/* Убираем стандартные отступы у Streamlit инпутов */
+div[data-testid="stTextInput"] {
+    margin-bottom: 0;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# Индикатор для мобильных
+# Заголовок страницы
+st.title("📱 Адаптивные поля ввода")
+st.markdown("""
+На десктопе оба поля отображаются рядом.  
+**На мобильных (ширина < 641px)** появляется горизонтальная прокрутка.
+""")
+
+# Подсказка для мобильных пользователей
 st.markdown(
-    '<div class="scroll-indicator">↔️ Проведите для прокрутки</div>',
+    '<div class="scroll-hint">↔️ Проведите в сторону для прокрутки полей</div>', 
     unsafe_allow_html=True
 )
 
-st.title("📱 Адаптивный дашборд с горизонтальным скроллом")
+# Контейнер для двух инпутов с горизонтальным скроллом
+st.markdown('<div class="inputs-container">', unsafe_allow_html=True)
 
-# Широкий контейнер с карточками
-st.markdown('<div class="wide-dashboard">', unsafe_allow_html=True)
+# Поле ввода 1
+st.markdown('<div class="input-block">', unsafe_allow_html=True)
+st.markdown('<div class="input-title">👤 Личная информация</div>', unsafe_allow_html=True)
 
-# Карточка 1
-st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-st.subheader("📊 Продажи")
-sales_data = pd.DataFrame({
-    'День': ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
-    'Сумма': [12000, 15000, 18000, 22000, 25000, 14000, 9000]
-})
-st.bar_chart(sales_data.set_index('День'))
-st.markdown('</div>')
+# Первый инпут
+name = st.text_input(
+    "Полное имя",
+    placeholder="Иван Иванов",
+    key="name_input",
+    label_visibility="collapsed"
+)
 
-# Карточка 2
-st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-st.subheader("👥 Пользователи")
-st.metric("Активные", "1,234", "+23")
-st.metric("Новые", "89", "+12")
-st.metric("Конверсия", "4.2%", "+0.5%")
-st.markdown('</div>')
+# Дополнительные элементы в первом блоке
+col1, col2 = st.columns(2)
+with col1:
+    age = st.number_input("Возраст", 0, 120, 25, key="age_input")
+with col2:
+    gender = st.selectbox("Пол", ["Мужской", "Женский"], key="gender_input")
 
-# Карточка 3
-st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-st.subheader("📈 Тренды")
-trend_data = pd.DataFrame(np.random.randn(30, 1), columns=['Тренд'])
-st.line_chart(trend_data)
-st.markdown('</div>')
+st.markdown('</div>')  # Закрываем input-block 1
 
-# Карточка 4
-st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-st.subheader("⚙️ Настройки")
-st.checkbox("Уведомления по email", value=True)
-st.checkbox("SMS-уведомления")
-st.slider("Частота отчетов", 1, 24, 4)
-st.button("Сохранить настройки")
-st.markdown('</div>')
+# Поле ввода 2
+st.markdown('<div class="input-block">', unsafe_allow_html=True)
+st.markdown('<div class="input-title">📧 Контактные данные</div>', unsafe_allow_html=True)
 
-st.markdown('</div>')  # закрываем wide-dashboard
+# Второй инпут
+email = st.text_input(
+    "Email адрес",
+    placeholder="example@gmail.com",
+    key="email_input",
+    label_visibility="collapsed"
+)
 
-# Широкая таблица
-st.subheader("📋 Детальные данные")
-st.markdown('<div class="wide-table">', unsafe_allow_html=True)
+# Третий инпут во втором блоке
+phone = st.text_input(
+    "Номер телефона",
+    placeholder="+7 900 000-00-00",
+    key="phone_input",
+    label_visibility="collapsed"
+)
 
-# Создаем широкую таблицу
-columns = [f"Показатель {i}" for i in range(1, 9)] + ["Сумма", "Изменение"]
-data = []
-for i in range(10):
-    row = list(np.random.randn(8) * 1000) + [np.random.randint(1000, 10000), f"+{np.random.randint(1, 20)}%"]
-    data.append(row)
+# Четвертый инпут
+address = st.text_area(
+    "Адрес проживания",
+    placeholder="Город, улица, дом",
+    height=80,
+    key="address_input",
+    label_visibility="collapsed"
+)
 
-df = pd.DataFrame(data, columns=columns)
-st.dataframe(df, use_container_width=False, width=1200)
+st.markdown('</div>')  # Закрываем input-block 2
 
-st.markdown('</div>')
+st.markdown('</div>')  # Закрываем inputs-container
 
-# Фиксированные элементы (без скролла)
+# Кнопки действий (вне скролла)
 st.divider()
-with st.expander("💡 Подсказки по использованию"):
-    st.write("""
-    - На мобильных устройствах используйте горизонтальную прокрутку
-    - На компьютере весь контент отображается полностью
-    - Все элементы остаются функциональными при любом размере экрана
+col_btn1, col_btn2, col_btn3 = st.columns(3)
+with col_btn1:
+    if st.button("💾 Сохранить данные", use_container_width=True):
+        if name and email:
+            st.success("Данные сохранены!")
+            st.json({
+                "name": name,
+                "age": age,
+                "gender": gender,
+                "email": email,
+                "phone": phone,
+                "address": address
+            })
+        else:
+            st.warning("Заполните обязательные поля (имя и email)")
+
+with col_btn2:
+    if st.button("🔄 Очистить форму", use_container_width=True):
+        st.rerun()
+
+with col_btn3:
+    if st.button("📋 Показать все", use_container_width=True):
+        st.write(f"**Имя:** {name or 'Не указано'}")
+        st.write(f"**Возраст:** {age}")
+        st.write(f"**Пол:** {gender}")
+        st.write(f"**Email:** {email or 'Не указан'}")
+        st.write(f"**Телефон:** {phone or 'Не указан'}")
+        st.write(f"**Адрес:** {address or 'Не указан'}")
+
+# Дополнительная информация
+with st.expander("ℹ️ Как это работает"):
+    st.markdown("""
+    ### Принцип работы:
+    1. **На десктопе (ширина > 640px):**
+       - Оба блока с полями ввода отображаются рядом
+       - Ширина контейнера ограничена 800px
+       - Нет горизонтального скролла
+       
+    2. **На мобильных (ширина ≤ 640px):**
+       - Контейнер растягивается до 500px
+       - Появляется горизонтальная прокрутка
+       - Поля можно листать пальцем
+       
+    ### Ключевые CSS-свойства:
+    ```css
+    @media (max-width: 640px) {
+        .inputs-container {
+            min-width: 500px;  /* Шире экрана */
+            overflow-x: auto;  /* Включаем скролл */
+            -webkit-overflow-scrolling: touch; /* Плавный скролл */
+        }
+        .input-block {
+            flex-shrink: 0;    /* Запрещаем сжиматься */
+            min-width: 250px;  /* Минимальная ширина */
+        }
+    }
+    ```
+    
+    ### Преимущества:
+    - Поля всегда удобного размера
+    - Не нужно масштабировать текст
+    - Сохраняется первоначальный дизайн
+    - Touch-friendly интерфейс
     """)
+
+# Индикатор текущей ширины экрана (для отладки)
+st.markdown("---")
+st.caption(f"*Текущая минимальная ширина контейнера: 500px*")
