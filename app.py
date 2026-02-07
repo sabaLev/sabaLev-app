@@ -4,455 +4,6 @@ import pandas as pd
 import math
 import json
 
-# ---------- MEMPHIS DESIGN CSS ----------
-st.markdown("""
-<style>
-    /* Memphis Design Variables */
-    :root {
-        --memphis-yellow: #FFD166;
-        --memphis-pink: #FF6B9D;
-        --memphis-blue: #118AB2;
-        --memphis-green: #06D6A0;
-        --memphis-purple: #9B5DE5;
-        --memphis-red: #EF476F;
-        --memphis-black: #073B4C;
-        --memphis-white: #FFFFFF;
-        
-        --memphis-grid: #00000020;
-        --memphis-stripe: repeating-linear-gradient(
-            45deg,
-            transparent,
-            transparent 10px,
-            var(--memphis-grid) 10px,
-            var(--memphis-grid) 20px
-        );
-    }
-    
-    /* Memphis Background */
-    .stApp {
-        background: 
-            radial-gradient(circle at 20% 80%, var(--memphis-yellow)15, transparent 25%),
-            radial-gradient(circle at 80% 20%, var(--memphis-pink)15, transparent 25%),
-            radial-gradient(circle at 40% 40%, var(--memphis-blue)10, transparent 20%),
-            linear-gradient(135deg, var(--memphis-white) 0%, #F8F9FA 100%);
-        background-attachment: fixed;
-    }
-    
-    /* Memphis Typography */
-    h1, h2, h3, h4, h5, h6 {
-        font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
-        font-weight: 900;
-        letter-spacing: -0.5px;
-        text-transform: uppercase;
-        background: linear-gradient(45deg, var(--memphis-blue), var(--memphis-purple));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-shadow: 3px 3px 0px var(--memphis-yellow);
-        margin-bottom: 1rem !important;
-    }
-    
-    /* Main Container */
-    .main .block-container {
-        background-color: rgba(255, 255, 255, 0.9);
-        border-radius: 20px;
-        border: 5px solid var(--memphis-black);
-        box-shadow: 
-            15px 15px 0 var(--memphis-pink),
-            30px 30px 0 var(--memphis-yellow);
-        padding: 3rem !important;
-        margin-top: 2rem;
-        margin-bottom: 4rem;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .main .block-container:before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 10px;
-        background: linear-gradient(90deg, 
-            var(--memphis-yellow) 0%, 
-            var(--memphis-pink) 25%, 
-            var(--memphis-blue) 50%, 
-            var(--memphis-green) 75%, 
-            var(--memphis-purple) 100%);
-        z-index: 100;
-    }
-    
-    /* Memphis Buttons */
-    div[data-testid="stButton"] > button {
-        font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
-        font-weight: 900;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        border: 3px solid var(--memphis-black) !important;
-        border-radius: 0 !important;
-        box-shadow: 5px 5px 0 var(--memphis-black);
-        transition: all 0.2s ease;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    div[data-testid="stButton"] > button:before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-        transition: left 0.5s ease;
-    }
-    
-    div[data-testid="stButton"] > button:hover {
-        transform: translate(-2px, -2px);
-        box-shadow: 7px 7px 0 var(--memphis-black);
-    }
-    
-    div[data-testid="stButton"] > button:hover:before {
-        left: 100%;
-    }
-    
-    div[data-testid="stButton"] > button[kind="primary"] {
-        background: linear-gradient(45deg, var(--memphis-blue), var(--memphis-purple)) !important;
-        color: var(--memphis-white) !important;
-        font-size: 1.2rem !important;
-        padding: 15px 40px !important;
-    }
-    
-    div[data-testid="stButton"] > button[kind="secondary"] {
-        background: var(--memphis-yellow) !important;
-        color: var(--memphis-black) !important;
-        border: 3px solid var(--memphis-black) !important;
-    }
-    
-    /* Memphis Input Fields */
-    .stTextInput > div > div > input,
-    .stNumberInput > div > div > input,
-    .stSelectbox > div > div > div,
-    .stTextArea > div > div > textarea {
-        font-family: 'Courier New', monospace;
-        font-weight: bold;
-        border: 3px solid var(--memphis-black) !important;
-        border-radius: 0 !important;
-        background-color: var(--memphis-white) !important;
-        padding: 12px 15px !important;
-        box-shadow: 3px 3px 0 var(--memphis-pink);
-        transition: all 0.2s ease;
-    }
-    
-    .stTextInput > div > div > input:focus,
-    .stNumberInput > div > div > input:focus,
-    .stSelectbox > div > div > div:focus,
-    .stTextArea > div > div > textarea:focus {
-        box-shadow: 5px 5px 0 var(--memphis-green);
-        border-color: var(--memphis-purple) !important;
-        outline: none !important;
-    }
-    
-    /* Memphis Labels */
-    .stMarkdown p, .stMarkdown div {
-        font-family: 'Arial', sans-serif;
-        font-weight: bold;
-        color: var(--memphis-black);
-    }
-    
-    .right-label {
-        font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif !important;
-        font-weight: 900 !important;
-        color: var(--memphis-blue) !important;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        background: var(--memphis-yellow);
-        display: inline-block;
-        padding: 5px 15px;
-        border: 2px solid var(--memphis-black);
-        box-shadow: 3px 3px 0 var(--memphis-black);
-        margin-bottom: 10px !important;
-    }
-    
-    /* Memphis Expanders */
-    .streamlit-expanderHeader {
-        font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
-        font-weight: 900;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        background: linear-gradient(45deg, var(--memphis-green), var(--memphis-blue)) !important;
-        color: var(--memphis-white) !important;
-        border: 3px solid var(--memphis-black) !important;
-        border-radius: 0 !important;
-        box-shadow: 5px 5px 0 var(--memphis-black);
-        margin-bottom: 15px !important;
-        padding: 15px 20px !important;
-    }
-    
-    .streamlit-expanderContent {
-        background-color: rgba(255, 255, 255, 0.9);
-        border: 3px solid var(--memphis-black);
-        border-top: none;
-        padding: 20px !important;
-        margin-top: -10px !important;
-        box-shadow: 5px 5px 0 var(--memphis-yellow);
-    }
-    
-    /* Memphis Sidebar */
-    section[data-testid="stSidebar"] {
-        background: linear-gradient(135deg, var(--memphis-pink), var(--memphis-purple));
-        border-right: 5px solid var(--memphis-black);
-    }
-    
-    section[data-testid="stSidebar"] > div {
-        padding: 2rem 1.5rem;
-    }
-    
-    section[data-testid="stSidebar"] .stButton > button {
-        background: var(--memphis-yellow) !important;
-        color: var(--memphis-black) !important;
-        border: 3px solid var(--memphis-black) !important;
-        width: 100%;
-    }
-    
-    /* Memphis Radio Buttons */
-    .stRadio > div {
-        background: var(--memphis-white);
-        border: 3px solid var(--memphis-black);
-        padding: 10px;
-        box-shadow: 3px 3px 0 var(--memphis-blue);
-    }
-    
-    .stRadio > div > label {
-        font-family: 'Courier New', monospace;
-        font-weight: bold;
-        color: var(--memphis-black);
-    }
-    
-    /* Memphis Success/Info Boxes */
-    .stAlert[data-testid="stAlert"] > div {
-        font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
-        border: 3px solid var(--memphis-black) !important;
-        border-radius: 0 !important;
-        box-shadow: 5px 5px 0 var(--memphis-black);
-        padding: 20px !important;
-    }
-    
-    div[data-testid="stAlert"] div[role="alert"][data-baseweb="notification"] {
-        background: var(--memphis-green) !important;
-        color: var(--memphis-black) !important;
-    }
-    
-    /* Memphis Table/Grid Elements */
-    .stDataFrame, .stTable {
-        border: 3px solid var(--memphis-black) !important;
-        box-shadow: 5px 5px 0 var(--memphis-purple);
-    }
-    
-    /* Memphis Geometric Decorations */
-    .memphis-triangle {
-        position: absolute;
-        width: 0;
-        height: 0;
-        border-left: 30px solid transparent;
-        border-right: 30px solid transparent;
-        border-bottom: 50px solid var(--memphis-yellow);
-        z-index: -1;
-    }
-    
-    .memphis-circle {
-        position: absolute;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: var(--memphis-pink);
-        border: 3px solid var(--memphis-black);
-        z-index: -1;
-    }
-    
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-        width: 12px;
-        background: var(--memphis-white);
-        border-left: 3px solid var(--memphis-black);
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: linear-gradient(45deg, var(--memphis-blue), var(--memphis-purple));
-        border: 2px solid var(--memphis-black);
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(45deg, var(--memphis-pink), var(--memphis-red));
-    }
-    
-    /* Animation for results */
-    @keyframes memphisPulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
-    }
-    
-    .result-highlight {
-        animation: memphisPulse 2s infinite;
-        display: inline-block;
-        padding: 10px 20px;
-        background: var(--memphis-yellow);
-        border: 3px solid var(--memphis-black);
-        box-shadow: 5px 5px 0 var(--memphis-pink);
-        font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
-        font-weight: 900;
-        color: var(--memphis-black);
-    }
-    
-    /* Column styling */
-    .stColumn {
-        padding: 10px;
-    }
-    
-    /* Memphis Checkbox */
-    .stCheckbox > div {
-        background: var(--memphis-white);
-        border: 3px solid var(--memphis-black);
-        padding: 10px;
-        margin: 5px 0;
-        box-shadow: 3px 3px 0 var(--memphis-green);
-    }
-    
-    .stCheckbox > div > label {
-        font-family: 'Courier New', monospace;
-        font-weight: bold;
-        color: var(--memphis-black);
-    }
-    
-    /* Memphis Grid Lines */
-    .main .block-container:after {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-image: 
-            linear-gradient(to right, var(--memphis-grid) 1px, transparent 1px),
-            linear-gradient(to bottom, var(--memphis-grid) 1px, transparent 1px);
-        background-size: 20px 20px;
-        pointer-events: none;
-        z-index: -1;
-        opacity: 0.3;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# ---------- MEMPHIS DECORATIONS ----------
-st.markdown("""
-<div style="position: fixed; top: 50px; right: 50px; z-index: -1;">
-    <div style="width: 60px; height: 60px; background: #FF6B9D; border: 3px solid #073B4C; transform: rotate(45deg); box-shadow: 5px 5px 0 #073B4C;"></div>
-</div>
-<div style="position: fixed; bottom: 100px; left: 30px; z-index: -1;">
-    <div style="width: 40px; height: 40px; background: #06D6A0; border: 3px solid #073B4C; border-radius: 50%; box-shadow: 5px 5px 0 #073B4C;"></div>
-</div>
-<div style="position: fixed; top: 150px; left: 100px; z-index: -1;">
-    <div style="width: 0; height: 0; border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 50px solid #FFD166; border-top: 3px solid #073B4C; box-shadow: 5px 5px 0 #073B4C;"></div>
-</div>
-""", unsafe_allow_html=True)
-
-# ---------- ОБНОВЛЕННЫЕ ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
-def right_label(text: str) -> str:
-    return f'<div class="right-label">{text}</div>'
-
-def right_header(text: str) -> str:
-    return f'<h3 style="text-align:right; margin-bottom:1.5rem; padding: 15px; background: linear-gradient(90deg, transparent, #FFD166); border-left: 5px solid #118AB2;">{text}</h3>'
-
-def clean_text(text: str) -> str:
-    return text.rstrip(" .…")
-
-def info_box(text: str):
-    text = clean_text(text)
-    st.markdown(
-        f"""
-        <div style="
-            background: linear-gradient(45deg, #118AB2, #06D6A0);
-            color: #073B4C;
-            padding: 20px;
-            border-radius: 0;
-            text-align: right;
-            border: 3px solid #073B4C;
-            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
-            font-weight: 900;
-            box-shadow: 5px 5px 0 #073B4C;
-            margin: 15px 0;
-        ">
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <div style="width: 30px; height: 30px; background: #FFD166; border: 2px solid #073B4C;"></div>
-                <div style="flex-grow: 1;">{text}</div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-def success_box(text: str):
-    text = clean_text(text)
-    st.markdown(
-        f"""
-        <div style="
-            background: linear-gradient(45deg, #06D6A0, #FFD166);
-            color: #073B4C;
-            padding: 25px;
-            border-radius: 0;
-            text-align: right;
-            border: 4px solid #073B4C;
-            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
-            font-weight: 900;
-            font-size: 1.2em;
-            box-shadow: 8px 8px 0 #073B4C;
-            margin: 20px 0;
-            position: relative;
-            overflow: hidden;
-        ">
-            <div style="position: absolute; top: -20px; right: -20px; width: 60px; height: 60px; background: #FF6B9D; transform: rotate(45deg); border: 3px solid #073B4C;"></div>
-            <div style="position: relative; z-index: 2; display: flex; align-items: center; gap: 20px;">
-                <div style="font-size: 2em;">🎉</div>
-                <div style="flex-grow: 1;">{text}</div>
-                <div style="width: 40px; height: 40px; background: #118AB2; border: 2px solid #073B4C;"></div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-def memphis_card(title, content, color="#118AB2"):
-    accent_colors = {
-        "#118AB2": "#FFD166",
-        "#06D6A0": "#FF6B9D", 
-        "#FF6B9D": "#06D6A0",
-        "#FFD166": "#118AB2",
-        "#9B5DE5": "#FFD166"
-    }
-    accent = accent_colors.get(color, "#FFD166")
-    
-    return f"""
-    <div style="
-        background: linear-gradient(135deg, {color}20, {color}10);
-        border: 3px solid {color};
-        border-left: 10px solid {accent};
-        padding: 25px;
-        margin: 20px 0;
-        position: relative;
-        box-shadow: 8px 8px 0 {accent};
-    ">
-        <div style="position: absolute; top: -15px; left: -15px; width: 30px; height: 30px; background: {accent}; border: 2px solid {color};"></div>
-        <h4 style="color: {color}; margin: 0 0 15px 0; font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 1px;">
-            {title}
-        </h4>
-        <div style="color: #073B4C; font-family: 'Arial', sans-serif; font-weight: bold; line-height: 1.6;">
-            {content}
-        </div>
-        <div style="position: absolute; bottom: -10px; right: -10px; width: 20px; height: 20px; background: {color}; transform: rotate(45deg);"></div>
-    </div>
-    """
-
 # ---------- ИНИЦИАЛИЗАЦИЯ SESSION STATE ----------
 if "fasteners" not in st.session_state:
     st.session_state.fasteners = None
@@ -502,6 +53,52 @@ if "report_needs_update" not in st.session_state:
     st.session_state.report_needs_update = True
 if "previous_groups_hash" not in st.session_state:
     st.session_state.previous_groups_hash = None
+
+# ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
+def right_label(text: str) -> str:
+    return f'<div style="text-align:right; font-weight:bold;">{text}</div>'
+
+def right_header(text: str) -> str:
+    return f'<h3 style="text-align:right; margin-bottom:0.5rem;">{text}</h3>'
+
+def clean_text(text: str) -> str:
+    return text.rstrip(" .…")
+
+def info_box(text: str):
+    text = clean_text(text)
+    st.markdown(
+        f"""
+        <div style="
+            background-color:#2b2b2b;
+            color:white;
+            padding:12px;
+            border-radius:6px;
+            text-align:right;
+            border:1px solid #555;
+        ">
+            {text}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def success_box(text: str):
+    text = clean_text(text)
+    st.markdown(
+        f"""
+        <div style="
+            background-color:#1f3d1f;
+            color:white;
+            padding:12px;
+            border-radius:6px;
+            text-align:right;
+            border:1px solid #4caf50;
+        ">
+            {text}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 def groups_hash(groups_list):
     """Создает хэш для групп, чтобы отслеживать изменения"""
@@ -625,6 +222,175 @@ def format_length_for_display(length):
         return s
     except Exception:
         return str(length)
+
+# ---------- CSS СТИЛИ ДЛЯ МОБИЛЬНОЙ АДАПТАЦИИ ----------
+st.markdown("""
+    <style>
+    /* Основные стили для всех устройств */
+    .streamlit-expanderHeader svg {
+        transform: rotate(0deg);
+        transition: transform 0.3s;
+    }
+    .streamlit-expanderHeader[aria-expanded="true"] svg {
+        transform: rotate(-90deg);
+    }
+    .streamlit-expanderHeader {
+        text-align: right;
+        direction: rtl;
+    }
+    
+    /* Адаптивные колонки для мобильных устройств */
+    @media (max-width: 768px) {
+        /* На мобильных - вертикальное расположение */
+        .mobile-vertical .stColumn {
+            width: 100% !important;
+            min-width: 100% !important;
+            margin-bottom: 10px;
+        }
+        
+        /* Скрываем лишние отступы на мобильных */
+        .mobile-vertical div[data-testid="column"] {
+            padding: 0 !important;
+        }
+        
+        /* Увеличиваем шрифт на мобильных */
+        .mobile-input input {
+            font-size: 16px !important; /* Предотвращает zoom в iOS */
+            height: 44px !important; /* Минимальная высота для тапа */
+        }
+        
+        /* Стили для labels на мобильных */
+        .mobile-label {
+            font-size: 14px !important;
+            margin-bottom: 5px !important;
+            display: block !important;
+        }
+        
+        /* Фиксируем ширину колонок в fasteners на мобильных */
+        div[data-testid="column"] {
+            min-width: unset !important;
+            flex: 1 !important;
+        }
+        
+        /* Галочки и поля в одну строку на мобильных */
+        .fastener-row-mobile {
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+            margin-bottom: 15px !important;
+        }
+        
+        .fastener-checkbox-mobile {
+            flex: 0 0 40px !important;
+        }
+        
+        .fastener-input-mobile {
+            flex: 0 0 80px !important;
+        }
+        
+        .fastener-label-mobile {
+            flex: 1 !important;
+            text-align: right !important;
+        }
+        
+        /* Мобильная адаптация всех элементов */
+        /* Основной контейнер */
+        .main .block-container {
+            padding: 1rem !important;
+            margin-top: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        /* Кнопки на всю ширину */
+        div[data-testid="stButton"] > button {
+            width: 100% !important;
+            margin-bottom: 10px;
+        }
+        
+        /* Expanders на мобильных */
+        .streamlit-expanderHeader {
+            padding: 12px 15px !important;
+            font-size: 14px !important;
+        }
+        
+        /* Поля ввода на мобильных */
+        .stTextInput > div > div > input,
+        .stNumberInput > div > div > input,
+        .stSelectbox > div > div > div {
+            padding: 10px 12px !important;
+            font-size: 16px !important; /* Предотвращает zoom */
+        }
+        
+        /* Колонки в секции каналов */
+        .stHorizontalBlock {
+            flex-direction: column !important;
+        }
+        
+        .stHorizontalBlock [data-testid="column"] {
+            width: 100% !important;
+            min-width: 100% !important;
+        }
+        
+        /* Ручные рельсы на мобильных */
+        .manual-rails-mobile .stColumn {
+            width: 100% !important;
+            margin-bottom: 15px;
+        }
+        
+        /* Адаптивные заголовки */
+        h1 { font-size: 24px !important; }
+        h2 { font-size: 20px !important; }
+        h3 { font-size: 18px !important; }
+        
+        /* Правая колонка в экспорте на всю ширину */
+        .export-buttons-mobile {
+            flex-direction: column !important;
+        }
+        
+        .export-buttons-mobile [data-testid="column"] {
+            width: 100% !important;
+            margin-bottom: 10px;
+        }
+        
+        /* Скрываем сложные градиенты на мобильных для производительности */
+        .stApp {
+            background: linear-gradient(135deg, #ffffff 0%, #F8F9FA 100%) !important;
+        }
+        
+        /* Десктоп-специфичные элементы скрываем */
+        .desktop-only {
+            display: none !important;
+        }
+        
+        /* Мобильные элементы показываем */
+        .mobile-only {
+            display: block !important;
+        }
+    }
+    
+    /* Десктоп версия */
+    @media (min-width: 769px) {
+        .desktop-horizontal .stColumn {
+            width: 50% !important;
+        }
+        
+        /* Десктоп-специфичные элементы показываем */
+        .desktop-only {
+            display: block !important;
+        }
+        
+        /* Мобильные элементы скрываем */
+        .mobile-only {
+            display: none !important;
+        }
+    }
+    
+    /* Общие стили для всех устройств */
+    .panel-input-group {
+        margin-bottom: 15px;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # ---------- PROJECT NAME ----------
 st.markdown(right_label("שם פרויקט"), unsafe_allow_html=True)
@@ -766,52 +532,51 @@ panel = panel_rows.iloc[0]
 # ---------- GROUPS ----------
 groups = []
 
-st.markdown("""
-    <style>
-    .streamlit-expanderHeader svg {
-        transform: rotate(0deg);
-        transition: transform 0.3s;
-    }
-    .streamlit-expanderHeader[aria-expanded="true"] svg {
-        transform: rotate(-90deg);
-    }
-    .streamlit-expanderHeader {
-        text-align: right;
-        direction: rtl;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
 # Секция вертикальных панелей - עומדים
 with st.expander("**עומדים**", expanded=True):
-    vh = st.columns(2)
-    vh[0].markdown(right_label("שורות"), unsafe_allow_html=True)
-    vh[1].markdown(right_label("פאנלים"), unsafe_allow_html=True)
+    # Добавляем контейнер с классами для разных устройств
+    st.markdown('<div class="desktop-horizontal mobile-vertical">', unsafe_allow_html=True)
+    
+    # Заголовки
+    cols = st.columns(2)
+    with cols[0]:
+        st.markdown('<div class="mobile-label">', unsafe_allow_html=True)
+        st.markdown(right_label("שורות"), unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    with cols[1]:
+        st.markdown('<div class="mobile-label">', unsafe_allow_html=True)
+        st.markdown(right_label("פאנלים"), unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
     
     vertical_rows = st.session_state.vertical_rows
     for i in range(1, vertical_rows + 1):
-        c0, c1 = st.columns(2)
-        default_g = 0
-        if i <= 8:
-            default_n = i
-        else:
-            default_n = 0
+        # Создаем контейнер для каждой пары полей ввода
+        st.markdown(f'<div class="panel-input-group">', unsafe_allow_html=True)
+        cols = st.columns(2)
         
-        g = c0.number_input(
-            "",
-            0, 50, default_g,
-            key=f"g_g_vertical_{i}",
-            label_visibility="collapsed",
-        )
-        n = c1.number_input(
-            "",
-            0, 100, default_n,
-            key=f"g_n_vertical_{i}",
-            label_visibility="collapsed",
-        )
+        with cols[0]:
+            g = st.number_input(
+                "",
+                0, 50, 0,
+                key=f"g_g_vertical_{i}",
+                label_visibility="collapsed",
+            )
+        
+        with cols[1]:
+            default_n = i if i <= 8 else 0
+            n = st.number_input(
+                "",
+                0, 100, default_n,
+                key=f"g_n_vertical_{i}",
+                label_visibility="collapsed",
+            )
+        
+        st.markdown('</div>', unsafe_allow_html=True)
         
         if n > 0 and g > 0:
             groups.append((n, g, "עומד"))
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     
     if st.button("להוסיף פאנלים", key="add_panels_vertical"):
         st.session_state.vertical_rows += 1
@@ -819,34 +584,49 @@ with st.expander("**עומדים**", expanded=True):
 
 # Секция горизонтальных панелей - שוכבים
 with st.expander("**שוכבים**", expanded=True):
-    hh = st.columns(2)
-    hh[0].markdown(right_label("שורות"), unsafe_allow_html=True)
-    hh[1].markdown(right_label("פאנלים"), unsafe_allow_html=True)
+    # Добавляем контейнер с классами для разных устройств
+    st.markdown('<div class="desktop-horizontal mobile-vertical">', unsafe_allow_html=True)
+    
+    # Заголовки
+    cols = st.columns(2)
+    with cols[0]:
+        st.markdown('<div class="mobile-label">', unsafe_allow_html=True)
+        st.markdown(right_label("שורות"), unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    with cols[1]:
+        st.markdown('<div class="mobile-label">', unsafe_allow_html=True)
+        st.markdown(right_label("פאנלים"), unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
     
     horizontal_rows = st.session_state.horizontal_rows
     for i in range(1, horizontal_rows + 1):
-        c0, c1 = st.columns(2)
-        default_g = 0
-        if i <= 4:
-            default_n = i
-        else:
-            default_n = 0
+        # Создаем контейнер для каждой пары полей ввода
+        st.markdown(f'<div class="panel-input-group">', unsafe_allow_html=True)
+        cols = st.columns(2)
         
-        g = c0.number_input(
-            "",
-            0, 50, default_g,
-            key=f"g_g_horizontal_{i}",
-            label_visibility="collapsed",
-        )
-        n = c1.number_input(
-            "",
-            0, 100, default_n,
-            key=f"g_n_horizontal_{i}",
-            label_visibility="collapsed",
-        )
+        with cols[0]:
+            g = st.number_input(
+                "",
+                0, 50, 0,
+                key=f"g_g_horizontal_{i}",
+                label_visibility="collapsed",
+            )
+        
+        with cols[1]:
+            default_n = i if i <= 4 else 0
+            n = st.number_input(
+                "",
+                0, 100, default_n,
+                key=f"g_n_horizontal_{i}",
+                label_visibility="collapsed",
+            )
+        
+        st.markdown('</div>', unsafe_allow_html=True)
         
         if n > 0 and g > 0:
             groups.append((n, g, "שוכב"))
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     
     if st.button("להוסיף פאנלים", key="add_panels_horizontal"):
         st.session_state.horizontal_rows += 1
@@ -1217,11 +997,7 @@ if calc_result is not None:
     auto_rails = calc_result["auto_rails"]
     manual_rails = st.session_state.manual_rails
     
-    # Используем Memphis Card для отображения результатов
-    st.markdown(memphis_card("🎯 תוצאות חישוב", 
-                            f"<div style='font-size: 1.5em; text-align: center; padding: 20px;'><span class='result-highlight'>סה\"כ פאנלים: {calc_result['total_panels']}</span></div>",
-                            "#118AB2"), 
-               unsafe_allow_html=True)
+    st.write(f"סה\"כ פאנלים: {calc_result['total_panels']}")
     
     # ----- קושרות -----
     with st.expander("**קושרות**", expanded=True):
@@ -1289,9 +1065,17 @@ if calc_result is not None:
     
     # ----- קושרות (הוספה ידנית) -----
     with st.expander("**קושרות (הוספה ידנית)**", expanded=True):
-        mh = st.columns(2)
-        mh[0].markdown(right_label("אורך (ס״מ)"), unsafe_allow_html=True)
-        mh[1].markdown(right_label("כמות"), unsafe_allow_html=True)
+        st.markdown('<div class="manual-rails-mobile">', unsafe_allow_html=True)
+        
+        cols = st.columns(2)
+        with cols[0]:
+            st.markdown('<div class="mobile-label">', unsafe_allow_html=True)
+            st.markdown(right_label("אורך (ס״מ)"), unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+        with cols[1]:
+            st.markdown('<div class="mobile-label">', unsafe_allow_html=True)
+            st.markdown(right_label("כמות"), unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
         
         manual_rows = st.session_state.manual_rows
         for j in range(1, manual_rows + 1):
@@ -1301,25 +1085,29 @@ if calc_result is not None:
             length_key = f"m_len_{j}_{st.session_state.manual_rails_reset_version}"
             qty_key = f"m_qty_{j}_{st.session_state.manual_rails_reset_version}"
             
-            # Начинаем с нулевых значений (форма сброшена)
-            length = cols[0].number_input(
-                "",
-                min_value=0,
-                max_value=10000,
-                step=10,
-                value=0,  # Всегда начинаем с 0 после сброса
-                key=length_key,
-                label_visibility="collapsed",
-            )
-            qty = cols[1].number_input(
-                "",
-                min_value=0,
-                max_value=1000,
-                step=1,
-                value=0,  # Всегда начинаем с 0 после сброса
-                key=qty_key,
-                label_visibility="collapsed",
-            )
+            with cols[0]:
+                length = st.number_input(
+                    "",
+                    min_value=0,
+                    max_value=10000,
+                    step=10,
+                    value=0,
+                    key=length_key,
+                    label_visibility="collapsed",
+                )
+            
+            with cols[1]:
+                qty = st.number_input(
+                    "",
+                    min_value=0,
+                    max_value=1000,
+                    step=1,
+                    value=0,
+                    key=qty_key,
+                    label_visibility="collapsed",
+                )
+        
+        st.markdown('</div>', unsafe_allow_html=True)
         
         if st.button("להוסיף עוד קושרות", key="add_manual_rails"):
             st.session_state.manual_rows += 1
@@ -1428,7 +1216,7 @@ if calc_result is not None:
                 if lbl not in st.session_state.fasteners_include:
                     st.session_state.fasteners_include[lbl] = True
         
-        # UI для каждого fastener
+        # UI для каждого fastener - АДАПТИВНАЯ ВЕРСИЯ
         new_fasteners = {}
         fasteners_changed = False
         
@@ -1441,9 +1229,14 @@ if calc_result is not None:
             if int(base_val) == 0 and current_val == 0 and lbl not in st.session_state.fasteners:
                 continue
             
-            c_chk, c_val, c_name = st.columns([0.8, 1.6, 5])
+            # Используем контейнер для мобильной адаптации
+            st.markdown('<div class="fastener-row-mobile">', unsafe_allow_html=True)
             
-            with c_chk:
+            # Создаем колонки с фиксированными пропорциями
+            col_check, col_input, col_label = st.columns([0.8, 1.6, 5])
+            
+            with col_check:
+                st.markdown('<div class="fastener-checkbox-mobile">', unsafe_allow_html=True)
                 # Уникальный ключ
                 inc_key = f"fast_inc_{lbl}_{st.session_state.calculation_counter}"
                 inc_default = st.session_state.fasteners_include.get(lbl, True)
@@ -1454,8 +1247,10 @@ if calc_result is not None:
                     st.session_state.report_needs_update = True
                 else:
                     st.session_state.fasteners_include[lbl] = bool(inc_val)
+                st.markdown('</div>', unsafe_allow_html=True)
             
-            with c_val:
+            with col_input:
+                st.markdown('<div class="fastener-input-mobile">', unsafe_allow_html=True)
                 # Уникальный ключ
                 val_key = f"fastener_qty_{lbl}_{st.session_state.calculation_counter}"
                 v = st.number_input(
@@ -1466,12 +1261,17 @@ if calc_result is not None:
                     key=val_key,
                     label_visibility="collapsed",
                 )
+                st.markdown('</div>', unsafe_allow_html=True)
                 
                 if v != current_val:
                     fasteners_changed = True
             
-            with c_name:
+            with col_label:
+                st.markdown('<div class="fastener-label-mobile">', unsafe_allow_html=True)
                 st.markdown(right_label(lbl), unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)
+            
+            st.markdown('</div>', unsafe_allow_html=True)
             
             new_fasteners[lbl] = int(v)
         
@@ -1606,6 +1406,8 @@ with st.expander("**ייצוא (HTML להדפסה ל-PDF)**", expanded=True):
         # Используем сохраненный отчет
         html_report = st.session_state.get("last_html_report", "")
         
+        st.markdown('<div class="export-buttons-mobile">', unsafe_allow_html=True)
+        
         c_left, c_right = st.columns(2)
         with c_left:
             if st.button('לייצא דו"ח', use_container_width=True, key="export"):
@@ -1623,6 +1425,8 @@ with st.expander("**ייצוא (HTML להדפסה ל-PDF)**", expanded=True):
                     }}
                 </script>"""
                 components.html(js, height=0)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
         
         if st.session_state.show_report:
             st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
