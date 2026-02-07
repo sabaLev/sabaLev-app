@@ -1,39 +1,20 @@
 import streamlit as st
 import pandas as pd
 
-st.markdown("""
-<style>
-/* Таблица на всю ширину */
-.stDataFrame {
-    width: 100% !important;
-}
+st.title("Контейнер с таблицей")
 
-/* Ячейки таблицы */
-.stDataFrame td, .stDataFrame th {
-    padding: 12px !important;
-    text-align: left !important;
-}
+# Создаем контейнер на всю ширину
+container = st.container()
 
-/* Адаптивность для мобильных */
-@media (max-width: 768px) {
-    .stDataFrame {
-        font-size: 14px !important;
-    }
-    .stDataFrame td, .stDataFrame th {
-        padding: 8px !important;
-    }
-}
-</style>
-""", unsafe_allow_html=True)
-
-st.title("Респонсив таблица")
-
-df = pd.DataFrame({
-    'Название': ['Элемент 1', 'Элемент 2', 'Элемент 3', 'Элемент 4'],
-    'Описание': ['Длинное описание первого элемента', 
-                 'Описание второго элемента',
-                 'Третье описание',
-                 'Четвертое описание элемента']
-})
-
-st.dataframe(df, use_container_width=True)
+with container:
+    # Таблица внутри контейнера
+    df = pd.DataFrame({
+        'Слева': ['A1', 'A2', 'A3', 'A4', 'A5'],
+        'Справа': ['B1', 'B2', 'B3', 'B4', 'B5']
+    })
+    
+    st.dataframe(
+        df,
+        use_container_width=True,
+        hide_index=True
+    )
