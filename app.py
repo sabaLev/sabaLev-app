@@ -1,101 +1,169 @@
 import streamlit as st
 
-# CSS для создания двух сайдбаров
+# Настройка страницы
+st.set_page_config(layout="wide", initial_sidebar_state="collapsed")
+
+# CSS для фиксированных панелей
 st.markdown("""
 <style>
-/* Левая панель (кастомный сайдбар) */
-[data-testid="stSidebar"] {
-    min-width: 300px !important;
-    max-width: 300px !important;
+/* Отключаем скролл у body */
+.stApp {
+    overflow: hidden;
 }
 
-/* Создаем правую панель */
-.right-sidebar {
+/* Левая фиксированная панель */
+.fixed-left-panel {
     position: fixed;
+    left: 0;
     top: 0;
-    right: 0;
+    width: 280px;
     height: 100vh;
-    width: 300px;
-    background: #f0f2f6;
+    background: white;
+    border-right: 2px solid #e0e0e0;
     padding: 20px;
     overflow-y: auto;
-    z-index: 999;
-    border-left: 1px solid #ddd;
+    z-index: 100;
 }
 
-/* Сдвигаем основной контент */
-.main .block-container {
-    padding-left: 320px !important;
-    padding-right: 320px !important;
-    max-width: calc(100vw - 640px) !important;
+/* Правая фиксированная панель */
+.fixed-right-panel {
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 280px;
+    height: 100vh;
+    background: white;
+    border-left: 2px solid #e0e0e0;
+    padding: 20px;
+    overflow-y: auto;
+    z-index: 100;
 }
 
-/* Скрываем дефолтный правый padding */
-.css-1d391kg {
-    padding-right: 0 !important;
+/* Центральный контент */
+.main-content {
+    margin-left: 300px;
+    margin-right: 300px;
+    padding: 20px;
+    min-height: 100vh;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ===== ЛЕВАЯ ПАНЕЛЬ (нативный сайдбар) =====
-with st.sidebar:
-    st.title("📁 Панель А")
-    st.markdown("---")
-    
-    # Независимые элементы левой панели
-    left_counter = st.number_input("Счетчик А", 0, 100, 10, key="left_counter")
-    st.progress(left_counter / 100)
-    
-    left_text = st.text_input("Введите для А:", key="left_text")
-    st.write(f"**А получил:** {left_text}")
-    
-    left_option = st.selectbox("Выбор А:", ["Опция 1", "Опция 2"], key="left_select")
-    st.button("Действие А", key="btn_a")
-
-# ===== ОСНОВНОЙ КОНТЕНТ =====
-st.title("🎯 Центральная панель")
-st.write("Это основное рабочее пространство")
-st.slider("Общий слайдер", 0, 100, 50)
-
-# ===== ПРАВАЯ ПАНЕЛЬ (через HTML) =====
-right_panel_html = f"""
-<div class="right-sidebar">
-    <h2>📊 Панель Б</h2>
+# ===== ЛЕВАЯ ПАНЕЛЬ =====
+left_panel = """
+<div class="fixed-left-panel">
+    <h3>🔧 Инструменты</h3>
     <hr>
-    <p>Независимая правая панель</p>
-    
-    <div style="margin: 20px 0;">
-        <label>Счетчик Б:</label>
-        <input type="range" min="0" max="100" value="30" 
-               id="rightSlider" style="width: 100%;">
-        <div id="rightValue">30</div>
+    <div style="margin: 15px 0;">
+        <strong>Настройки:</strong><br>
+        <input type="checkbox" id="tool1"> <label for="tool1">Опция 1</label><br>
+        <input type="checkbox" id="tool2"> <label for="tool2">Опция 2</label><br>
+        <input type="checkbox" id="tool3"> <label for="tool3">Опция 3</label>
     </div>
     
-    <div style="margin: 20px 0;">
-        <input type="text" id="rightInput" placeholder="Введите для Б" 
-               style="width: 100%; padding: 8px;">
+    <div style="margin: 15px 0;">
+        <label>Уровень:</label>
+        <input type="range" min="1" max="10" value="5" style="width: 100%;">
     </div>
     
-    <button onclick="alert('Из панели Б: ' + document.getElementById('rightInput').value)"
-            style="padding: 10px; width: 100%; background: #4CAF50; color: white; border: none;">
-        Отправить Б
+    <button onclick="runLeftPanel()" 
+            style="width: 100%; padding: 10px; background: #2196F3; color: white; border: none;">
+        Применить
     </button>
     
+    <div style="margin-top: 20px; padding: 10px; background: #f5f5f5; border-radius: 5px;">
+        <small>Левая панель полностью независима</small>
+    </div>
+    
     <script>
-        // Обновление значения слайдера
-        document.getElementById('rightSlider').addEventListener('input', function(e) {{
-            document.getElementById('rightValue').innerText = e.target.value;
-        }});
-        
-        // Отправка данных в Streamlit
-        function sendToStreamlit() {{
-            window.parent.postMessage({{
-                type: 'streamlit:setComponentValue',
-                value: document.getElementById('rightInput').value
-            }}, '*');
-        }}
+    function runLeftPanel() {
+        const checks = [
+            document.getElementById('tool1').checked,
+            document.getElementById('tool2').checked,
+            document.getElementById('tool3').checked
+        ];
+        alert('Левые настройки: ' + checks);
+    }
     </script>
 </div>
 """
 
-st.components.v1.html(right_panel_html, height=0)
+# ===== ПРАВАЯ ПАНЕЛЬ =====
+right_panel = """
+<div class="fixed-right-panel">
+    <h3>📈 Мониторинг</h3>
+    <hr>
+    
+    <div style="margin: 15px 0;">
+        <strong>Показатели:</strong>
+        <div style="background: #e8f5e8; padding: 10px; margin: 5px 0; border-radius: 5px;">
+            CPU: <span id="cpu">45%</span>
+        </div>
+        <div style="background: #e3f2fd; padding: 10px; margin: 5px 0; border-radius: 5px;">
+            Память: <span id="mem">67%</span>
+        </div>
+    </div>
+    
+    <div style="margin: 15px 0;">
+        <label>Обновлять каждые:</label>
+        <select style="width: 100%; padding: 5px;">
+            <option>5 секунд</option>
+            <option>10 секунд</option>
+            <option>30 секунд</option>
+        </select>
+    </div>
+    
+    <button onclick="refreshMetrics()"
+            style="width: 100%; padding: 10px; background: #4CAF50; color: white; border: none; margin-top: 10px;">
+        Обновить
+    </button>
+    
+    <script>
+    function refreshMetrics() {
+        // Случайные значения для демонстрации
+        document.getElementById('cpu').innerText = Math.floor(Math.random() * 100) + '%';
+        document.getElementById('mem').innerText = Math.floor(Math.random() * 100) + '%';
+    }
+    
+    // Автообновление каждые 10 секунд
+    setInterval(refreshMetrics, 10000);
+    </script>
+</div>
+"""
+
+# ===== ОТОБРАЖЕНИЕ =====
+# Рендерим фиксированные панели
+st.components.v1.html(left_panel, height=0)
+st.components.v1.html(right_panel, height=0)
+
+# Основной контент
+st.markdown('<div class="main-content">', unsafe_allow_html=True)
+
+st.title("📝 Основное рабочее пространство")
+st.write("Это центральная область между двумя независимыми панелями")
+
+# Пример основного контента
+tab1, tab2, tab3 = st.tabs(["Документ", "Графики", "Настройки"])
+
+with tab1:
+    st.header("Редактор")
+    content = st.text_area("Содержание:", height=200, placeholder="Введите текст здесь...")
+    if st.button("Сохранить документ"):
+        st.success("Документ сохранен!")
+
+with tab2:
+    import pandas as pd
+    import numpy as np
+    chart_data = pd.DataFrame(np.random.randn(50, 3), columns=['A', 'B', 'C'])
+    st.line_chart(chart_data)
+
+with tab3:
+    col1, col2 = st.columns(2)
+    with col1:
+        st.checkbox("Автосохранение")
+        st.checkbox("Уведомления")
+    with col2:
+        st.selectbox("Тема", ["Светлая", "Темная"])
+        st.color_picker("Цвет акцента")
+
+st.markdown('</div>', unsafe_allow_html=True)
