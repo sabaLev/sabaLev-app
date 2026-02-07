@@ -1,43 +1,55 @@
 import streamlit as st
 
-# Минимальный CSS
+# CSS для горизонтального скролла
 st.markdown("""
 <style>
+/* Для всего приложения */
+.stApp {
+    min-width: 1000px !important;  /* Минимальная ширина */
+    overflow-x: auto !important;   /* Горизонтальный скролл */
+}
+
+/* Убираем вертикальный скролл для маленьких экранов */
 @media (max-width: 640px) {
-    .mobile-scroll {
-        display: flex;
-        min-width: 500px;
-        overflow-x: auto;
-        gap: 20px;
-        padding: 10px 0;
+    .stApp {
+        min-width: 1000px !important;
+        overflow-x: scroll !important;
+        overflow-y: hidden !important;
     }
-    .mobile-scroll > div {
-        min-width: 250px;
-        flex-shrink: 0;
+    
+    /* Делаем элементы не сжимаемыми */
+    .main-content > div {
+        min-width: 300px !important;
     }
 }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("Простая форма с горизонтальным скроллом")
+# Создаем широкий контент
+st.title("📱 Адаптивная страница с горизонтальным скроллом")
 
-st.markdown('<div class="mobile-scroll">', unsafe_allow_html=True)
+# Создаем широкую панель с колонками
+wide_container = st.container()
 
-# Блок 1
-st.markdown('<div>', unsafe_allow_html=True)
-st.subheader("Поле 1")
-field1 = st.text_input("Введите текст 1", key="field1")
-st.number_input("Число 1", 0, 100, 50, key="num1")
-st.markdown('</div>')
-
-# Блок 2  
-st.markdown('<div>', unsafe_allow_html=True)
-st.subheader("Поле 2")
-field2 = st.text_input("Введите текст 2", key="field2")
-st.selectbox("Выбор", ["Вариант A", "Вариант B"], key="select1")
-st.markdown('</div>')
-
-st.markdown('</div>')
-
-if field1 or field2:
-    st.success("Форма заполнена!")
+with wide_container:
+    # Широкий макет (шире 640px)
+    cols = st.columns(4)  # 4 колонки для широкого экрана
+    
+    for i, col in enumerate(cols, 1):
+        with col:
+            st.header(f"Колонка {i}")
+            st.text_input(f"Ввод {i}", key=f"input_{i}")
+            st.slider(f"Слайдер {i}", 0, 100, 50, key=f"slider_{i}")
+            st.button(f"Кнопка {i}", key=f"btn_{i}")
+    
+    # Еще один широкий элемент
+    st.subheader("Широкая таблица")
+    import pandas as pd
+    import numpy as np
+    
+    # Создаем широкую таблицу
+    wide_data = pd.DataFrame(
+        np.random.randn(5, 8),
+        columns=[f'Колонка {i+1}' for i in range(8)]
+    )
+    st.dataframe(wide_data, use_container_width=False, width=1200)
