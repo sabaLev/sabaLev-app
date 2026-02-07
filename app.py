@@ -1,30 +1,32 @@
 import streamlit as st
 import pandas as pd
-from datetime import date, time
+from datetime import date
 
-# Простая таблица с основными типами
+st.title("Демо всех типов полей")
+
 df = pd.DataFrame({
     'Текст': ['Пример'],
     'Число': [100],
+    'Десятичное': [50.5],
     'Чекбокс': [True],
-    'Выбор': ['Вариант A'],
-    'Дата': [date.today()],
-    'Время': [time.now()]
+    'Выбор': ['Опция A'],
+    'Дата': [date(2023, 1, 1)],
+    'Ссылка': ['https://example.com'],
+    'Прогресс': [0.7]
 })
 
 edited = st.data_editor(
     df,
     column_config={
-        'Текст': st.column_config.TextColumn("Текст"),
-        'Число': st.column_config.NumberColumn("Число", step=1),
-        'Чекбокс': st.column_config.CheckboxColumn("Включено"),
-        'Выбор': st.column_config.SelectboxColumn(
-            "Выбор",
-            options=['Вариант A', 'Вариант B', 'Вариант C']
-        ),
-        'Дата': st.column_config.DateColumn("Дата"),
-        'Время': st.column_config.TimeColumn("Время")
+        'Текст': st.column_config.TextColumn("Текст", max_chars=50),
+        'Число': st.column_config.NumberColumn("Целое", min_value=0, max_value=1000, step=1),
+        'Десятичное': st.column_config.NumberColumn("Дробное", format="%.2f", step=0.1),
+        'Чекбокс': st.column_config.CheckboxColumn("Статус"),
+        'Выбор': st.column_config.SelectboxColumn("Список", options=['Опция A', 'Опция B', 'Опция C']),
+        'Дата': st.column_config.DateColumn("Календарь"),
+        'Ссылка': st.column_config.LinkColumn("Ссылка"),
+        'Прогресс': st.column_config.ProgressColumn("Прогресс", format="%.0f%%")
     }
 )
 
-st.write("Вы ввели:", edited)
+st.write("Итог:", edited)
