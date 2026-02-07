@@ -1,26 +1,54 @@
 import streamlit as st
 
-if 'email' not in st.session_state:
-    st.session_state.email = ""
+# CSS для стилизации
+st.markdown("""
+<style>
+.prefix-input-container {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 0.25rem;
+    padding: 0;
+    background: white;
+}
+.prefix-input-container .prefix {
+    padding: 0.5rem;
+    background: #f0f0f0;
+    border-right: 1px solid #ccc;
+    color: #666;
+    white-space: nowrap;
+}
+.prefix-input-container input {
+    border: none;
+    padding: 0.5rem;
+    width: 100%;
+    outline: none;
+}
+</style>
+""", unsafe_allow_html=True)
 
-if 'show_hint' not in st.session_state:
-    st.session_state.show_hint = True
+# Функция для создания поля с префиксом
+def text_input_with_prefix(prefix, placeholder, key):
+    html_code = f"""
+    <div class="prefix-input-container">
+        <div class="prefix">{prefix}</div>
+        <input type="text" 
+               placeholder="{placeholder}"
+               id="{key}"
+               style="flex-grow: 1;">
+    </div>
+    <script>
+        document.getElementById('{key}').addEventListener('input', function(e) {{
+            window.parent.postMessage({{
+                type: 'streamlit:setComponentValue',
+                value: e.target.value
+            }}, '*');
+        }});
+    </script>
+    """
+    return st.components.v1.html(html_code, height=50)
 
-def on_email_change():
-    st.session_state.show_hint = False
-
-col1, col2 = st.columns([3, 1])
-with col1:
-    email = st.text_input(
-        "Email", 
-        value=st.session_state.email,
-        on_change=on_email_change,
-        key="email_input"
-    )
-    
-with col2:
-    if st.session_state.show_hint or not email:
-        st.markdown(
-            '<div style="color: #888; font-style: italic; padding-top: 1.5rem;">user@example.com</div>',
-            unsafe_allow_html=True
-        )
+# Использование
+st.write("**Пример с постоянным префиксом:**")
+value1 = text_input_with_prefix("https://", "example.com", "url_input")
+value2 = text_input_with_prefix("+7", "900 000-00-00", "phone_input")
