@@ -1,28 +1,25 @@
-import streamlit as st
+st.title("Тест лазейки №2: container с высотой")
 
-st.title("Тест лазейки №1: st.columns внутри")
+# Создаем контейнер
+container = st.container()
 
-st.markdown("""
-<style>
-/* Контейнер, который Streamlit должен уважать */
-.my-container {
-    border: 3px solid red;
-    padding: 15px;
-    margin: 20px 0;
-    background: #fff9e6;
-}
-</style>
-
-<div class="my-container">
-""", unsafe_allow_html=True)
-
-# ВАЖНО: Внутри HTML-контейнера создаем КОЛОНКИ STREAMLIT
-col1, col2 = st.columns([1, 3])
-
-with col1:
-    st.checkbox("", key="test_cb_1", label_visibility="collapsed")
-
-with col2:
-    st.markdown('<div style="text-align:right; font-size:18px; padding:8px;">מהדק הארקה</div>', unsafe_allow_html=True)
-
-st.markdown("</div>", unsafe_allow_html=True)
+# Заполняем контейнер
+with container:
+    # Пытаемся сделать свою разметку внутри
+    html_code = """
+    <div style="
+        display: flex !important;
+        width: 100% !important;
+        border: 2px solid blue;
+        padding: 10px;
+        height: 60px !important;  # ФИКСИРОВАННАЯ высота
+        overflow: hidden !important;
+    ">
+        <div style="width:50px; background:lightgreen; text-align:center;">✓</div>
+        <div style="flex:1; text-align:right; padding-right:15px;">טקסט בעברית</div>
+    </div>
+    """
+    st.markdown(html_code, unsafe_allow_html=True)
+    
+    # Пробуем вставить нативный элемент
+    st.checkbox("Чекбокс в контейнере", key="cb_container")
