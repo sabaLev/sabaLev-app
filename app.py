@@ -1,179 +1,94 @@
 import streamlit as st
 import pandas as pd
 
-st.title("➕➖ Кнопки прямо в ячейках таблицы")
+st.title("📊 Таблица с кнопками в строках (без HTML)")
 
-# Простой DataFrame
-data = pd.DataFrame({
-    'Понедельник': [5, 3, 7],
-    'Вторник': [8, 4, 6],
-    'Среда': [2, 9, 5],
-    'Четверг': [6, 7, 8],
-    'Пятница': [4, 5, 9]
-}, index=['Задача 1', 'Задача 2', 'Задача 3'])
+# Инициализация данных
+if 'work_hours' not in st.session_state:
+    st.session_state.work_hours = pd.DataFrame({
+        'Задача': ['Разработка', 'Тестирование', 'Документация', 'Встречи'],
+        'Пн': [8, 4, 2, 2],
+        'Вт': [6, 3, 3, 2],
+        'Ср': [7, 5, 2, 1],
+        'Чт': [8, 4, 3, 1],
+        'Пт': [5, 6, 2, 2]
+    })
 
 st.write("### Часы работы по задачам")
 
-# Создаем HTML таблицу с кнопками в каждой ячейке
-html_table = """
-<style>
-.hours-table {
-    border-collapse: collapse;
-    width: 100%;
-    margin: 20px 0;
-}
+# Заголовок таблицы
+header_cols = st.columns([2] + [1] * 5)  # 2 для задачи, 1 для каждого дня
+with header_cols[0]:
+    st.markdown("**Задача / День**")
+for i, day in enumerate(['Пн', 'Вт', 'Ср', 'Чт', 'Пт'], 1):
+    with header_cols[i]:
+        st.markdown(f"**{day}**")
 
-.hours-table th, .hours-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: center;
-    min-width: 100px;
-}
+st.divider()
 
-.hours-table th {
-    background-color: #4CAF50;
-    color: white;
-    position: sticky;
-    top: 0;
-}
+# Тело таблицы - каждая строка
+total_hours = {day: 0 for day in ['Пн', 'Вт', 'Ср', 'Чт', 'Пт']}
 
-.hours-table tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-.hours-table tr:hover {
-    background-color: #f5f5f5;
-}
-
-.cell-controls {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-}
-
-.hour-btn {
-    width: 25px;
-    height: 25px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    background: white;
-    cursor: pointer;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.hour-btn.minus {
-    background: #ffebee;
-    color: #c62828;
-    border-color: #ffcdd2;
-}
-
-.hour-btn.plus {
-    background: #e8f5e8;
-    color: #2e7d32;
-    border-color: #c8e6c9;
-}
-
-.hour-value {
-    font-weight: bold;
-    min-width: 30px;
-    text-align: center;
-}
-</style>
-
-<table class="hours-table">
-    <thead>
-        <tr>
-            <th>Задача / День</th>
-"""
-
-# Заголовки дней
-for day in data.columns:
-    html_table += f'<th>{day}</th>'
-html_table += "</tr></thead><tbody>"
-
-# Тело таблицы
-for task_idx, task_name in enumerate(data.index):
-    html_table += f'<tr><td style="font-weight: bold; text-align: left;">{task_name}</td>'
+for task_idx, task in enumerate(st.session_state.work_hours['Задача']):
+    row_cols = st.columns([2] + [1] * 5)
     
-    for day_idx, day in enumerate(data.columns):
-        value = data.loc[task_name, day]
-        cell_id = f"{task_idx}_{day_idx}"
-        
-        html_table += f"""
-        <td>
-            <div class="cell-controls">
-                <button class="hour-btn minus" onclick="updateHour('{cell_id}', -1)">-</button>
-                <span class="hour-value" id="val_{cell_id}">{value}</span>
-                <button class="hour-btn plus" onclick="updateHour('{cell_id}', 1)">+</button>
-            </div>
-            <div style="font-size: 11px; color: #666; margin-top: 3px;">
-                <button onclick="setHour('{cell_id}', 4)" style="padding: 1px 3px; font-size: 10px;">4h</button>
-                <button onclick="setHour('{cell_id}', 8)" style="padding: 1px 3px; font-size: 10px;">8h</button>
-            </div>
-        </td>
-        """
+    with row_cols[0]:
+        st.markdown(f"**{task}**")
     
-    html_table += '</tr>'
-
-html_table += """
-</tbody>
-</table>
-
-<div style="margin-top: 20px; padding: 10px; background: #f0f8ff; border-radius: 5px;">
-    <strong>Итого часов:</strong>
-    <span id="total-hours">0</span> ч.
-</div>
-
-<script>
-// Обновляем общее количество часов
-function updateTotal() {
-    let total = 0;
-    document.querySelectorAll('.hour-value').forEach(el => {
-        total += parseInt(el.innerText);
-    });
-    document.getElementById('total-hours').innerText = total;
-}
-
-// Функции для изменения часов
-function updateHour(cellId, delta) {
-    const elem = document.getElementById('val_' + cellId);
-    const current = parseInt(elem.innerText);
-    const newValue = Math.max(0, current + delta);
-    elem.innerText = newValue;
-    updateTotal();
+    for day_idx, day in enumerate(['Пн', 'Вт', 'Ср', 'Чт', 'Пт'], 1):
+        with row_cols[day_idx]:
+            # Текущее значение
+            current_value = st.session_state.work_hours.at[task_idx, day]
+            
+            # Кнопки и значение в одной строке
+            btn_col1, val_col, btn_col2 = st.columns([1, 2, 1])
+            
+            with btn_col1:
+                if st.button("➖", key=f"dec_{task}_{day}", help="Уменьшить на 1"):
+                    new_val = max(0, current_value - 1)
+                    st.session_state.work_hours.at[task_idx, day] = new_val
+                    st.rerun()
+            
+            with val_col:
+                st.markdown(f"<div style='text-align: center; font-weight: bold;'>{current_value}</div>", 
+                           unsafe_allow_html=True)
+            
+            with btn_col2:
+                if st.button("➕", key=f"inc_{task}_{day}", help="Увеличить на 1"):
+                    st.session_state.work_hours.at[task_idx, day] = current_value + 1
+                    st.rerun()
+            
+            total_hours[day] += current_value
     
-    // Отправляем в Streamlit
-    window.parent.postMessage({
-        type: 'streamlit:setComponentValue',
-        value: cellId + ':' + newValue
-    }, '*');
-}
+    st.divider()
 
-function setHour(cellId, value) {
-    const elem = document.getElementById('val_' + cellId);
-    elem.innerText = value;
-    updateTotal();
-    
-    window.parent.postMessage({
-        type: 'streamlit:setComponentValue',
-        value: cellId + ':' + value + ':set'
-    }, '*');
-}
+# Итоговая строка
+footer_cols = st.columns([2] + [1] * 5)
+with footer_cols[0]:
+    st.markdown("**Итого за день:**")
+for i, day in enumerate(['Пн', 'Вт', 'Ср', 'Чт', 'Пт'], 1):
+    with footer_cols[i]:
+        st.markdown(f"**{total_hours[day]}**")
 
-// Инициализация
-updateTotal();
-</script>
-"""
+# Статистика
+st.write("---")
+col1, col2, col3 = st.columns(3)
+with col1:
+    weekly_total = sum(total_hours.values())
+    st.metric("Всего часов за неделю", f"{weekly_total} ч.")
+with col2:
+    avg_per_day = weekly_total / 5
+    st.metric("Среднее в день", f"{avg_per_day:.1f} ч.")
+with col3:
+    max_day = max(total_hours.items(), key=lambda x: x[1])
+    st.metric("Самый загруженный", f"{max_day[0]}: {max_day[1]} ч.")
 
-# Отображаем таблицу
-st.components.v1.html(html_table, height=500)
-
-# Получаем обновленные значения
-cell_update = st.text_input("", key="cell_update", label_visibility="collapsed")
-if cell_update:
-    # Можно обработать обновления значений
-    st.write(f"Обновлена ячейка: {cell_update}")
+# Экспорт данных
+if st.button("📥 Экспортировать в CSV"):
+    csv = st.session_state.work_hours.to_csv(index=False)
+    st.download_button(
+        label="Скачать CSV",
+        data=csv,
+        file_name="work_hours.csv",
+        mime="text/csv"
+    )
