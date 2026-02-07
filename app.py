@@ -1,54 +1,18 @@
 import streamlit as st
 
-# CSS для стилизации
-st.markdown("""
-<style>
-.prefix-input-container {
-    display: flex;
-    align-items: center;
-    border: 1px solid #ccc;
-    border-radius: 0.25rem;
-    padding: 0;
-    background: white;
-}
-.prefix-input-container .prefix {
-    padding: 0.5rem;
-    background: #f0f0f0;
-    border-right: 1px solid #ccc;
-    color: #666;
-    white-space: nowrap;
-}
-.prefix-input-container input {
-    border: none;
-    padding: 0.5rem;
-    width: 100%;
-    outline: none;
-}
-</style>
-""", unsafe_allow_html=True)
+# Простейшая реализация с columns
+st.subheader("Введите данные:")
 
-# Функция для создания поля с префиксом
-def text_input_with_prefix(prefix, placeholder, key):
-    html_code = f"""
-    <div class="prefix-input-container">
-        <div class="prefix">{prefix}</div>
-        <input type="text" 
-               placeholder="{placeholder}"
-               id="{key}"
-               style="flex-grow: 1;">
-    </div>
-    <script>
-        document.getElementById('{key}').addEventListener('input', function(e) {{
-            window.parent.postMessage({{
-                type: 'streamlit:setComponentValue',
-                value: e.target.value
-            }}, '*');
-        }});
-    </script>
-    """
-    return st.components.v1.html(html_code, height=50)
+# Email - разделяем на префикс и домен
+col1, col2, col3 = st.columns([1, 3, 2])
+with col1:
+    st.markdown('<div style="padding-top: 0.5rem;">@</div>', unsafe_allow_html=True)
+with col2:
+    username = st.text_input("", placeholder="username", label_visibility="collapsed", key="user")
+with col3:
+    st.markdown('<div style="padding-top: 0.5rem; color: #666;">@gmail.com</div>', 
+               unsafe_allow_html=True)
 
-# Использование
-st.write("**Пример с постоянным префиксом:**")
-value1 = text_input_with_prefix("https://", "example.com", "url_input")
-value2 = text_input_with_prefix("+7", "900 000-00-00", "phone_input")
+# Итог
+if username:
+    st.write(f"Ваш email: **{username}@gmail.com**")
