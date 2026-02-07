@@ -1071,19 +1071,7 @@ if calc_result is not None:
             if int(base_val) == 0 and current_val == 0 and lbl not in st.session_state.fasteners:
                 continue
             
-            c_chk, c_val, c_name = st.columns([0.8, 1.6, 5])
-            
-            with c_chk:
-                # Уникальный ключ
-                inc_key = f"fast_inc_{lbl}_{st.session_state.calculation_counter}"
-                inc_default = st.session_state.fasteners_include.get(lbl, True)
-                inc_val = st.checkbox("", value=inc_default, key=inc_key, label_visibility="collapsed")
-                
-                if inc_val != st.session_state.fasteners_include.get(lbl, True):
-                    st.session_state.fasteners_include[lbl] = bool(inc_val)
-                    st.session_state.report_needs_update = True
-                else:
-                    st.session_state.fasteners_include[lbl] = bool(inc_val)
+            c_val, c_chk = st.columns([1.6, 6])
             
             with c_val:
                 # Уникальный ключ
@@ -1100,8 +1088,17 @@ if calc_result is not None:
                 if v != current_val:
                     fasteners_changed = True
             
-            with c_name:
-                st.markdown(right_label(lbl), unsafe_allow_html=True)
+            with c_chk:
+                # Уникальный ключ
+                inc_key = f"fast_inc_{lbl}_{st.session_state.calculation_counter}"
+                inc_default = st.session_state.fasteners_include.get(lbl, True)
+                inc_val = st.checkbox(lbl, value=inc_default, key=inc_key, label_visibility="visible")
+                
+                if inc_val != st.session_state.fasteners_include.get(lbl, True):
+                    st.session_state.fasteners_include[lbl] = bool(inc_val)
+                    st.session_state.report_needs_update = True
+                else:
+                    st.session_state.fasteners_include[lbl] = bool(inc_val)
             
             new_fasteners[lbl] = int(v)
         
