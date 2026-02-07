@@ -939,360 +939,205 @@ if calc_result is not None:
         else:
             st.session_state.manual_rails = manual_rails_dict
     
-# ----- פרזול - HTML/JS ВЕРСИЯ (с проверкой calc_result) -----
+# ----- פרזול - УПРОЩЕННАЯ HTML ВЕРСИЯ -----
 with st.expander("**פרזול**", expanded=True):
     
-    # ПРОВЕРЯЕМ, есть ли результаты расчета
-    if calc_result is not None:
-        # Базовые значения из расчета
-        ear = calc_result["ear"]
-        mid = calc_result["mid"]
-        edge = calc_result["edge"]
-        conn = calc_result["conn"]
-        total_panels = calc_result["total_panels"]
-        
-        # Расчет для M8: учитываем и авто и ручные рельсы
-        rails_total = {}
-        
-        # Используем актуальные значения из koshrot_qty
-        if st.session_state.koshrot_qty:
-            for length_str, qty in st.session_state.koshrot_qty.items():
-                try:
-                    length = float(length_str)
-                    rails_total[length] = rails_total.get(length, 0) + qty
-                except:
-                    rails_total[length_str] = rails_total.get(length_str, 0) + qty
-        
-        # Добавляем ручные рельсы
-        for length, qty in manual_rails.items():
-            rails_total[length] = rails_total.get(length, 0) + qty
-        
-        total_length_cm = 0
-        for length, qty in rails_total.items():
-            try:
-                total_length_cm += float(length) * qty
-            except Exception:
-                pass
-        
-        screws_iso = round_up_to_tens(conn * 4 + total_panels)
-        m8_count = 0
-        if total_length_cm > 0:
-            m8_base = total_length_cm / 140.0
-            m8_count = round_up_to_tens(m8_base)
-        
-        # Базовые значения (обновляются всегда при расчете)
-        fasteners_base = [
-            ("מהדק הארקה", ear),
-            ("מהדק אמצע", mid),
-            ("מהדק קצה", edge),
-            ("פקק לקושרות", edge),
-            ("מחברי קושרות", conn),
-            ("בורג איסכורית 3,5", screws_iso),
-            ("M8 בורג", m8_count),
-            ("M8 אום", m8_count),
-        ]
-    else:
-        # Если расчетов еще не было, используем нулевые значения
-        fasteners_base = [
-            ("מהדק הארקה", 0),
-            ("מהדק אמצע", 0),
-            ("מהדק קצה", 0),
-            ("פקק לקושרות", 0),
-            ("מחברי קושרות", 0),
-            ("בורג איסכורית 3,5", 0),
-            ("M8 בורג", 0),
-            ("M8 אום", 0),
-        ]
-    
-    # Инициализируем session_state для fasteners если нужно
-    if 'html_fasteners' not in st.session_state:
-        st.session_state.html_fasteners = []
-        for i, (lbl, base_val) in enumerate(fasteners_base):
-            current_val = st.session_state.fasteners.get(lbl, base_val) if st.session_state.fasteners else base_val
-            inc_val = st.session_state.fasteners_include.get(lbl, True) if st.session_state.fasteners_include else True
-            
-            st.session_state.html_fasteners.append({
-                'id': i,
-                'label': lbl,
-                'base_value': int(base_val),
-                'current_value': int(current_val),
-                'checked': bool(inc_val),
-                'visible': int(base_val) > 0 or (lbl in (st.session_state.fasteners or {}) and st.session_state.fasteners.get(lbl, 0) > 0)
-            })
-    
-    # HTML/JS компонент для fasteners
-    fasteners_html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>
-            * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-            
-            .fasteners-table {{
-                width: 100%;
-                font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-                direction: rtl;
-            }}
-            
-            .fastener-header {{
-                display: flex;
-                font-weight: bold;
-                padding: 12px 8px;
-                border-bottom: 2px solid #2E7D32;
-                background: #f8f9fa;
-                font-size: 15px;
-                text-align: right;
-            }}
-            
-            .fastener-row {{
-                display: flex;
-                align-items: center;
-                padding: 14px 8px;
-                border-bottom: 1px solid #e0e0e0;
-                min-height: 62px;
-            }}
-            
-            .fastener-col-check {{
-                width: 45px;
-                flex: 0 0 45px;
-                display: flex;
-                justify-content: center;
-            }}
-            
-            .fastener-col-label {{
-                flex: 1;
-                padding: 0 12px;
-                font-size: 16px;
-                text-align: right;
-                font-weight: 500;
-            }}
-            
-            .fastener-col-input {{
-                width: 100px;
-                flex: 0 0 100px;
-            }}
-            
-            /* Кастомный чекбокс */
-            .fastener-checkbox {{
-                width: 26px;
-                height: 26px;
-                border: 2px solid #4CAF50;
-                border-radius: 5px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                background: white;
-                transition: all 0.2s;
-            }}
-            
-            .fastener-checkbox.checked {{
-                background: #4CAF50;
-            }}
-            
-            .fastener-checkmark {{
-                color: white;
-                font-size: 16px;
-                font-weight: bold;
-                display: none;
-            }}
-            
-            .fastener-checkbox.checked .fastener-checkmark {{
-                display: block;
-            }}
-            
-            /* Поле ввода */
-            .fastener-input {{
-                display: flex;
-                align-items: center;
-                border: 2px solid #2196F3;
-                border-radius: 6px;
-                overflow: hidden;
-                background: white;
-                height: 44px;
-            }}
-            
-            .fastener-btn {{
-                width: 38px;
-                height: 100%;
-                background: #2196F3;
-                color: white;
-                border: none;
-                font-size: 20px;
-                font-weight: bold;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }}
-            
-            .fastener-btn:hover {{ background: #1976D2; }}
-            
-            .fastener-btn-minus {{ border-right: 1px solid #1976D2; }}
-            .fastener-btn-plus {{ border-left: 1px solid #1976D2; }}
-            
-            .fastener-value {{
-                flex: 1;
-                text-align: center;
-                font-size: 16px;
-                font-weight: bold;
-                padding: 0 4px;
-                min-width: 30px;
-            }}
-            
-            /* Для iPhone */
-            @media (max-width: 768px) {{
-                .fastener-row {{ 
-                    padding: 12px 6px; 
-                    min-height: 58px;
-                }}
-                .fastener-col-input {{ 
-                    width: 95px; 
-                    flex: 0 0 95px; 
-                }}
-                .fastener-btn {{ 
-                    width: 36px; 
-                    font-size: 18px; 
-                }}
-                .fastener-value {{ font-size: 15px; }}
-                .fastener-col-label {{ 
-                    font-size: 15px; 
-                    padding: 0 10px; 
-                }}
-                .fastener-checkbox {{
-                    width: 24px;
-                    height: 24px;
-                }}
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="fasteners-table">
-            <div class="fastener-header">
-                <div class="fastener-col-check">✓</div>
-                <div class="fastener-col-label">שם פריט</div>
-                <div class="fastener-col-input">כמות</div>
-            </div>
-            
-            <div id="fasteners-body">
-                <!-- Строки будут здесь -->
-            </div>
-        </div>
-
-        <script>
-            // Данные из Python
-            const fastenersData = {json.dumps([f for f in st.session_state.html_fasteners if f['visible']])};
-            
-            // Создаем строку fastener
-            function createFastenerRow(item) {{
-                return `
-                <div class="fastener-row" data-id="${{item.id}}">
-                    <div class="fastener-col-check">
-                        <div class="fastener-checkbox ${{item.checked ? 'checked' : ''}}" 
-                             onclick="toggleFastenerCheckbox(${{item.id}})">
-                            <div class="fastener-checkmark">✓</div>
-                        </div>
-                    </div>
-                    <div class="fastener-col-label">${{item.label}}</div>
-                    <div class="fastener-col-input">
-                        <div class="fastener-input">
-                            <button class="fastener-btn fastener-btn-minus" 
-                                    onclick="changeFastenerValue(${{item.id}}, -1)">−</button>
-                            <div class="fastener-value">${{item.current_value}}</div>
-                            <button class="fastener-btn fastener-btn-plus" 
-                                    onclick="changeFastenerValue(${{item.id}}, 1)">+</button>
-                        </div>
-                    </div>
-                </div>
-                `;
-            }}
-            
-            // Заполняем таблицу
-            document.getElementById('fasteners-body').innerHTML = 
-                fastenersData.map(item => createFastenerRow(item)).join('');
-            
-            // Функции для взаимодействия
-            function toggleFastenerCheckbox(id) {{
-                const checkbox = document.querySelector(`.fastener-row[data-id="${{id}}"] .fastener-checkbox`);
-                checkbox.classList.toggle('checked');
-                
-                // Отправляем данные в Streamlit
-                window.parent.postMessage({{
-                    type: 'FASTENER_TOGGLE_CHECKBOX',
-                    id: id,
-                    checked: checkbox.classList.contains('checked')
-                }}, '*');
-            }}
-            
-            function changeFastenerValue(id, delta) {{
-                const valueEl = document.querySelector(`.fastener-row[data-id="${{id}}"] .fastener-value`);
-                let value = parseInt(valueEl.textContent) + delta;
-                if (value < 0) value = 0;
-                valueEl.textContent = value;
-                
-                // Отправляем данные в Streamlit
-                window.parent.postMessage({{
-                    type: 'FASTENER_CHANGE_VALUE',
-                    id: id,
-                    value: value
-                }}, '*');
-            }}
-            
-            // Получаем сообщения от Streamlit для обновления
-            window.addEventListener('message', (event) => {{
-                if (event.data.type === 'UPDATE_FASTENERS') {{
-                    document.getElementById('fasteners-body').innerHTML = 
-                        event.data.fastenersData.map(item => createFastenerRow(item)).join('');
-                }}
-            }});
-        </script>
-    </body>
-    </html>
-    """
-    
-    # Отображаем компонент
-    fastener_component = components.html(fasteners_html, height=500, scrolling=False)
-    
-    # Обрабатываем взаимодействие
-    if fastener_component and isinstance(fastener_component, dict):
-        if fastener_component.get('type') == 'FASTENER_TOGGLE_CHECKBOX':
-            item_id = fastener_component['id']
-            for item in st.session_state.html_fasteners:
-                if item['id'] == item_id:
-                    item['checked'] = fastener_component['checked']
-                    
-                    # Обновляем оригинальные fasteners_include
-                    lbl = item['label']
-                    st.session_state.fasteners_include[lbl] = fastener_component['checked']
-                    st.session_state.report_needs_update = True
-                    break
-        
-        elif fastener_component.get('type') == 'FASTENER_CHANGE_VALUE':
-            item_id = fastener_component['id']
-            for item in st.session_state.html_fasteners:
-                if item['id'] == item_id:
-                    item['current_value'] = fastener_component['value']
-                    
-                    # Обновляем оригинальные fasteners
-                    lbl = item['label']
-                    st.session_state.fasteners[lbl] = fastener_component['value']
-                    st.session_state.report_needs_update = True
-                    break
-        
-        st.rerun()
-    
-    # Обновляем new_fasteners для совместимости со старой логикой
-    new_fasteners = {}
-    for item in st.session_state.html_fasteners:
-        if item['visible']:
-            new_fasteners[item['label']] = item['current_value']
-    
-    st.session_state.fasteners = new_fasteners
-    
-    # Если расчетов еще не было, показываем сообщение
+    # 1. Сначала проверяем calc_result
     if calc_result is None:
         st.info('קודם יש לחשב, ואז יופיעו הנתונים בפרזול')
+        st.stop()  # Останавливаем выполнение если нет расчетов
+    
+    # 2. Базовые значения из расчета
+    ear = calc_result["ear"]
+    mid = calc_result["mid"]
+    edge = calc_result["edge"]
+    conn = calc_result["conn"]
+    total_panels = calc_result["total_panels"]
+    
+    # 3. Расчет для M8
+    rails_total = {}
+    if st.session_state.koshrot_qty:
+        for length_str, qty in st.session_state.koshrot_qty.items():
+            try:
+                length = float(length_str)
+                rails_total[length] = rails_total.get(length, 0) + qty
+            except:
+                rails_total[length_str] = rails_total.get(length_str, 0) + qty
+    
+    for length, qty in manual_rails.items():
+        rails_total[length] = rails_total.get(length, 0) + qty
+    
+    total_length_cm = 0
+    for length, qty in rails_total.items():
+        try:
+            total_length_cm += float(length) * qty
+        except Exception:
+            pass
+    
+    screws_iso = round_up_to_tens(conn * 4 + total_panels)
+    m8_count = 0
+    if total_length_cm > 0:
+        m8_base = total_length_cm / 140.0
+        m8_count = round_up_to_tens(m8_base)
+    
+    # 4. Базовые значения
+    fasteners_data = [
+        {"label": "מהדק הארקה", "base": ear, "id": 0},
+        {"label": "מהדק אמצע", "base": mid, "id": 1},
+        {"label": "מהדק קצה", "base": edge, "id": 2},
+        {"label": "פקק לקושרות", "base": edge, "id": 3},
+        {"label": "מחברי קושרות", "base": conn, "id": 4},
+        {"label": "בורג איסכורית 3,5", "base": screws_iso, "id": 5},
+        {"label": "M8 בורג", "base": m8_count, "id": 6},
+        {"label": "M8 אום", "base": m8_count, "id": 7},
+    ]
+    
+    # 5. Инициализация session_state
+    if 'fasteners_values' not in st.session_state:
+        st.session_state.fasteners_values = {}
+        for item in fasteners_data:
+            lbl = item["label"]
+            base_val = item["base"]
+            st.session_state.fasteners_values[lbl] = {
+                "value": st.session_state.fasteners.get(lbl, base_val) if st.session_state.fasteners else base_val,
+                "checked": st.session_state.fasteners_include.get(lbl, True) if st.session_state.fasteners_include else True
+            }
+    
+    # 6. ПРОСТОЙ HTML для отображения (без сложного JS)
+    st.markdown("""
+    <style>
+    .simple-fastener-table {
+        width: 100%;
+        direction: rtl;
+    }
+    
+    .simple-header {
+        display: flex;
+        padding: 12px 10px;
+        background: #f5f5f5;
+        border-bottom: 2px solid #4CAF50;
+        font-weight: bold;
+        font-size: 16px;
+    }
+    
+    .simple-header-name {
+        flex: 1;
+        text-align: right;
+        padding-right: 15px;
+    }
+    
+    .simple-header-qty {
+        width: 120px;
+        text-align: right;
+    }
+    
+    .simple-row {
+        display: flex;
+        align-items: center;
+        padding: 15px 10px;
+        border-bottom: 1px solid #e0e0e0;
+        min-height: 65px;
+    }
+    
+    .simple-checkbox {
+        width: 40px;
+        flex: 0 0 40px;
+        display: flex;
+        justify-content: center;
+    }
+    
+    .simple-name {
+        flex: 1;
+        text-align: right;
+        padding: 0 15px;
+        font-size: 16px;
+    }
+    
+    .simple-input-container {
+        width: 120px;
+        flex: 0 0 120px;
+    }
+    
+    @media (max-width: 768px) {
+        .simple-row {
+            padding: 12px 8px;
+            min-height: 58px;
+        }
+        
+        .simple-input-container {
+            width: 110px;
+        }
+        
+        .simple-header-qty {
+            width: 110px;
+        }
+    }
+    </style>
+    
+    <div class="simple-fastener-table">
+        <!-- ЗАГОЛОВОК БЕЗ ГАЛОЧКИ -->
+        <div class="simple-header">
+            <div class="simple-header-name">שם פריט</div>
+            <div class="simple-header-qty">כמות</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # 7. Отображаем строки через Streamlit (гарантированно работает)
+    for item in fasteners_data:
+        lbl = item["label"]
+        base_val = item["base"]
+        
+        # Пропускаем нулевые значения
+        if base_val == 0 and lbl not in (st.session_state.fasteners or {}):
+            continue
+        
+        # Создаем строку
+        col1, col2, col3 = st.columns([0.8, 4, 2])
+        
+        with col1:
+            # Чекбокс
+            current_checked = st.session_state.fasteners_values[lbl]["checked"]
+            new_checked = st.checkbox(
+                "",
+                value=current_checked,
+                key=f"fast_check_{lbl}",
+                label_visibility="collapsed"
+            )
+            
+            if new_checked != current_checked:
+                st.session_state.fasteners_values[lbl]["checked"] = new_checked
+                st.session_state.fasteners_include[lbl] = new_checked
+                st.session_state.report_needs_update = True
+                st.rerun()
+        
+        with col2:
+            # Название
+            st.markdown(f'<div class="simple-name" style="padding-top:12px;">{lbl}</div>', unsafe_allow_html=True)
+        
+        with col3:
+            # Поле ввода
+            current_value = st.session_state.fasteners_values[lbl]["value"]
+            new_value = st.number_input(
+                "",
+                min_value=0,
+                value=current_value,
+                step=1,
+                key=f"fast_input_{lbl}",
+                label_visibility="collapsed"
+            )
+            
+            if new_value != current_value:
+                st.session_state.fasteners_values[lbl]["value"] = new_value
+                st.session_state.fasteners[lbl] = new_value
+                st.session_state.report_needs_update = True
+                st.rerun()
+    
+    # 8. Обновляем оригинальные данные для совместимости
+    for lbl in st.session_state.fasteners_values:
+        st.session_state.fasteners[lbl] = st.session_state.fasteners_values[lbl]["value"]
+        st.session_state.fasteners_include[lbl] = st.session_state.fasteners_values[lbl]["checked"]
+        
 # ---------- CHANNELS ----------
 with st.expander("**תעלות עם מכסים (מטר)**", expanded=True):
     channel_order = {}
