@@ -1,24 +1,12 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
+# 1. Самый простой
+value = st.slider("Выберите", 0, 100)
 
-st.title("Динамическая таблица")
+# 2. С диапазоном
+range_val = st.slider("Диапазон", 0, 100, (25, 75))
 
-# Пользователь выбирает количество строк
-num_rows = st.slider("Количество строк:", 1, 100, 10)
+# 3. С временем
+from datetime import time
+time_val = st.slider("Время", value=time(12, 0))
 
-# Генерируем данные
-df = pd.DataFrame({
-    'Колонка 1': [f'Строка {i}' for i in range(1, num_rows + 1)],
-    'Колонка 2': np.random.randint(1, 100, num_rows)
-})
-
-# Отображаем таблицу
-st.dataframe(
-    df,
-    use_container_width=True,
-    height=min(400, num_rows * 35 + 50)  # Автоматическая высота
-)
-
-# Показываем статистику
-st.write(f"Таблица занимает примерно {num_rows * 35 + 50}px по высоте")
+# 4. Select слайдер
+select_val = st.select_slider("Выбор", options=[1, 2, 3, 4, 5])
