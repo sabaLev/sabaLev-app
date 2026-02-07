@@ -1,55 +1,115 @@
 import streamlit as st
 
-# CSS для горизонтального скролла
 st.markdown("""
 <style>
-/* Для всего приложения */
-.stApp {
-    min-width: 1000px !important;  /* Минимальная ширина */
-    overflow-x: auto !important;   /* Горизонтальный скролл */
+/* Контейнер с горизонтальным скроллом */
+.horizontal-scroll-container {
+    min-width: 1000px;  /* Фиксированная минимальная ширина */
+    overflow-x: auto;   /* Горизонтальный скролл */
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin: 10px 0;
 }
 
-/* Убираем вертикальный скролл для маленьких экранов */
+/* Для мобильных - включаем скролл */
 @media (max-width: 640px) {
-    .stApp {
-        min-width: 1000px !important;
-        overflow-x: scroll !important;
-        overflow-y: hidden !important;
+    .horizontal-scroll-container {
+        min-width: 800px;
+        overflow-x: scroll;
+        -webkit-overflow-scrolling: touch; /* Плавный скролл на iOS */
     }
     
-    /* Делаем элементы не сжимаемыми */
-    .main-content > div {
-        min-width: 300px !important;
+    /* Подсказка пользователю */
+    .scroll-hint {
+        display: block;
+        text-align: center;
+        color: #666;
+        font-style: italic;
+        margin: 10px 0;
     }
+}
+
+/* Широкие элементы внутри контейнера */
+.wide-content {
+    display: flex;
+    gap: 20px;
+    min-width: 900px;
+}
+
+.wide-column {
+    min-width: 280px;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# Создаем широкий контент
-st.title("📱 Адаптивная страница с горизонтальным скроллом")
+st.title("📊 Панель управления с горизонтальным скроллом")
 
-# Создаем широкую панель с колонками
-wide_container = st.container()
+# Подсказка для мобильных пользователей
+st.markdown(
+    '<p class="scroll-hint">📱 На мобильных: проведите пальцем вправо/влево для прокрутки</p>', 
+    unsafe_allow_html=True
+)
 
-with wide_container:
-    # Широкий макет (шире 640px)
-    cols = st.columns(4)  # 4 колонки для широкого экрана
+# Контейнер с горизонтальным скроллом
+with st.container():
+    st.markdown('<div class="horizontal-scroll-container">', unsafe_allow_html=True)
     
-    for i, col in enumerate(cols, 1):
-        with col:
-            st.header(f"Колонка {i}")
-            st.text_input(f"Ввод {i}", key=f"input_{i}")
-            st.slider(f"Слайдер {i}", 0, 100, 50, key=f"slider_{i}")
-            st.button(f"Кнопка {i}", key=f"btn_{i}")
+    # Широкий макет из 3 колонок
+    st.markdown('<div class="wide-content">', unsafe_allow_html=True)
     
-    # Еще один широкий элемент
-    st.subheader("Широкая таблица")
+    # Колонка 1
+    st.markdown('<div class="wide-column">', unsafe_allow_html=True)
+    st.header("📈 Аналитика")
+    st.metric("Конверсия", "24%", "+3%")
+    st.metric("Доход", "₽245,678", "+12%")
+    st.metric("Посетители", "1,234", "+23")
+    st.markdown('</div>')
+    
+    # Колонка 2  
+    st.markdown('<div class="wide-column">', unsafe_allow_html=True)
+    st.header("⚙️ Настройки")
+    st.slider("Целевая температура", 0, 100, 25, key="temp_setting")
+    st.selectbox("Режим работы", ["Авто", "Ручной", "Расписание"], key="mode")
+    st.checkbox("Уведомления", key="notifications")
+    st.checkbox("Автосохранение", key="autosave")
+    st.markdown('</div>')
+    
+    # Колонка 3
+    st.markdown('<div class="wide-column">', unsafe_allow_html=True)
+    st.header("👥 Пользователи")
+    st.text_input("Имя пользователя", key="username")
+    st.text_input("Email", key="email", type="default")
+    st.selectbox("Роль", ["Админ", "Редактор", "Зритель"], key="role")
+    st.button("Сохранить", key="save_user")
+    st.markdown('</div>')
+    
+    # Колонка 4
+    st.markdown('<div class="wide-column">', unsafe_allow_html=True)
+    st.header("📊 Графики")
+    
     import pandas as pd
     import numpy as np
     
-    # Создаем широкую таблицу
-    wide_data = pd.DataFrame(
-        np.random.randn(5, 8),
-        columns=[f'Колонка {i+1}' for i in range(8)]
-    )
-    st.dataframe(wide_data, use_container_width=False, width=1200)
+    chart_data = pd.DataFrame({
+        'Месяц': ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
+        'Продажи': [100, 200, 150, 300, 250, 400],
+        'Затраты': [50, 80, 60, 120, 100, 150]
+    })
+    
+    st.bar_chart(chart_data.set_index('Месяц'))
+    st.markdown('</div>')
+    
+    st.markdown('</div>')  # закрываем wide-content
+    st.markdown('</div>')  # закрываем horizontal-scroll-container
+
+# Контент вне скролла (всегда видимый)
+st.divider()
+st.write("**Эта часть всегда видна без скролла:**")
+important_info = st.text_area("Важные заметки:", height=100)
+if st.button("Сохранить заметки"):
+    st.success("Заметки сохранены!")
