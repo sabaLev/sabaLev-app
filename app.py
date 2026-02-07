@@ -1,94 +1,102 @@
 import streamlit as st
 import pandas as pd
 
-st.title("📊 Таблица с кнопками в строках (без HTML)")
+st.title("🛒 Таблица товаров с управлением")
 
-# Инициализация данных
-if 'work_hours' not in st.session_state:
-    st.session_state.work_hours = pd.DataFrame({
-        'Задача': ['Разработка', 'Тестирование', 'Документация', 'Встречи'],
-        'Пн': [8, 4, 2, 2],
-        'Вт': [6, 3, 3, 2],
-        'Ср': [7, 5, 2, 1],
-        'Чт': [8, 4, 3, 1],
-        'Пт': [5, 6, 2, 2]
+# Инициализация
+if 'products' not in st.session_state:
+    st.session_state.products = pd.DataFrame({
+        'Товар': ['Ноутбук', 'Смартфон', 'Наушники', 'Клавиатура'],
+        'Категория': ['Электроника', 'Электроника', 'Аксессуары', 'Аксессуары'],
+        'Цена': [50000, 25000, 5000, 2000],
+        'Количество': [10, 25, 50, 30]
     })
 
-st.write("### Часы работы по задачам")
+st.write("### Управление количеством товаров")
 
-# Заголовок таблицы
-header_cols = st.columns([2] + [1] * 5)  # 2 для задачи, 1 для каждого дня
-with header_cols[0]:
-    st.markdown("**Задача / День**")
-for i, day in enumerate(['Пн', 'Вт', 'Ср', 'Чт', 'Пт'], 1):
-    with header_cols[i]:
-        st.markdown(f"**{day}**")
-
-st.divider()
-
-# Тело таблицы - каждая строка
-total_hours = {day: 0 for day in ['Пн', 'Вт', 'Ср', 'Чт', 'Пт']}
-
-for task_idx, task in enumerate(st.session_state.work_hours['Задача']):
-    row_cols = st.columns([2] + [1] * 5)
-    
-    with row_cols[0]:
-        st.markdown(f"**{task}**")
-    
-    for day_idx, day in enumerate(['Пн', 'Вт', 'Ср', 'Чт', 'Пт'], 1):
-        with row_cols[day_idx]:
-            # Текущее значение
-            current_value = st.session_state.work_hours.at[task_idx, day]
-            
-            # Кнопки и значение в одной строке
-            btn_col1, val_col, btn_col2 = st.columns([1, 2, 1])
-            
+# Создаем отдельные кнопки для каждой строки
+for idx, row in st.session_state.products.iterrows():
+    with st.container():
+        cols = st.columns([3, 1, 2, 2, 2])
+        
+        with cols[0]:
+            st.markdown(f"**{row['Товар']}**")
+            st.caption(f"{row['Категория']} • {row['Цена']:,.0f} ₽")
+        
+        with cols[1]:
+            st.markdown(f"<div style='text-align: center; font-size: 1.2em; font-weight: bold;'>{row['Количество']}</div>", 
+                       unsafe_allow_html=True)
+        
+        with cols[2]:
+            # Кнопки управления в маленьком формате
+            btn_col1, btn_col2 = st.columns(2)
             with btn_col1:
-                if st.button("➖", key=f"dec_{task}_{day}", help="Уменьшить на 1"):
-                    new_val = max(0, current_value - 1)
-                    st.session_state.work_hours.at[task_idx, day] = new_val
+                if st.button("➖", key=f"dec_{idx}", use_container_width=True):
+                    new_qty = max(0, row['Количество'] - 1)
+                    st.session_state.products.at[idx, 'Количество'] = new_qty
                     st.rerun()
-            
-            with val_col:
-                st.markdown(f"<div style='text-align: center; font-weight: bold;'>{current_value}</div>", 
-                           unsafe_allow_html=True)
-            
             with btn_col2:
-                if st.button("➕", key=f"inc_{task}_{day}", help="Увеличить на 1"):
-                    st.session_state.work_hours.at[task_idx, day] = current_value + 1
+                if st.button("➕", key=f"inc_{idx}", use_container_width=True):
+                    st.session_state.products.at[idx, 'Количество'] = row['Количество'] + 1
                     st.rerun()
-            
-            total_hours[day] += current_value
-    
-    st.divider()
+        
+        with cols[3]:
+            # Быстрые действия
+            if st.button("📥 +5", key=f"fast5_{idx}", use_container_width=True):
+                st.session_state.products.at[idx, 'Количество'] += 5
+                st.rerun()
+        
+        with cols[4]:
+            if st.button("🔄 0", key=f"reset_{idx}", use_container_width=True):
+                st.session_state.products.at[idx, 'Количество'] = 0
+                st.rerun()
+        
+        # Прогресс-бар для наглядности
+        max_qty = 100
+        progress = min(row['Количество'] / max_qty, 1.0)
+        st.progress(progress, text=f"{row['Количество']} из {max_qty}")
 
-# Итоговая строка
-footer_cols = st.columns([2] + [1] * 5)
-with footer_cols[0]:
-    st.markdown("**Итого за день:**")
-for i, day in enumerate(['Пн', 'Вт', 'Ср', 'Чт', 'Пт'], 1):
-    with footer_cols[i]:
-        st.markdown(f"**{total_hours[day]}**")
-
-# Статистика
+# Сводная информация
 st.write("---")
+st.write("### 📈 Сводка по складу")
+
+total_value = (st.session_state.products['Цена'] * st.session_state.products['Количество']).sum()
+total_items = st.session_state.products['Количество'].sum()
+
 col1, col2, col3 = st.columns(3)
 with col1:
-    weekly_total = sum(total_hours.values())
-    st.metric("Всего часов за неделю", f"{weekly_total} ч.")
+    st.metric("Всего товаров", f"{total_items} шт.")
 with col2:
-    avg_per_day = weekly_total / 5
-    st.metric("Среднее в день", f"{avg_per_day:.1f} ч.")
+    st.metric("Общая стоимость", f"{total_value:,.0f} ₽")
 with col3:
-    max_day = max(total_hours.items(), key=lambda x: x[1])
-    st.metric("Самый загруженный", f"{max_day[0]}: {max_day[1]} ч.")
+    avg_price = total_value / total_items if total_items > 0 else 0
+    st.metric("Средняя цена", f"{avg_price:,.0f} ₽")
 
-# Экспорт данных
-if st.button("📥 Экспортировать в CSV"):
-    csv = st.session_state.work_hours.to_csv(index=False)
-    st.download_button(
-        label="Скачать CSV",
-        data=csv,
-        file_name="work_hours.csv",
-        mime="text/csv"
-    )
+# Фильтрация
+st.write("---")
+category_filter = st.multiselect(
+    "Фильтр по категориям:",
+    options=st.session_state.products['Категория'].unique(),
+    default=st.session_state.products['Категория'].unique()
+)
+
+filtered_df = st.session_state.products[
+    st.session_state.products['Категория'].isin(category_filter)
+]
+
+st.dataframe(
+    filtered_df,
+    use_container_width=True,
+    column_config={
+        "Товар": st.column_config.TextColumn(width="medium"),
+        "Категория": st.column_config.TextColumn(width="small"),
+        "Цена": st.column_config.NumberColumn(
+            "Цена (₽)",
+            format="%d ₽"
+        ),
+        "Количество": st.column_config.NumberColumn(
+            "Кол-во",
+            help="Используйте кнопки выше для изменения"
+        )
+    }
+)
