@@ -1,3 +1,17 @@
+# Минимальный CSS фикс (добавьте в начало)
+st.markdown("""
+<style>
+@media (max-width: 640px) {
+    div[data-testid="column"] {
+        min-width: unset !important;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
+import streamlit as st
+
+st.set_page_config(layout="wide")
+
 # Создаем основной контейнер
 main_container = st.container()
 
