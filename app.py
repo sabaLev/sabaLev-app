@@ -939,342 +939,141 @@ if calc_result is not None:
         else:
             st.session_state.manual_rails = manual_rails_dict
     
-# ----- פרזול - HTML/JS ВЕРСИЯ (ГАРАНТИРОВАННО РАБОТАЕТ НА МОБИЛЬНЫХ) -----
-with st.expander("**פרזול**", expanded=True):
-    
-    # Базовые значения из расчета
-    ear = calc_result["ear"]
-    mid = calc_result["mid"]
-    edge = calc_result["edge"]
-    conn = calc_result["conn"]
-    total_panels = calc_result["total_panels"]
-    
-    # Расчет для M8: учитываем и авто и ручные рельсы
-    rails_total = {}
-    
-    # Используем актуальные значения из koshrot_qty
-    if st.session_state.koshrot_qty:
-        for length_str, qty in st.session_state.koshrot_qty.items():
+    # ----- פרזול -----
+    with st.expander("**פרזול**", expanded=True):
+        # Базовые значения из расчета
+        ear = calc_result["ear"]
+        mid = calc_result["mid"]
+        edge = calc_result["edge"]
+        conn = calc_result["conn"]
+        total_panels = calc_result["total_panels"]
+        
+        # Расчет для M8: учитываем и авто и ручные рельсы
+        rails_total = {}
+        
+        # Используем актуальные значения из koshrot_qty
+        if st.session_state.koshrot_qty:
+            for length_str, qty in st.session_state.koshrot_qty.items():
+                try:
+                    length = float(length_str)
+                    rails_total[length] = rails_total.get(length, 0) + qty
+                except:
+                    rails_total[length_str] = rails_total.get(length_str, 0) + qty
+        
+        # Добавляем ручные рельсы
+        for length, qty in manual_rails.items():
+            rails_total[length] = rails_total.get(length, 0) + qty
+        
+        total_length_cm = 0
+        for length, qty in rails_total.items():
             try:
-                length = float(length_str)
-                rails_total[length] = rails_total.get(length, 0) + qty
-            except:
-                rails_total[length_str] = rails_total.get(length_str, 0) + qty
-    
-    # Добавляем ручные рельсы
-    for length, qty in manual_rails.items():
-        rails_total[length] = rails_total.get(length, 0) + qty
-    
-    total_length_cm = 0
-    for length, qty in rails_total.items():
-        try:
-            total_length_cm += float(length) * qty
-        except Exception:
-            pass
-    
-    screws_iso = round_up_to_tens(conn * 4 + total_panels)
-    m8_count = 0
-    if total_length_cm > 0:
-        m8_base = total_length_cm / 140.0
-        m8_count = round_up_to_tens(m8_base)
-    
-    # Базовые значения (обновляются всегда при расчете)
-    fasteners_base = [
-        ("מהדק הארקה", ear),
-        ("מהדק אמצע", mid),
-        ("מהדק קצה", edge),
-        ("פקק לקושרות", edge),
-        ("מחברי קושרות", conn),
-        ("בורג איסכורית 3,5", screws_iso),
-        ("M8 בורג", m8_count),
-        ("M8 אום", m8_count),
-    ]
-    
-    # Инициализируем session_state для fasteners если нужно
-    if 'html_fasteners' not in st.session_state:
-        st.session_state.html_fasteners = []
+                total_length_cm += float(length) * qty
+            except Exception:
+                pass
+        
+        screws_iso = round_up_to_tens(conn * 4 + total_panels)
+        m8_count = 0
+        if total_length_cm > 0:
+            m8_base = total_length_cm / 140.0
+            m8_count = round_up_to_tens(m8_base)
+        
+        # Базовые значения (обновляются всегда при расчете)
+        fasteners_base = [
+            ("מהדק הארקה", ear),
+            ("מהדק אמצע", mid),
+            ("מהדק קצה", edge),
+            ("פקק לקושרות", edge),
+            ("מחברי קושרות", conn),
+            ("בורג איסכורית 3,5", screws_iso),
+            ("M8 בורג", m8_count),
+            ("M8 אום", m8_count),
+        ]
+        
+        # Создаем базовые значения для текущего расчета
+        current_base_fasteners = {lbl: int(val) for (lbl, val) in fasteners_base}
+        
+        # Если fasteners не инициализированы или расчет изменился, используем новые значения
+        if not st.session_state.fasteners or st.session_state.fasteners.keys() != current_base_fasteners.keys():
+            # Проверяем, есть ли уже сохраненные значения пользователя
+            if st.session_state.fasteners:
+                # Сохраняем пользовательские изменения, если они есть
+                updated_fasteners = {}
+                for lbl, base_val in current_base_fasteners.items():
+                    if lbl in st.session_state.fasteners:
+                        # Сохраняем пользовательское значение, если оно было изменено
+                        user_val = st.session_state.fasteners[lbl]
+                        if user_val != 0:  # Сохраняем ненулевые пользовательские значения
+                            updated_fasteners[lbl] = user_val
+                        else:
+                            updated_fasteners[lbl] = base_val
+                    else:
+                        updated_fasteners[lbl] = base_val
+                st.session_state.fasteners = updated_fasteners
+            else:
+                st.session_state.fasteners = current_base_fasteners
+        
+        # Инициализируем fasteners_include если нужно
+        if not st.session_state.fasteners_include:
+            st.session_state.fasteners_include = {lbl: True for lbl in current_base_fasteners.keys()}
+        else:
+            # Добавляем новые позиции, если они появились
+            for lbl in current_base_fasteners.keys():
+                if lbl not in st.session_state.fasteners_include:
+                    st.session_state.fasteners_include[lbl] = True
+        
+        # UI для каждого fastener
+        new_fasteners = {}
+        fasteners_changed = False
+        
         for i, (lbl, base_val) in enumerate(fasteners_base):
-            current_val = st.session_state.fasteners.get(lbl, base_val) if st.session_state.fasteners else base_val
-            inc_val = st.session_state.fasteners_include.get(lbl, True) if st.session_state.fasteners_include else True
+            # Получаем текущее значение
+            current_val = st.session_state.fasteners.get(lbl, base_val)
+            current_val = int(current_val) if current_val is not None else int(base_val)
             
-            st.session_state.html_fasteners.append({
-                'id': i,
-                'label': lbl,
-                'base_value': int(base_val),
-                'current_value': int(current_val),
-                'checked': bool(inc_val),
-                'visible': int(base_val) > 0 or (lbl in (st.session_state.fasteners or {}) and st.session_state.fasteners.get(lbl, 0) > 0)
-            })
-    
-    # HTML/JS компонент для fasteners
-    fasteners_html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>
-            * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+            # Показываем только если значение > 0 или если пользователь уже изменял его
+            if int(base_val) == 0 and current_val == 0 and lbl not in st.session_state.fasteners:
+                continue
             
-            .fasteners-table {{
-                width: 100%;
-                font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-                direction: rtl;
-            }}
+            c_chk, c_val, c_name = st.columns([0.8, 1.6, 5])
             
-            .fastener-header {{
-                display: flex;
-                font-weight: bold;
-                padding: 12px 8px;
-                border-bottom: 2px solid #2E7D32;
-                background: #f8f9fa;
-                font-size: 15px;
-                text-align: right;
-            }}
-            
-            .fastener-row {{
-                display: flex;
-                align-items: center;
-                padding: 14px 8px;
-                border-bottom: 1px solid #e0e0e0;
-                min-height: 62px;
-            }}
-            
-            .fastener-col-check {{
-                width: 45px;
-                flex: 0 0 45px;
-                display: flex;
-                justify-content: center;
-            }}
-            
-            .fastener-col-label {{
-                flex: 1;
-                padding: 0 12px;
-                font-size: 16px;
-                text-align: right;
-                font-weight: 500;
-            }}
-            
-            .fastener-col-input {{
-                width: 100px;
-                flex: 0 0 100px;
-            }}
-            
-            /* Кастомный чекбокс */
-            .fastener-checkbox {{
-                width: 26px;
-                height: 26px;
-                border: 2px solid #4CAF50;
-                border-radius: 5px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                background: white;
-                transition: all 0.2s;
-            }}
-            
-            .fastener-checkbox.checked {{
-                background: #4CAF50;
-            }}
-            
-            .fastener-checkmark {{
-                color: white;
-                font-size: 16px;
-                font-weight: bold;
-                display: none;
-            }}
-            
-            .fastener-checkbox.checked .fastener-checkmark {{
-                display: block;
-            }}
-            
-            /* Поле ввода */
-            .fastener-input {{
-                display: flex;
-                align-items: center;
-                border: 2px solid #2196F3;
-                border-radius: 6px;
-                overflow: hidden;
-                background: white;
-                height: 44px;
-            }}
-            
-            .fastener-btn {{
-                width: 38px;
-                height: 100%;
-                background: #2196F3;
-                color: white;
-                border: none;
-                font-size: 20px;
-                font-weight: bold;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }}
-            
-            .fastener-btn:hover {{ background: #1976D2; }}
-            
-            .fastener-btn-minus {{ border-right: 1px solid #1976D2; }}
-            .fastener-btn-plus {{ border-left: 1px solid #1976D2; }}
-            
-            .fastener-value {{
-                flex: 1;
-                text-align: center;
-                font-size: 16px;
-                font-weight: bold;
-                padding: 0 4px;
-                min-width: 30px;
-            }}
-            
-            /* Для iPhone */
-            @media (max-width: 768px) {{
-                .fastener-row {{ 
-                    padding: 12px 6px; 
-                    min-height: 58px;
-                }}
-                .fastener-col-input {{ 
-                    width: 95px; 
-                    flex: 0 0 95px; 
-                }}
-                .fastener-btn {{ 
-                    width: 36px; 
-                    font-size: 18px; 
-                }}
-                .fastener-value {{ font-size: 15px; }}
-                .fastener-col-label {{ 
-                    font-size: 15px; 
-                    padding: 0 10px; 
-                }}
-                .fastener-checkbox {{
-                    width: 24px;
-                    height: 24px;
-                }}
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="fasteners-table">
-            <div class="fastener-header">
-                <div class="fastener-col-check">✓</div>
-                <div class="fastener-col-label">שם פריט</div>
-                <div class="fastener-col-input">כמות</div>
-            </div>
-            
-            <div id="fasteners-body">
-                <!-- Строки будут здесь -->
-            </div>
-        </div>
-
-        <script>
-            // Данные из Python
-            const fastenersData = {json.dumps([f for f in st.session_state.html_fasteners if f['visible']])};
-            
-            // Создаем строку fastener
-            function createFastenerRow(item) {{
-                return `
-                <div class="fastener-row" data-id="${{item.id}}">
-                    <div class="fastener-col-check">
-                        <div class="fastener-checkbox ${{item.checked ? 'checked' : ''}}" 
-                             onclick="toggleFastenerCheckbox(${{item.id}})">
-                            <div class="fastener-checkmark">✓</div>
-                        </div>
-                    </div>
-                    <div class="fastener-col-label">${{item.label}}</div>
-                    <div class="fastener-col-input">
-                        <div class="fastener-input">
-                            <button class="fastener-btn fastener-btn-minus" 
-                                    onclick="changeFastenerValue(${{item.id}}, -1)">−</button>
-                            <div class="fastener-value">${{item.current_value}}</div>
-                            <button class="fastener-btn fastener-btn-plus" 
-                                    onclick="changeFastenerValue(${{item.id}}, 1)">+</button>
-                        </div>
-                    </div>
-                </div>
-                `;
-            }}
-            
-            // Заполняем таблицу
-            document.getElementById('fasteners-body').innerHTML = 
-                fastenersData.map(item => createFastenerRow(item)).join('');
-            
-            // Функции для взаимодействия
-            function toggleFastenerCheckbox(id) {{
-                const checkbox = document.querySelector(`.fastener-row[data-id="${{id}}"] .fastener-checkbox`);
-                checkbox.classList.toggle('checked');
+            with c_chk:
+                # Уникальный ключ
+                inc_key = f"fast_inc_{lbl}_{st.session_state.calculation_counter}"
+                inc_default = st.session_state.fasteners_include.get(lbl, True)
+                inc_val = st.checkbox("", value=inc_default, key=inc_key, label_visibility="collapsed")
                 
-                // Отправляем данные в Streamlit
-                window.parent.postMessage({{
-                    type: 'FASTENER_TOGGLE_CHECKBOX',
-                    id: id,
-                    checked: checkbox.classList.contains('checked')
-                }}, '*');
-            }}
+                if inc_val != st.session_state.fasteners_include.get(lbl, True):
+                    st.session_state.fasteners_include[lbl] = bool(inc_val)
+                    st.session_state.report_needs_update = True
+                else:
+                    st.session_state.fasteners_include[lbl] = bool(inc_val)
             
-            function changeFastenerValue(id, delta) {{
-                const valueEl = document.querySelector(`.fastener-row[data-id="${{id}}"] .fastener-value`);
-                let value = parseInt(valueEl.textContent) + delta;
-                if (value < 0) value = 0;
-                valueEl.textContent = value;
+            with c_val:
+                # Уникальный ключ
+                val_key = f"fastener_qty_{lbl}_{st.session_state.calculation_counter}"
+                v = st.number_input(
+                    "",
+                    min_value=0,
+                    value=current_val,
+                    step=1,
+                    key=val_key,
+                    label_visibility="collapsed",
+                )
                 
-                // Отправляем данные в Streamlit
-                window.parent.postMessage({{
-                    type: 'FASTENER_CHANGE_VALUE',
-                    id: id,
-                    value: value
-                }}, '*');
-            }}
+                if v != current_val:
+                    fasteners_changed = True
             
-            // Получаем сообщения от Streamlit для обновления
-            window.addEventListener('message', (event) => {{
-                if (event.data.type === 'UPDATE_FASTENERS') {{
-                    document.getElementById('fasteners-body').innerHTML = 
-                        event.data.fastenersData.map(item => createFastenerRow(item)).join('');
-                }}
-            }});
-        </script>
-    </body>
-    </html>
-    """
-    
-    # Отображаем компонент
-    fastener_component = components.html(fasteners_html, height=500, scrolling=False)
-    
-    # Обрабатываем взаимодействие
-    if fastener_component and isinstance(fastener_component, dict):
-        if fastener_component.get('type') == 'FASTENER_TOGGLE_CHECKBOX':
-            item_id = fastener_component['id']
-            for item in st.session_state.html_fasteners:
-                if item['id'] == item_id:
-                    item['checked'] = fastener_component['checked']
-                    
-                    # Обновляем оригинальные fasteners_include
-                    lbl = item['label']
-                    st.session_state.fasteners_include[lbl] = fastener_component['checked']
-                    st.session_state.report_needs_update = True
-                    break
+            with c_name:
+                st.markdown(right_label(lbl), unsafe_allow_html=True)
+            
+            new_fasteners[lbl] = int(v)
         
-        elif fastener_component.get('type') == 'FASTENER_CHANGE_VALUE':
-            item_id = fastener_component['id']
-            for item in st.session_state.html_fasteners:
-                if item['id'] == item_id:
-                    item['current_value'] = fastener_component['value']
-                    
-                    # Обновляем оригинальные fasteners
-                    lbl = item['label']
-                    st.session_state.fasteners[lbl] = fastener_component['value']
-                    st.session_state.report_needs_update = True
-                    break
-        
-        st.rerun()
-    
-    # Обновляем new_fasteners для совместимости со старой логикой
-    new_fasteners = {}
-    for item in st.session_state.html_fasteners:
-        if item['visible']:
-            new_fasteners[item['label']] = item['current_value']
-    
-    st.session_state.fasteners = new_fasteners
+        # Обновляем fasteners если были изменения
+        if fasteners_changed:
+            st.session_state.fasteners = new_fasteners
+            st.session_state.report_needs_update = True
+        else:
+            st.session_state.fasteners = new_fasteners
 
 # ---------- CHANNELS ----------
 with st.expander("**תעלות עם מכסים (מטר)**", expanded=True):
@@ -1423,252 +1222,3 @@ with st.expander("**ייצוא (HTML להדפסה ל-PDF)**", expanded=True):
             components.html(html_report, height=950, scrolling=True)
     else:
         info_box('קודם יש לחשב, ואז ניתן לייצא דו"ח')
-import streamlit as st
-import streamlit.components.v1 as components
-import json
-
-# Инициализация состояния
-if 'table_data' not in st.session_state:
-    st.session_state.table_data = [
-        {'id': 1, 'checked': True, 'value': 0, 'label': 'מהדק הארקה'},
-        {'id': 2, 'checked': True, 'value': 0, 'label': 'מהדק אמצע'},
-        {'id': 3, 'checked': False, 'value': 5, 'label': 'בורג איסכורית'},
-    ]
-
-st.title("📱 Рабочая таблица (HTML+JS)")
-
-# HTML/JS компонент
-table_html = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        
-        .table {{ 
-            width: 100%; 
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            direction: rtl;
-        }}
-        
-        .header {{
-            display: flex;
-            font-weight: bold;
-            padding: 12px 10px;
-            border-bottom: 2px solid #2E7D32;
-            background: #f8f9fa;
-            font-size: 16px;
-        }}
-        
-        .row {{
-            display: flex;
-            align-items: center;
-            padding: 15px 10px;
-            border-bottom: 1px solid #e0e0e0;
-            min-height: 65px;
-        }}
-        
-        .col-check {{ 
-            width: 50px; 
-            flex: 0 0 50px;
-            display: flex;
-            justify-content: center;
-        }}
-        
-        .col-label {{ 
-            flex: 1;
-            padding: 0 15px;
-            font-size: 17px;
-            text-align: right;
-        }}
-        
-        .col-input {{ 
-            width: 130px; 
-            flex: 0 0 130px;
-        }}
-        
-        /* Чекбокс */
-        .checkbox {{
-            width: 28px;
-            height: 28px;
-            border: 2px solid #4CAF50;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            background: white;
-            transition: all 0.2s;
-        }}
-        
-        .checkbox.checked {{
-            background: #4CAF50;
-        }}
-        
-        .checkmark {{
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-            display: none;
-        }}
-        
-        .checkbox.checked .checkmark {{
-            display: block;
-        }}
-        
-        /* Поле ввода */
-        .number-input {{
-            display: flex;
-            align-items: center;
-            border: 2px solid #2196F3;
-            border-radius: 8px;
-            overflow: hidden;
-            background: white;
-            height: 48px;
-        }}
-        
-        .btn {{
-            width: 45px;
-            height: 100%;
-            background: #2196F3;
-            color: white;
-            border: none;
-            font-size: 24px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }}
-        
-        .btn:hover {{ background: #1976D2; }}
-        
-        .btn-minus {{ border-right: 1px solid #1976D2; }}
-        .btn-plus {{ border-left: 1px solid #1976D2; }}
-        
-        .value {{
-            flex: 1;
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-            padding: 0 5px;
-            min-width: 40px;
-        }}
-        
-        /* Для iPhone */
-        @media (max-width: 768px) {{
-            .row {{ padding: 12px 8px; min-height: 58px; }}
-            .col-input {{ width: 120px; flex: 0 0 120px; }}
-            .btn {{ width: 42px; font-size: 22px; }}
-            .value {{ font-size: 17px; }}
-            .col-label {{ font-size: 16px; padding: 0 12px; }}
-        }}
-    </style>
-</head>
-<body>
-    <div class="table">
-        <div class="header">
-            <div class="col-check">✓</div>
-            <div class="col-label">שם פריט</div>
-            <div class="col-input">כמות</div>
-        </div>
-        
-        <div id="table-body">
-            <!-- Строки будут здесь -->
-        </div>
-    </div>
-
-    <script>
-        // Данные из Python
-        const tableData = {json.dumps(st.session_state.table_data)};
-        
-        // Создаем строки таблицы
-        function createRow(item) {{
-            return `
-            <div class="row" data-id="${{item.id}}">
-                <div class="col-check">
-                    <div class="checkbox ${{item.checked ? 'checked' : ''}}" onclick="toggleCheckbox(${{item.id}})">
-                        <div class="checkmark">✓</div>
-                    </div>
-                </div>
-                <div class="col-label">${{item.label}}</div>
-                <div class="col-input">
-                    <div class="number-input">
-                        <button class="btn btn-minus" onclick="changeValue(${{item.id}}, -1)">−</button>
-                        <div class="value">${{item.value}}</div>
-                        <button class="btn btn-plus" onclick="changeValue(${{item.id}}, 1)">+</button>
-                    </div>
-                </div>
-            </div>
-            `;
-        }}
-        
-        // Заполняем таблицу
-        document.getElementById('table-body').innerHTML = 
-            tableData.map(item => createRow(item)).join('');
-        
-        // Функции для взаимодействия
-        function toggleCheckbox(id) {{
-            const checkbox = document.querySelector(`.row[data-id="${{id}}"] .checkbox`);
-            checkbox.classList.toggle('checked');
-            
-            // Отправляем данные в Streamlit
-            window.parent.postMessage({{
-                type: 'TOGGLE_CHECKBOX',
-                id: id,
-                checked: checkbox.classList.contains('checked')
-            }}, '*');
-        }}
-        
-        function changeValue(id, delta) {{
-            const valueEl = document.querySelector(`.row[data-id="${{id}}"] .value`);
-            let value = parseInt(valueEl.textContent) + delta;
-            if (value < 0) value = 0;
-            valueEl.textContent = value;
-            
-            // Отправляем данные в Streamlit
-            window.parent.postMessage({{
-                type: 'CHANGE_VALUE',
-                id: id,
-                value: value
-            }}, '*');
-        }}
-        
-        // Получаем сообщения от Streamlit (если нужно обновить)
-        window.addEventListener('message', (event) => {{
-            if (event.data.type === 'UPDATE_DATA') {{
-                document.getElementById('table-body').innerHTML = 
-                    event.data.tableData.map(item => createRow(item)).join('');
-            }}
-        }});
-    </script>
-</body>
-</html>
-"""
-
-# Отображаем компонент
-component_value = components.html(table_html, height=400, scrolling=False)
-
-# Обрабатываем взаимодействие с таблицей
-if component_value:
-    if isinstance(component_value, dict):
-        if component_value.get('type') == 'TOGGLE_CHECKBOX':
-            item_id = component_value['id']
-            for item in st.session_state.table_data:
-                if item['id'] == item_id:
-                    item['checked'] = component_value['checked']
-                    break
-        elif component_value.get('type') == 'CHANGE_VALUE':
-            item_id = component_value['id']
-            for item in st.session_state.table_data:
-                if item['id'] == item_id:
-                    item['value'] = component_value['value']
-                    break
-        
-        st.rerun()
-
-# Показываем текущие данные
-st.markdown("---")
-st.write("**Текущее состояние таблицы:**")
-st.json(st.session_state.table_data)
