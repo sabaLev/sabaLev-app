@@ -21,7 +21,7 @@ div[data-testid="stTextInput"] > label {
 # Создаем inline блок
 st.markdown('<div class="inline-input">', unsafe_allow_html=True)
 st.markdown('**Логин:**')
-username = st.text_input("", placeholder="Введите логин", label_visibility="collapsed")
+username = st.text_input("апрапрапр", placeholder="Введите логин", label_visibility="collapsed")
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Еще пример
