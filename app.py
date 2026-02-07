@@ -223,7 +223,7 @@ def format_length_for_display(length):
     except Exception:
         return str(length)
 
-# ---------- CSS СТИЛИ ДЛЯ МОБИЛЬНОЙ АДАПТАЦИИ ----------
+# ---------- CSS ДЛЯ МОБИЛЬНОЙ АДАПТАЦИИ ----------
 st.markdown("""
     <style>
     /* Основные стили для всех устройств */
@@ -239,154 +239,143 @@ st.markdown("""
         direction: rtl;
     }
     
-    /* Адаптивные колонки для мобильных устройств */
+    /* Стили для таблицы групп (заменяем колонки) */
+    .groups-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+    }
+    
+    .groups-table th {
+        text-align: right;
+        font-weight: bold;
+        padding-bottom: 8px;
+        font-size: 14px;
+    }
+    
+    .groups-table td {
+        padding: 6px 0;
+        text-align: right;
+        vertical-align: middle;
+    }
+    
+    .row-number {
+        font-weight: bold;
+        font-size: 14px;
+        color: #555;
+        min-width: 30px;
+        display: inline-block;
+        text-align: center;
+    }
+    
+    .quantity-input {
+        width: 100%;
+        margin: 0;
+    }
+    
+    /* Адаптация для мобильных */
     @media (max-width: 768px) {
-        /* На мобильных - вертикальное расположение */
-        .mobile-vertical .stColumn {
-            width: 100% !important;
-            min-width: 100% !important;
-            margin-bottom: 10px;
+        .groups-table th {
+            font-size: 13px;
+            padding: 8px 5px;
         }
         
-        /* Скрываем лишние отступы на мобильных */
-        .mobile-vertical div[data-testid="column"] {
-            padding: 0 !important;
+        .groups-table td {
+            padding: 10px 5px;
         }
         
-        /* Увеличиваем шрифт на мобильных */
-        .mobile-input input {
-            font-size: 16px !important; /* Предотвращает zoom в iOS */
-            height: 44px !important; /* Минимальная высота для тапа */
+        .row-number {
+            font-size: 13px;
         }
         
-        /* Стили для labels на мобильных */
-        .mobile-label {
-            font-size: 14px !important;
-            margin-bottom: 5px !important;
-            display: block !important;
+        /* Увеличиваем поля ввода для мобильных */
+        .stNumberInput > div > div > input {
+            font-size: 16px !important;
+            height: 44px !important;
+            padding: 10px 12px !important;
         }
         
-        /* Фиксируем ширину колонок в fasteners на мобильных */
-        div[data-testid="column"] {
-            min-width: unset !important;
-            flex: 1 !important;
+        /* Адаптация для fasteners */
+        .fastener-mobile-container {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
         }
         
-        /* Галочки и поля в одну строку на мобильных */
         .fastener-row-mobile {
-            display: flex !important;
-            align-items: center !important;
-            gap: 10px !important;
-            margin-bottom: 15px !important;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 5px;
         }
         
         .fastener-checkbox-mobile {
-            flex: 0 0 40px !important;
+            order: 3; /* Чекбокс в конце строки */
+            margin-left: 10px;
         }
         
         .fastener-input-mobile {
-            flex: 0 0 80px !important;
+            order: 2; /* Поле ввода посередине */
+            flex: 0 0 90px;
         }
         
         .fastener-label-mobile {
-            flex: 1 !important;
-            text-align: right !important;
+            order: 1; /* Метка в начале */
+            flex: 1;
+            text-align: right;
+            font-weight: bold;
+            font-size: 14px;
         }
         
-        /* Мобильная адаптация всех элементов */
-        /* Основной контейнер */
-        .main .block-container {
-            padding: 1rem !important;
-            margin-top: 1rem;
-            margin-bottom: 2rem;
-        }
-        
-        /* Кнопки на всю ширину */
+        /* Кнопки на всю ширину на мобильных */
         div[data-testid="stButton"] > button {
             width: 100% !important;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         
         /* Expanders на мобильных */
         .streamlit-expanderHeader {
-            padding: 12px 15px !important;
+            padding: 12px 10px !important;
             font-size: 14px !important;
         }
         
-        /* Поля ввода на мобильных */
-        .stTextInput > div > div > input,
-        .stNumberInput > div > div > input,
-        .stSelectbox > div > div > div {
-            padding: 10px 12px !important;
-            font-size: 16px !important; /* Предотвращает zoom */
-        }
-        
-        /* Колонки в секции каналов */
-        .stHorizontalBlock {
-            flex-direction: column !important;
-        }
-        
-        .stHorizontalBlock [data-testid="column"] {
-            width: 100% !important;
-            min-width: 100% !important;
-        }
-        
-        /* Ручные рельсы на мобильных */
-        .manual-rails-mobile .stColumn {
-            width: 100% !important;
-            margin-bottom: 15px;
-        }
-        
-        /* Адаптивные заголовки */
-        h1 { font-size: 24px !important; }
-        h2 { font-size: 20px !important; }
-        h3 { font-size: 18px !important; }
-        
-        /* Правая колонка в экспорте на всю ширину */
-        .export-buttons-mobile {
-            flex-direction: column !important;
-        }
-        
-        .export-buttons-mobile [data-testid="column"] {
-            width: 100% !important;
-            margin-bottom: 10px;
-        }
-        
-        /* Скрываем сложные градиенты на мобильных для производительности */
-        .stApp {
-            background: linear-gradient(135deg, #ffffff 0%, #F8F9FA 100%) !important;
-        }
-        
-        /* Десктоп-специфичные элементы скрываем */
-        .desktop-only {
-            display: none !important;
-        }
-        
-        /* Мобильные элементы показываем */
-        .mobile-only {
-            display: block !important;
+        /* Уменьшаем отступы в секциях */
+        .main .block-container {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
         }
     }
     
-    /* Десктоп версия */
+    /* Десктоп версия для fasteners */
     @media (min-width: 769px) {
-        .desktop-horizontal .stColumn {
-            width: 50% !important;
+        .fastener-desktop-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
         }
         
-        /* Десктоп-специфичные элементы показываем */
-        .desktop-only {
-            display: block !important;
+        .fastener-checkbox-desktop {
+            flex: 0 0 30px;
         }
         
-        /* Мобильные элементы скрываем */
-        .mobile-only {
-            display: none !important;
+        .fastener-input-desktop {
+            flex: 0 0 90px;
+        }
+        
+        .fastener-label-desktop {
+            flex: 1;
+            text-align: right;
+            font-weight: bold;
         }
     }
     
-    /* Общие стили для всех устройств */
-    .panel-input-group {
+    /* Общие стили для ручных рельсов */
+    .manual-rails-container {
         margin-bottom: 15px;
     }
     </style>
@@ -529,32 +518,36 @@ if panel_rows.empty:
 
 panel = panel_rows.iloc[0]
 
-# ---------- GROUPS ----------
+# ---------- GROUPS - НОВАЯ ВЕРСИЯ С ТАБЛИЦЕЙ ----------
 groups = []
 
 # Секция вертикальных панелей - עומדים
 with st.expander("**עומדים**", expanded=True):
-    # Добавляем контейнер с классами для разных устройств
-    st.markdown('<div class="desktop-horizontal mobile-vertical">', unsafe_allow_html=True)
-    
-    # Заголовки
-    cols = st.columns(2)
-    with cols[0]:
-        st.markdown('<div class="mobile-label">', unsafe_allow_html=True)
-        st.markdown(right_label("שורות"), unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    with cols[1]:
-        st.markdown('<div class="mobile-label">', unsafe_allow_html=True)
-        st.markdown(right_label("פאנלים"), unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+    # Используем HTML таблицу вместо Streamlit колонок
+    st.markdown("""
+    <table class="groups-table">
+        <thead>
+            <tr>
+                <th>שורה</th>
+                <th>שורות</th>
+                <th>פאנלים</th>
+            </tr>
+        </thead>
+        <tbody>
+    """, unsafe_allow_html=True)
     
     vertical_rows = st.session_state.vertical_rows
     for i in range(1, vertical_rows + 1):
-        # Создаем контейнер для каждой пары полей ввода
-        st.markdown(f'<div class="panel-input-group">', unsafe_allow_html=True)
-        cols = st.columns(2)
+        st.markdown(f"""
+        <tr>
+            <td><span class="row-number">{i}</span></td>
+        """, unsafe_allow_html=True)
         
-        with cols[0]:
+        # Создаем колонки для полей ввода
+        col1, col2 = st.columns([1, 1])
+        
+        with col1:
+            st.markdown(f'<div class="row-number" style="visibility:hidden;">{i}</div>', unsafe_allow_html=True)
             g = st.number_input(
                 "",
                 0, 50, 0,
@@ -562,21 +555,24 @@ with st.expander("**עומדים**", expanded=True):
                 label_visibility="collapsed",
             )
         
-        with cols[1]:
-            default_n = i if i <= 8 else 0
+        with col2:
+            st.markdown(f'<div class="row-number" style="visibility:hidden;">{i}</div>', unsafe_allow_html=True)
             n = st.number_input(
                 "",
-                0, 100, default_n,
+                0, 100, i if i <= 8 else 0,
                 key=f"g_n_vertical_{i}",
                 label_visibility="collapsed",
             )
         
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("</tr>", unsafe_allow_html=True)
         
         if n > 0 and g > 0:
             groups.append((n, g, "עומד"))
     
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("""
+        </tbody>
+    </table>
+    """, unsafe_allow_html=True)
     
     if st.button("להוסיף פאנלים", key="add_panels_vertical"):
         st.session_state.vertical_rows += 1
@@ -584,27 +580,31 @@ with st.expander("**עומדים**", expanded=True):
 
 # Секция горизонтальных панелей - שוכבים
 with st.expander("**שוכבים**", expanded=True):
-    # Добавляем контейнер с классами для разных устройств
-    st.markdown('<div class="desktop-horizontal mobile-vertical">', unsafe_allow_html=True)
-    
-    # Заголовки
-    cols = st.columns(2)
-    with cols[0]:
-        st.markdown('<div class="mobile-label">', unsafe_allow_html=True)
-        st.markdown(right_label("שורות"), unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    with cols[1]:
-        st.markdown('<div class="mobile-label">', unsafe_allow_html=True)
-        st.markdown(right_label("פאנלים"), unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+    # Используем HTML таблицу вместо Streamlit колонок
+    st.markdown("""
+    <table class="groups-table">
+        <thead>
+            <tr>
+                <th>שורה</th>
+                <th>שורות</th>
+                <th>פאנלים</th>
+            </tr>
+        </thead>
+        <tbody>
+    """, unsafe_allow_html=True)
     
     horizontal_rows = st.session_state.horizontal_rows
     for i in range(1, horizontal_rows + 1):
-        # Создаем контейнер для каждой пары полей ввода
-        st.markdown(f'<div class="panel-input-group">', unsafe_allow_html=True)
-        cols = st.columns(2)
+        st.markdown(f"""
+        <tr>
+            <td><span class="row-number">{i}</span></td>
+        """, unsafe_allow_html=True)
         
-        with cols[0]:
+        # Создаем колонки для полей ввода
+        col1, col2 = st.columns([1, 1])
+        
+        with col1:
+            st.markdown(f'<div class="row-number" style="visibility:hidden;">{i}</div>', unsafe_allow_html=True)
             g = st.number_input(
                 "",
                 0, 50, 0,
@@ -612,21 +612,24 @@ with st.expander("**שוכבים**", expanded=True):
                 label_visibility="collapsed",
             )
         
-        with cols[1]:
-            default_n = i if i <= 4 else 0
+        with col2:
+            st.markdown(f'<div class="row-number" style="visibility:hidden;">{i}</div>', unsafe_allow_html=True)
             n = st.number_input(
                 "",
-                0, 100, default_n,
+                0, 100, i if i <= 4 else 0,
                 key=f"g_n_horizontal_{i}",
                 label_visibility="collapsed",
             )
         
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("</tr>", unsafe_allow_html=True)
         
         if n > 0 and g > 0:
             groups.append((n, g, "שוכב"))
     
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("""
+        </tbody>
+    </table>
+    """, unsafe_allow_html=True)
     
     if st.button("להוסיף פאנלים", key="add_panels_horizontal"):
         st.session_state.horizontal_rows += 1
@@ -1065,27 +1068,35 @@ if calc_result is not None:
     
     # ----- קושרות (הוספה ידנית) -----
     with st.expander("**קושרות (הוספה ידנית)**", expanded=True):
-        st.markdown('<div class="manual-rails-mobile">', unsafe_allow_html=True)
+        st.markdown('<div class="manual-rails-container">', unsafe_allow_html=True)
         
-        cols = st.columns(2)
-        with cols[0]:
-            st.markdown('<div class="mobile-label">', unsafe_allow_html=True)
-            st.markdown(right_label("אורך (ס״מ)"), unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-        with cols[1]:
-            st.markdown('<div class="mobile-label">', unsafe_allow_html=True)
-            st.markdown(right_label("כמות"), unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
+        # Используем таблицу для ручных рельсов
+        st.markdown("""
+        <table class="groups-table">
+            <thead>
+                <tr>
+                    <th>שורה</th>
+                    <th>אורך (ס״מ)</th>
+                    <th>כמות</th>
+                </tr>
+            </thead>
+            <tbody>
+        """, unsafe_allow_html=True)
         
         manual_rows = st.session_state.manual_rows
         for j in range(1, manual_rows + 1):
-            cols = st.columns(2)
+            st.markdown(f"""
+            <tr>
+                <td><span class="row-number">{j}</span></td>
+            """, unsafe_allow_html=True)
             
-            # Уникальный ключ с версией сброса
-            length_key = f"m_len_{j}_{st.session_state.manual_rails_reset_version}"
-            qty_key = f"m_qty_{j}_{st.session_state.manual_rails_reset_version}"
+            # Создаем колонки для полей ввода
+            col1, col2 = st.columns([1, 1])
             
-            with cols[0]:
+            with col1:
+                st.markdown(f'<div class="row-number" style="visibility:hidden;">{j}</div>', unsafe_allow_html=True)
+                # Уникальный ключ с версией сброса
+                length_key = f"m_len_{j}_{st.session_state.manual_rails_reset_version}"
                 length = st.number_input(
                     "",
                     min_value=0,
@@ -1096,7 +1107,9 @@ if calc_result is not None:
                     label_visibility="collapsed",
                 )
             
-            with cols[1]:
+            with col2:
+                st.markdown(f'<div class="row-number" style="visibility:hidden;">{j}</div>', unsafe_allow_html=True)
+                qty_key = f"m_qty_{j}_{st.session_state.manual_rails_reset_version}"
                 qty = st.number_input(
                     "",
                     min_value=0,
@@ -1106,6 +1119,13 @@ if calc_result is not None:
                     key=qty_key,
                     label_visibility="collapsed",
                 )
+            
+            st.markdown("</tr>", unsafe_allow_html=True)
+        
+        st.markdown("""
+            </tbody>
+        </table>
+        """, unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
         
@@ -1134,7 +1154,7 @@ if calc_result is not None:
         else:
             st.session_state.manual_rails = manual_rails_dict
     
-    # ----- פרזול -----
+    # ----- פרזול - НОВАЯ ВЕРСИЯ ----------
     with st.expander("**פרזול**", expanded=True):
         # Базовые значения из расчета
         ear = calc_result["ear"]
@@ -1229,47 +1249,45 @@ if calc_result is not None:
             if int(base_val) == 0 and current_val == 0 and lbl not in st.session_state.fasteners:
                 continue
             
-            # Используем контейнер для мобильной адаптации
+            # Используем разные контейнеры для мобильных и десктопа
+            st.markdown('<div class="fastener-mobile-container">', unsafe_allow_html=True)
+            
+            # Первая строка: метка и чекбокс
             st.markdown('<div class="fastener-row-mobile">', unsafe_allow_html=True)
             
-            # Создаем колонки с фиксированными пропорциями
-            col_check, col_input, col_label = st.columns([0.8, 1.6, 5])
+            # Метка (название)
+            st.markdown(f'<div class="fastener-label-mobile">{lbl}</div>', unsafe_allow_html=True)
             
-            with col_check:
-                st.markdown('<div class="fastener-checkbox-mobile">', unsafe_allow_html=True)
-                # Уникальный ключ
-                inc_key = f"fast_inc_{lbl}_{st.session_state.calculation_counter}"
-                inc_default = st.session_state.fasteners_include.get(lbl, True)
-                inc_val = st.checkbox("", value=inc_default, key=inc_key, label_visibility="collapsed")
-                
-                if inc_val != st.session_state.fasteners_include.get(lbl, True):
-                    st.session_state.fasteners_include[lbl] = bool(inc_val)
-                    st.session_state.report_needs_update = True
-                else:
-                    st.session_state.fasteners_include[lbl] = bool(inc_val)
-                st.markdown('</div>', unsafe_allow_html=True)
+            # Чекбокс (галочка)
+            inc_key = f"fast_inc_{lbl}_{st.session_state.calculation_counter}"
+            inc_default = st.session_state.fasteners_include.get(lbl, True)
+            inc_val = st.checkbox("", value=inc_default, key=inc_key, label_visibility="collapsed")
             
-            with col_input:
-                st.markdown('<div class="fastener-input-mobile">', unsafe_allow_html=True)
-                # Уникальный ключ
-                val_key = f"fastener_qty_{lbl}_{st.session_state.calculation_counter}"
-                v = st.number_input(
-                    "",
-                    min_value=0,
-                    value=current_val,
-                    step=1,
-                    key=val_key,
-                    label_visibility="collapsed",
-                )
-                st.markdown('</div>', unsafe_allow_html=True)
-                
-                if v != current_val:
-                    fasteners_changed = True
+            if inc_val != st.session_state.fasteners_include.get(lbl, True):
+                st.session_state.fasteners_include[lbl] = bool(inc_val)
+                st.session_state.report_needs_update = True
+            else:
+                st.session_state.fasteners_include[lbl] = bool(inc_val)
             
-            with col_label:
-                st.markdown('<div class="fastener-label-mobile">', unsafe_allow_html=True)
-                st.markdown(right_label(lbl), unsafe_allow_html=True)
-                st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            # Вторая строка: поле ввода количества
+            st.markdown('<div class="fastener-row-mobile" style="justify-content:flex-start;">', unsafe_allow_html=True)
+            
+            val_key = f"fastener_qty_{lbl}_{st.session_state.calculation_counter}"
+            v = st.number_input(
+                "כמות:",
+                min_value=0,
+                value=current_val,
+                step=1,
+                key=val_key,
+                label_visibility="visible",
+            )
+            
+            if v != current_val:
+                fasteners_changed = True
+            
+            st.markdown('</div>', unsafe_allow_html=True)
             
             st.markdown('</div>', unsafe_allow_html=True)
             
@@ -1406,8 +1424,6 @@ with st.expander("**ייצוא (HTML להדפסה ל-PDF)**", expanded=True):
         # Используем сохраненный отчет
         html_report = st.session_state.get("last_html_report", "")
         
-        st.markdown('<div class="export-buttons-mobile">', unsafe_allow_html=True)
-        
         c_left, c_right = st.columns(2)
         with c_left:
             if st.button('לייצא דו"ח', use_container_width=True, key="export"):
@@ -1425,8 +1441,6 @@ with st.expander("**ייצוא (HTML להדפסה ל-PDF)**", expanded=True):
                     }}
                 </script>"""
                 components.html(js, height=0)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
         
         if st.session_state.show_report:
             st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
