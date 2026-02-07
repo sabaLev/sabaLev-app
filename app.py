@@ -1,21 +1,34 @@
 import streamlit as st
 
-st.title("Двухколоночный макет")
+# Минимальные стили
+st.markdown(
+    """
+    <style>
+    div.row-widget.stRadio > div {
+        flex-direction: row;
+        align-items: center;
+    }
+    div.row-widget.stRadio > div[role="radiogroup"] > label {
+        margin-right: 20px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
-# Создаем placeholder'ы для колонок
-col1_placeholder = st.empty()
-col2_placeholder = st.empty()
+col1, col2 = st.columns(2)
 
-# Создаем контейнер для первой колонки
-with col1_placeholder.container():
-    st.subheader("Колонка 1")
-    st.checkbox("Включить функцию 1", key="func1")
-    st.text_input("Название проекта", key="project1")
-    st.button("Сохранить 1", key="btn1")
+with col1:
+    # Группируем элементы в контейнер
+    with st.container():
+        st.write("**Левая панель**")
+        st.checkbox("Согласен с условиями")
+        st.text_input("Логин", key="login")
+        st.radio("Выберите:", ["Да", "Нет"], horizontal=True)
 
-# Создаем контейнер для второй колонки  
-with col2_placeholder.container():
-    st.subheader("Колонка 2")
-    st.checkbox("Включить функцию 2", key="func2")
-    st.text_input("Название задачи", key="task1")
-    st.button("Сохранить 2", key="btn2")
+with col2:
+    with st.container():
+        st.write("**Правая панель**")
+        st.checkbox("Получать уведомления")
+        st.text_input("Пароль", type="password", key="pass")
+        st.select_slider("Уровень", options=["Низкий", "Средний", "Высокий"])
