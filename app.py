@@ -275,59 +275,86 @@ st.markdown("""
         direction: rtl;
     }
     
-    /* Стили для таблицы групп */
-    .groups-table-container {
-        margin-bottom: 20px;
-    }
-    
-    .panel-number-static {
+    /* Стили для статических чисел (такие же как у полей ввода) */
+    .static-number-display {
         font-size: 16px;
-        font-weight: bold;
+        font-weight: normal;
         text-align: center;
-        padding: 8px;
-        background-color: #f0f0f0;
-        border-radius: 4px;
-        border: 1px solid #ddd;
+        padding: 8px 12px;
+        background-color: #ffffff;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
         min-height: 45px;
         display: flex;
         align-items: center;
         justify-content: center;
+        color: #0f172a;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
     }
     
-    /* Диалоговые окна */
-    .dialog-overlay {
+    /* Адаптация для мобильных */
+    @media (max-width: 768px) {
+        .static-number-display {
+            font-size: 16px !important;
+            min-height: 44px !important;
+            padding: 10px 12px !important;
+        }
+        
+        .stNumberInput > div > div > input {
+            font-size: 16px !important;
+            height: 44px !important;
+        }
+    }
+    
+    /* Стили для диалоговых окон */
+    .dialog-container {
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: rgba(0,0,0,0.5);
+        background-color: rgba(0, 0, 0, 0.5);
         display: flex;
         align-items: center;
         justify-content: center;
         z-index: 1000;
+        padding: 20px;
     }
     
-    .dialog-content {
-        background-color: white;
-        padding: 25px;
+    .dialog-box {
+        background: white;
         border-radius: 10px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        padding: 25px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
         max-width: 400px;
-        width: 90%;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
     }
     
-    /* Адаптация для мобильных */
-    @media (max-width: 768px) {
-        .stNumberInput > div > div > input {
-            font-size: 16px !important;
-            height: 44px !important;
-        }
-        
-        .panel-number-static {
-            font-size: 16px;
-            min-height: 44px;
-        }
+    .dialog-title {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 18px;
+        font-weight: bold;
+        color: #1f2937;
+    }
+    
+    .dialog-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    
+    /* Стили для таблицы групп */
+    .groups-row {
+        margin-bottom: 10px;
+    }
+    
+    /* Скрываем ненужные элементы */
+    .hide-element {
+        display: none !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -518,116 +545,111 @@ def delete_horizontal_custom_panel(index):
         st.session_state.show_delete_dialog = False
         st.rerun()
 
-# ---------- GROUPS - НОВАЯ РЕАЛИЗАЦИЯ ----------
-groups = []
-
+# ---------- ДИАЛОГОВЫЕ ОКНА ----------
 # Диалог добавления вертикальных панелей
 if st.session_state.show_add_vertical_dialog:
-    with st.container():
-        st.markdown('<div class="dialog-overlay">', unsafe_allow_html=True)
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.markdown('<div class="dialog-content">', unsafe_allow_html=True)
-            st.markdown(right_label("כמה פאנלים לקבוצה החדשה?"), unsafe_allow_html=True)
-            
-            new_qty = st.number_input(
-                "",
-                min_value=1,
-                max_value=1000,
-                value=st.session_state.new_vertical_panels_qty or 9,
-                step=1,
-                key="dialog_vertical_qty",
-                label_visibility="collapsed"
-            )
-            
-            col_btn1, col_btn2 = st.columns(2)
-            with col_btn1:
-                if st.button("הוסף", use_container_width=True):
-                    add_vertical_custom_panel(new_qty)
-            with col_btn2:
-                if st.button("בטל", use_container_width=True):
-                    st.session_state.show_add_vertical_dialog = False
-                    st.rerun()
-            
-            st.markdown('</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="dialog-container">
+        <div class="dialog-box">
+            <div class="dialog-title">כמה פאנלים לקבוצה החדשה?</div>
+    """, unsafe_allow_html=True)
+    
+    new_qty = st.number_input(
+        "כמות פאנלים:",
+        min_value=1,
+        max_value=1000,
+        value=st.session_state.new_vertical_panels_qty or 9,
+        step=1,
+        key="dialog_vertical_qty",
+        label_visibility="visible"
+    )
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("הוסף", use_container_width=True, type="primary"):
+            if add_vertical_custom_panel(new_qty):
+                st.success("השורה נוספה")
+            else:
+                st.error("לא ניתן להוסיף שורה זו")
+    with col2:
+        if st.button("בטל", use_container_width=True):
+            st.session_state.show_add_vertical_dialog = False
+            st.rerun()
+    
+    st.markdown("</div></div>", unsafe_allow_html=True)
 
 # Диалог добавления горизонтальных панелей
 if st.session_state.show_add_horizontal_dialog:
-    with st.container():
-        st.markdown('<div class="dialog-overlay">', unsafe_allow_html=True)
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.markdown('<div class="dialog-content">', unsafe_allow_html=True)
-            st.markdown(right_label("כמה פאנלים לקבוצה החדשה?"), unsafe_allow_html=True)
-            
-            new_qty = st.number_input(
-                "",
-                min_value=1,
-                max_value=1000,
-                value=st.session_state.new_horizontal_panels_qty or 5,
-                step=1,
-                key="dialog_horizontal_qty",
-                label_visibility="collapsed"
-            )
-            
-            col_btn1, col_btn2 = st.columns(2)
-            with col_btn1:
-                if st.button("הוסף", use_container_width=True):
-                    add_horizontal_custom_panel(new_qty)
-            with col_btn2:
-                if st.button("בטל", use_container_width=True):
-                    st.session_state.show_add_horizontal_dialog = False
-                    st.rerun()
-            
-            st.markdown('</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="dialog-container">
+        <div class="dialog-box">
+            <div class="dialog-title">כמה פאנלים לקבוצה החדשה?</div>
+    """, unsafe_allow_html=True)
+    
+    new_qty = st.number_input(
+        "כמות פאנלים:",
+        min_value=1,
+        max_value=1000,
+        value=st.session_state.new_horizontal_panels_qty or 5,
+        step=1,
+        key="dialog_horizontal_qty",
+        label_visibility="visible"
+    )
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("הוסף", use_container_width=True, type="primary"):
+            if add_horizontal_custom_panel(new_qty):
+                st.success("השורה נוספה")
+            else:
+                st.error("לא ניתן להוסיף שורה זו")
+    with col2:
+        if st.button("בטל", use_container_width=True):
+            st.session_state.show_add_horizontal_dialog = False
+            st.rerun()
+    
+    st.markdown("</div></div>", unsafe_allow_html=True)
 
 # Диалог удаления строки
 if st.session_state.show_delete_dialog:
-    with st.container():
-        st.markdown('<div class="dialog-overlay">', unsafe_allow_html=True)
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.markdown('<div class="dialog-content">', unsafe_allow_html=True)
-            st.markdown(right_label("האם ברצונך למחוק שורה זו?"), unsafe_allow_html=True)
-            
-            col_btn1, col_btn2 = st.columns(2)
-            with col_btn1:
-                if st.button("כן", use_container_width=True, type="primary"):
-                    if st.session_state.delete_dialog_type == "vertical":
-                        delete_vertical_custom_panel(st.session_state.delete_dialog_index)
-                    elif st.session_state.delete_dialog_type == "horizontal":
-                        delete_horizontal_custom_panel(st.session_state.delete_dialog_index)
-            with col_btn2:
-                if st.button("לא", use_container_width=True):
-                    st.session_state.show_delete_dialog = False
-                    st.rerun()
-            
-            st.markdown('</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="dialog-container">
+        <div class="dialog-box">
+            <div class="dialog-title">האם ברצונך למחוק שורה זו?</div>
+    """, unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("כן, מחק", use_container_width=True, type="primary"):
+            if st.session_state.delete_dialog_type == "vertical":
+                delete_vertical_custom_panel(st.session_state.delete_dialog_index)
+            elif st.session_state.delete_dialog_type == "horizontal":
+                delete_horizontal_custom_panel(st.session_state.delete_dialog_index)
+            st.success("השורה נמחקה")
+    with col2:
+        if st.button("לא, בטל", use_container_width=True):
+            st.session_state.show_delete_dialog = False
+            st.rerun()
+    
+    st.markdown("</div></div>", unsafe_allow_html=True)
+
+# ---------- GROUPS - ИСПРАВЛЕННАЯ ВЕРСИЯ ----------
+groups = []
 
 # Секция вертикальных панелей - עומדים
 with st.expander("**עומדים**", expanded=True):
-    st.markdown('<div class="groups-table-container">', unsafe_allow_html=True)
-    
-    # Заголовки таблицы
-    cols = st.columns([3, 2, 3])
+    # Заголовки таблицы - ТОЛЬКО 2 колонки
+    cols = st.columns(2)
     with cols[0]:
-        st.markdown(right_label("שורה"), unsafe_allow_html=True)
-    with cols[1]:
         st.markdown(right_label("שורות"), unsafe_allow_html=True)
-    with cols[2]:
+    with cols[1]:
         st.markdown(right_label("פאנלים"), unsafe_allow_html=True)
     
     # Основные 8 строк (1-8)
     for i in range(1, 9):
-        cols = st.columns([3, 2, 3])
+        cols = st.columns(2)
         
         with cols[0]:
-            st.markdown(f'<div style="text-align:center; padding:10px;">{i}</div>', unsafe_allow_html=True)
-        
-        with cols[1]:
             g = st.number_input(
                 "",
                 0, 50, 0,
@@ -635,20 +657,18 @@ with st.expander("**עומדים**", expanded=True):
                 label_visibility="collapsed",
             )
         
-        with cols[2]:
-            st.markdown(f'<div class="panel-number-static">{i}</div>', unsafe_allow_html=True)
+        with cols[1]:
+            # Статическое число - выглядит как поле ввода
+            st.markdown(f'<div class="static-number-display">{i}</div>', unsafe_allow_html=True)
         
         if g > 0:
             groups.append((i, g, "עומד"))
     
     # Дополнительные строки (пользовательские)
     for idx, panel_qty in enumerate(st.session_state.vertical_custom_panels):
-        cols = st.columns([3, 2, 3])
+        cols = st.columns(2)
         
         with cols[0]:
-            st.markdown(f'<div style="text-align:center; padding:10px;">{9 + idx}</div>', unsafe_allow_html=True)
-        
-        with cols[1]:
             g_key = f"g_g_vertical_custom_{idx}"
             g = st.number_input(
                 "",
@@ -667,13 +687,12 @@ with st.expander("**עומדים**", expanded=True):
             # Сохраняем текущее значение для следующей проверки
             st.session_state[f"{g_key}_prev"] = g
         
-        with cols[2]:
-            st.markdown(f'<div class="panel-number-static">{panel_qty}</div>', unsafe_allow_html=True)
+        with cols[1]:
+            # Статическое число - выглядит как поле ввода
+            st.markdown(f'<div class="static-number-display">{panel_qty}</div>', unsafe_allow_html=True)
         
         if g > 0:
             groups.append((panel_qty, g, "עומד"))
-    
-    st.markdown('</div>', unsafe_allow_html=True)
     
     if st.button("להוסיף פאנלים", key="add_panels_vertical"):
         st.session_state.show_add_vertical_dialog = True
@@ -681,25 +700,18 @@ with st.expander("**עומדים**", expanded=True):
 
 # Секция горизонтальных панелей - שוכבים
 with st.expander("**שוכבים**", expanded=True):
-    st.markdown('<div class="groups-table-container">', unsafe_allow_html=True)
-    
-    # Заголовки таблицы
-    cols = st.columns([3, 2, 3])
+    # Заголовки таблицы - ТОЛЬКО 2 колонки
+    cols = st.columns(2)
     with cols[0]:
-        st.markdown(right_label("שורה"), unsafe_allow_html=True)
-    with cols[1]:
         st.markdown(right_label("שורות"), unsafe_allow_html=True)
-    with cols[2]:
+    with cols[1]:
         st.markdown(right_label("פאנלים"), unsafe_allow_html=True)
     
     # Основные 4 строки (1-4)
     for i in range(1, 5):
-        cols = st.columns([3, 2, 3])
+        cols = st.columns(2)
         
         with cols[0]:
-            st.markdown(f'<div style="text-align:center; padding:10px;">{i}</div>', unsafe_allow_html=True)
-        
-        with cols[1]:
             g = st.number_input(
                 "",
                 0, 50, 0,
@@ -707,20 +719,18 @@ with st.expander("**שוכבים**", expanded=True):
                 label_visibility="collapsed",
             )
         
-        with cols[2]:
-            st.markdown(f'<div class="panel-number-static">{i}</div>', unsafe_allow_html=True)
+        with cols[1]:
+            # Статическое число - выглядит как поле ввода
+            st.markdown(f'<div class="static-number-display">{i}</div>', unsafe_allow_html=True)
         
         if g > 0:
             groups.append((i, g, "שוכב"))
     
     # Дополнительные строки (пользовательские)
     for idx, panel_qty in enumerate(st.session_state.horizontal_custom_panels):
-        cols = st.columns([3, 2, 3])
+        cols = st.columns(2)
         
         with cols[0]:
-            st.markdown(f'<div style="text-align:center; padding:10px;">{5 + idx}</div>', unsafe_allow_html=True)
-        
-        with cols[1]:
             g_key = f"g_g_horizontal_custom_{idx}"
             g = st.number_input(
                 "",
@@ -739,13 +749,12 @@ with st.expander("**שוכבים**", expanded=True):
             # Сохраняем текущее значение для следующей проверки
             st.session_state[f"{g_key}_prev"] = g
         
-        with cols[2]:
-            st.markdown(f'<div class="panel-number-static">{panel_qty}</div>', unsafe_allow_html=True)
+        with cols[1]:
+            # Статическое число - выглядит как поле ввода
+            st.markdown(f'<div class="static-number-display">{panel_qty}</div>', unsafe_allow_html=True)
         
         if g > 0:
             groups.append((panel_qty, g, "שוכב"))
-    
-    st.markdown('</div>', unsafe_allow_html=True)
     
     if st.button("להוסיף פאנלים", key="add_panels_horizontal"):
         st.session_state.show_add_horizontal_dialog = True
