@@ -1,15 +1,20 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(layout="wide")
+st.title("Адаптивная таблица")
 
-st.title("Таблица на весь экран")
-
-# Создаем данные
 df = pd.DataFrame({
-    'Колонка A': ['Строка 1', 'Строка 2', 'Строка 3', 'Строка 4', 'Строка 5'] * 10,
-    'Колонка B': ['Данные 1', 'Данные 2', 'Данные 3', 'Данные 4', 'Данные 5'] * 10
+    'Левый столбец': ['Текст 1', 'Текст 2', 'Текст 3'],
+    'Правый столбец': ['Значение 1', 'Значение 2', 'Значение 3']
 })
 
-# Таблица на всю ширину контейнера
-st.dataframe(df, use_container_width=True)
+# Редактируемая таблица с настройкой ширины
+edited_df = st.data_editor(
+    df,
+    use_container_width=True,
+    hide_index=True,
+    column_config={
+        'Левый столбец': st.column_config.Column(width="large"),
+        'Правый столбец': st.column_config.Column(width="large")
+    }
+)
