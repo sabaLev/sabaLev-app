@@ -1,26 +1,30 @@
 import streamlit as st
 
-st.set_page_config(layout="wide")
+# Отключаем некоторые responsive-стили
+st.markdown(
+    """
+    <style>
+    .st-emotion-cache-1r6slb0 {
+        flex-wrap: nowrap !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
-# Создаем основной контейнер
-main_container = st.container()
+col1, col2 = st.columns(2, gap="small")
 
-with main_container:
-    # Создаем две колонки
-    left_col, right_col = st.columns(2)
-    
-    # Левая колонка в своем контейнере
-    with left_col:
-        col1_container = st.container()
-        with col1_container:
-            st.checkbox("Чекбокс 1", key="cb1")
-            st.text_input("Введите текст 1", key="ti1")
-            st.slider("Слайдер 1", 0, 100, 50, key="s1")
-    
-    # Правая колонка в своем контейнере
-    with right_col:
-        col2_container = st.container()
-        with col2_container:
-            st.checkbox("Чекбокс 2", key="cb2")
-            st.text_input("Введите текст 2", key="ti2")
-            st.slider("Слайдер 2", 0, 100, 30, key="s2")
+with col1:
+    # Используем markdown для создания блока
+    st.markdown('<div style="min-height: 200px;">', unsafe_allow_html=True)
+    st.checkbox("Опция A", value=True)
+    st.text_input("Имя пользователя", placeholder="Введите имя")
+    st.number_input("Количество", min_value=1, max_value=10, value=5)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+with col2:
+    st.markdown('<div style="min-height: 200px;">', unsafe_allow_html=True)
+    st.checkbox("Опция B")
+    st.text_input("Email", placeholder="email@example.com")
+    st.selectbox("Выберите вариант", ["Вариант 1", "Вариант 2", "Вариант 3"])
+    st.markdown('</div>', unsafe_allow_html=True)
