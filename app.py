@@ -1,28 +1,31 @@
-# Установите: pip install streamlit-aggrid
-from st_aggrid import AgGrid, GridOptionsBuilder
-import pandas as pd
 import streamlit as st
 
-st.title("AgGrid с мобильной оптимизацией")
+st.title("Лучшее что можно сделать в нативном Streamlit")
 
+# 1. Использовать number_input для чисел
+st.subheader("1. Отдельные поля для чисел")
+col1, col2 = st.columns(2)
+
+with col1:
+    price = st.number_input("Цена", min_value=0.0, value=100.0, step=0.01, format="%.2f")
+
+with col2:
+    quantity = st.number_input("Количество", min_value=0, value=1, step=1)
+
+st.write(f"Итого: **{price * quantity:.2f}**")
+
+# 2. Data editor с подсказками
+st.subheader("2. Таблица с подсказками")
 df = pd.DataFrame({
-    'ID': [1, 2, 3],
-    'Цена': [100.0, 200.0, 300.0],
-    'Количество': [5, 3, 7]
+    'Число (нажмите 2 раза)': [100, 200],
+    'Текст': ['A', 'B']
 })
 
-gb = GridOptionsBuilder.from_dataframe(df)
-
-# Настройка колонок для чисел
-gb.configure_column('Цена', type=["numericColumn", "numberColumnFilter"])
-gb.configure_column('Количество', type=["numericColumn"])
-
-grid_options = gb.build()
-
-AgGrid(
+edited = st.data_editor(
     df,
-    gridOptions=grid_options,
-    enable_enterprise_modules=False,
-    height=300,
-    theme='streamlit'
+    column_config={
+        'Число (нажмите 2 раза)': st.column_config.NumberColumn(
+            help="На телефоне: нажмите 2 раза для точного ввода"
+        )
+    }
 )
