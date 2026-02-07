@@ -1,32 +1,95 @@
 import streamlit as st
 import pandas as pd
-from datetime import date
+from datetime import datetime, time, date
 
-st.title("Демо всех типов полей")
+st.title("Демонстрация типов полей таблицы")
 
+# Создаем простую таблицу с одним набором данных
 df = pd.DataFrame({
-    'Текст': ['Пример'],
-    'Число': [100],
-    'Десятичное': [50.5],
-    'Чекбокс': [True],
-    'Выбор': ['Опция A'],
-    'Дата': [date(2023, 1, 1)],
-    'Ссылка': ['https://example.com'],
-    'Прогресс': [0.7]
+    'ID': [1],
+    'Название': ['Пример товара'],
+    'Количество': [10],
+    'Цена': [100.50],
+    'Активен': [True],
+    'Категория': ['Электроника'],
+    'Дата_добавления': [date.today()],
+    'Время_доставки': [time(14, 30)],  # Конкретное время 14:30
+    'Последнее_обновление': [datetime.now()],
+    'Статус': ['В обработке']
 })
 
-edited = st.data_editor(
+# Отображаем таблицу с возможностью редактирования
+edited_df = st.data_editor(
     df,
+    num_rows="fixed",
+    use_container_width=True,
     column_config={
-        'Текст': st.column_config.TextColumn("Текст", max_chars=50),
-        'Число': st.column_config.NumberColumn("Целое", min_value=0, max_value=1000, step=1),
-        'Десятичное': st.column_config.NumberColumn("Дробное", format="%.2f", step=0.1),
-        'Чекбокс': st.column_config.CheckboxColumn("Статус"),
-        'Выбор': st.column_config.SelectboxColumn("Список", options=['Опция A', 'Опция B', 'Опция C']),
-        'Дата': st.column_config.DateColumn("Календарь"),
-        'Ссылка': st.column_config.LinkColumn("Ссылка"),
-        'Прогресс': st.column_config.ProgressColumn("Прогресс", format="%.0f%%")
+        'ID': st.column_config.NumberColumn(
+            "ID",
+            disabled=True,
+            help="Идентификатор записи"
+        ),
+        'Название': st.column_config.TextColumn(
+            "Название товара",
+            max_chars=100,
+            help="Введите название до 100 символов"
+        ),
+        'Количество': st.column_config.NumberColumn(
+            "Количество",
+            min_value=0,
+            max_value=1000,
+            step=1,
+            format="%d шт.",
+            help="Количество товара на складе"
+        ),
+        'Цена': st.column_config.NumberColumn(
+            "Цена",
+            min_value=0.0,
+            max_value=10000.0,
+            step=0.01,
+            format="%.2f ₽",
+            help="Цена товара в рублях"
+        ),
+        'Активен': st.column_config.CheckboxColumn(
+            "Активен",
+            help="Товар доступен для продажи"
+        ),
+        'Категория': st.column_config.SelectboxColumn(
+            "Категория",
+            options=['Электроника', 'Одежда', 'Книги', 'Продукты', 'Другое'],
+            help="Выберите категорию товара"
+        ),
+        'Дата_добавления': st.column_config.DateColumn(
+            "Дата добавления",
+            format="DD.MM.YYYY",
+            help="Дата добавления товара"
+        ),
+        'Время_доставки': st.column_config.TimeColumn(
+            "Время доставки",
+            format="HH:mm",
+            help="Планируемое время доставки"
+        ),
+        'Последнее_обновление': st.column_config.DatetimeColumn(
+            "Последнее обновление",
+            format="DD.MM.YYYY HH:mm",
+            help="Дата и время последнего обновления"
+        ),
+        'Статус': st.column_config.TextColumn(
+            "Статус заказа",
+            help="Текущий статус обработки"
+        )
     }
 )
 
-st.write("Итог:", edited)
+st.write("### Отредактированные данные:")
+st.dataframe(edited_df)
+
+# Показать разницу между исходными и отредактированными данными
+st.write("### Сравнение с исходными данными:")
+col1, col2 = st.columns(2)
+with col1:
+    st.write("**Исходные данные:**")
+    st.write(df)
+with col2:
+    st.write("**Отредактированные данные:**")
+    st.write(edited_df)
