@@ -1,12 +1,20 @@
-# 1. Самый простой
-value = st.slider("Выберите", 0, 100)
+st.header("10. Интерактивный пример")
 
-# 2. С диапазоном
-range_val = st.slider("Диапазон", 0, 100, (25, 75))
+col1, col2 = st.columns(2)
 
-# 3. С временем
-from datetime import time
-time_val = st.slider("Время", value=time(12, 0))
+with col1:
+    # Слайдер для настройки параметров другого слайдера
+    min_val = st.slider("Минимальное значение", -100, 0, -50)
+    max_val = st.slider("Максимальное значение", 0, 100, 50)
+    step_val = st.slider("Шаг", 1, 20, 5)
 
-# 4. Select слайдер
-select_val = st.select_slider("Выбор", options=[1, 2, 3, 4, 5])
+with col2:
+    # Динамический слайдер
+    dynamic_slider = st.slider(
+        "Динамический слайдер",
+        min_value=min_val,
+        max_value=max_val,
+        value=(min_val + max_val) // 2,
+        step=step_val
+    )
+    st.metric("Результат", dynamic_slider)
