@@ -1,29 +1,14 @@
 import streamlit as st
-import pandas as pd
-from datetime import datetime
 
-st.title("Таблица с типами полей Streamlit")
+# Панель управления вверху
+with st.expander("⚙️ Панель управления - нажмите чтобы открыть", expanded=True):
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.selectbox("Фильтр", ["Все", "Активные", "Завершенные"])
+    with col2:
+        st.slider("Диапазон", 0, 100, (25, 75))
+    with col3:
+        st.button("Применить")
 
-# Простая таблица
-df = pd.DataFrame({
-    'Текст': ['Введите текст здесь'],
-    'Число': [50],
-    'Чекбокс': [True],
-    'Выбор': ['Вариант A']
-})
-
-edited_df = st.data_editor(
-    df,
-    column_config={
-        'Текст': st.column_config.TextColumn("Текстовое поле"),
-        'Число': st.column_config.NumberColumn("Числовое поле", step=1),
-        'Чекбокс': st.column_config.CheckboxColumn("Флажок"),
-        'Выбор': st.column_config.SelectboxColumn(
-            "Выпадающий список",
-            options=['Вариант A', 'Вариант B', 'Вариант C']
-        )
-    }
-)
-
-st.write("Отредактированные данные:")
-st.write(edited_df)
+# Основной контент
+st.title("Основное содержимое")
