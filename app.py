@@ -1,25 +1,20 @@
-st.title("Тест лазейки №2: container с высотой")
+st.title("Тест лазейки №3: st.empty() как плейсхолдер")
 
-# Создаем контейнер
-container = st.container()
+# Создаем "дырки" для наших элементов
+placeholder1 = st.empty()
+placeholder2 = st.empty()
 
-# Заполняем контейнер
-with container:
-    # Пытаемся сделать свою разметку внутри
-    html_code = """
-    <div style="
-        display: flex !important;
-        width: 100% !important;
-        border: 2px solid blue;
-        padding: 10px;
-        height: 60px !important;  # ФИКСИРОВАННАЯ высота
-        overflow: hidden !important;
-    ">
-        <div style="width:50px; background:lightgreen; text-align:center;">✓</div>
-        <div style="flex:1; text-align:right; padding-right:15px;">טקסט בעברית</div>
-    </div>
-    """
-    st.markdown(html_code, unsafe_allow_html=True)
-    
-    # Пробуем вставить нативный элемент
-    st.checkbox("Чекбокс в контейнере", key="cb_container")
+# Заполняем их ВРУЧНУЮ
+with placeholder1.container():
+    col1, col2 = st.columns([1, 3])
+    with col1:
+        st.checkbox("", key="cb_empty1", label_visibility="collapsed")
+    with col2:
+        st.markdown("מהדק הארקה")
+
+with placeholder2.container():
+    col1, col2 = st.columns([1, 3])
+    with col1:
+        st.checkbox("", key="cb_empty2", label_visibility="collapsed")
+    with col2:
+        st.markdown("מהדק אמצע")
