@@ -391,14 +391,28 @@ st.markdown("""
         border: none !important;
         box-shadow: none !important;
     }
+    .input-text-size {
+        font-size: 16px !important;
+        padding: 0.25rem 0.75rem !important;
+    }
+    .checkbox-container {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        width: 100%;
+    }
+    .full-width-input {
+        width: 100% !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 # Секция вертикальных панелей - עומדים
 with st.expander("**עומדים**", expanded=True):
     vh = st.columns(2)
-    vh[0].markdown(right_label("שורות"), unsafe_allow_html=True)
-    vh[1].markdown(right_label("פאנלים"), unsafe_allow_html=True)
+    # Меняем местами колонки: сначала פאנלים, потом שורות
+    vh[0].markdown(right_label("פאנלים"), unsafe_allow_html=True)
+    vh[1].markdown(right_label("שורות"), unsafe_allow_html=True)
     
     vertical_rows = st.session_state.vertical_rows
     for i in range(1, vertical_rows + 1):
@@ -409,18 +423,12 @@ with st.expander("**עומדים**", expanded=True):
         else:
             default_n = 0
         
-        g = c0.number_input(
-            "",
-            0, 50, default_g,
-            key=f"g_g_vertical_{i}",
-            label_visibility="collapsed",
-        )
-        
-        with c1:
+        # Левая колонка: количество панелей (פאנלים)
+        with c0:
             if i <= 8:
                 # Предустановленные значения 1-8 - не редактируемые
                 st.markdown(
-                    f'<div class="readonly-cell">{i}</div>',
+                    f'<div class="readonly-cell input-text-size">{i}</div>',
                     unsafe_allow_html=True
                 )
                 n = i  # Сохраняем значение для расчетов
@@ -433,6 +441,15 @@ with st.expander("**עומדים**", expanded=True):
                     label_visibility="collapsed",
                 )
         
+        # Правая колонка: количество рядов (שורות)
+        with c1:
+            g = st.number_input(
+                "",
+                0, 50, default_g,
+                key=f"g_g_vertical_{i}",
+                label_visibility="collapsed",
+            )
+        
         if n > 0 and g > 0:
             groups.append((n, g, "עומד"))
     
@@ -443,8 +460,9 @@ with st.expander("**עומדים**", expanded=True):
 # Секция горизонтальных панелей - שוכבים
 with st.expander("**שוכבים**", expanded=True):
     hh = st.columns(2)
-    hh[0].markdown(right_label("שורות"), unsafe_allow_html=True)
-    hh[1].markdown(right_label("פאנלים"), unsafe_allow_html=True)
+    # Меняем местами колонки: сначала פאנלים, потом שורות
+    hh[0].markdown(right_label("פאנלים"), unsafe_allow_html=True)
+    hh[1].markdown(right_label("שורות"), unsafe_allow_html=True)
     
     horizontal_rows = st.session_state.horizontal_rows
     for i in range(1, horizontal_rows + 1):
@@ -455,18 +473,12 @@ with st.expander("**שוכבים**", expanded=True):
         else:
             default_n = 0
         
-        g = c0.number_input(
-            "",
-            0, 50, default_g,
-            key=f"g_g_horizontal_{i}",
-            label_visibility="collapsed",
-        )
-        
-        with c1:
+        # Левая колонка: количество панелей (פאנלים)
+        with c0:
             if i <= 4:
                 # Предустановленные значения 1-4 - не редактируемые
                 st.markdown(
-                    f'<div class="readonly-cell">{i}</div>',
+                    f'<div class="readonly-cell input-text-size">{i}</div>',
                     unsafe_allow_html=True
                 )
                 n = i  # Сохраняем значение для расчетов
@@ -478,6 +490,15 @@ with st.expander("**שוכבים**", expanded=True):
                     key=f"g_n_horizontal_{i}",
                     label_visibility="collapsed",
                 )
+        
+        # Правая колонка: количество рядов (שורות)
+        with c1:
+            g = st.number_input(
+                "",
+                0, 50, default_g,
+                key=f"g_g_horizontal_{i}",
+                label_visibility="collapsed",
+            )
         
         if n > 0 and g > 0:
             groups.append((n, g, "שוכב"))
@@ -1092,7 +1113,10 @@ if calc_result is not None:
                 # Уникальный ключ
                 inc_key = f"fast_inc_{lbl}_{st.session_state.calculation_counter}"
                 inc_default = st.session_state.fasteners_include.get(lbl, True)
+                # Добавляем CSS класс для центрирования чекбокса по правому краю
+                st.markdown('<div class="checkbox-container">', unsafe_allow_html=True)
                 inc_val = st.checkbox(lbl, value=inc_default, key=inc_key, label_visibility="visible")
+                st.markdown('</div>', unsafe_allow_html=True)
                 
                 if inc_val != st.session_state.fasteners_include.get(lbl, True):
                     st.session_state.fasteners_include[lbl] = bool(inc_val)
