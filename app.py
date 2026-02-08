@@ -377,7 +377,7 @@ st.markdown("""
         direction: rtl;
     }
     .readonly-cell {
-        background-color: #f0f2f6;
+        background-color: #F1F2F6;
         border-radius: 8px;
         padding: 8px 12px;
         text-align: center;
