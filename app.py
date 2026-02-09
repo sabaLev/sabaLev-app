@@ -404,6 +404,9 @@ st.markdown("""
     .full-width-input {
         width: 100% !important;
     }
+    .stExpander div[data-testid="stNumberInput"] input {
+        text-align: center !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
