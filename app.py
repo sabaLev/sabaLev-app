@@ -363,6 +363,79 @@ panel = panel_rows.iloc[0]
 # ---------- GROUPS ----------
 groups = []
 
+# JavaScript для отслеживания темы Streamlit
+components.html(
+    """
+    <script>
+    // Функция для определения текущей темы
+    function getStreamlitTheme() {
+        const appElement = document.querySelector('.stApp');
+        if (!appElement) return 'light';
+        
+        const bgColor = window.getComputedStyle(appElement).backgroundColor;
+        // Streamlit светлая тема: фон rgb(255, 255, 255) или близкий к белому
+        // Streamlit темная тема: фон rgb(14, 17, 23) или близкий к черному
+        const rgb = bgColor.match(/\d+/g);
+        if (rgb && rgb.length >= 3) {
+            const brightness = (parseInt(rgb[0]) + parseInt(rgb[1]) + parseInt(rgb[2])) / 3;
+            return brightness > 128 ? 'light' : 'dark';
+        }
+        return 'light';
+    }
+    
+    // Функция для применения цветов в зависимости от темы
+    function applyThemeColors() {
+        const theme = getStreamlitTheme();
+        const style = document.getElementById('theme-dynamic-styles');
+        
+        if (theme === 'light') {
+            style.innerHTML = `
+                .readonly-cell, .column-header {
+                    background-color: #26272F !important;
+                    color: #F1F2F6 !important;
+                }
+            `;
+        } else {
+            style.innerHTML = `
+                .readonly-cell, .column-header {
+                    background-color: #F1F2F6 !important;
+                    color: #26272F !important;
+                }
+            `;
+        }
+    }
+    
+    // Создаем элемент style для динамических стилей
+    const styleElement = document.createElement('style');
+    styleElement.id = 'theme-dynamic-styles';
+    document.head.appendChild(styleElement);
+    
+    // Применяем начальные цвета
+    applyThemeColors();
+    
+    // Наблюдаем за изменениями в DOM (для отслеживания смены темы)
+    const observer = new MutationObserver(function(mutations) {
+        applyThemeColors();
+    });
+    
+    // Наблюдаем за изменениями атрибутов у всего документа
+    observer.observe(document.documentElement, {
+        attributes: true,
+        childList: true,
+        subtree: true,
+        attributeFilter: ['class', 'style']
+    });
+    
+    // Также наблюдаем за изменениями в body
+    observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style']
+    });
+    </script>
+    """,
+    height=0,
+)
+
 st.markdown("""
     <style>
     .streamlit-expanderHeader svg {
@@ -377,53 +450,25 @@ st.markdown("""
         direction: rtl;
     }
     
-    /* Общий стиль для заголовков столбцов */
+    /* Общий стиль для заголовков столбцов и ячеек */
+    .column-header, .readonly-cell {
+        border-radius: 8px;
+        padding: 8px 12px;
+        text-align: center;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 38px;
+        margin: 1px 0;
+        border: none !important;
+        box-shadow: none !important;
+        transition: all 0.2s ease;
+    }
+    
+    /* Специально для column-header добавим жирный шрифт */
     .column-header {
-        border-radius: 8px;
-        padding: 8px 12px;
-        text-align: center;
-        font-size: 14px;
         font-weight: bold;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 38px;
-        margin: 1px 0;
-        border: none !important;
-        box-shadow: none !important;
-        transition: all 0.2s ease;
-    }
-    
-    /* Инвертированные ячейки и заголовки */
-    .readonly-cell, .column-header {
-        border-radius: 8px;
-        padding: 8px 12px;
-        text-align: center;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 38px;
-        margin: 1px 0;
-        border: none !important;
-        box-shadow: none !important;
-        transition: all 0.2s ease;
-    }
-    
-    /* Светлая тема */
-    @media (prefers-color-scheme: light) {
-        .readonly-cell, .column-header {
-            background-color: #26272F !important;
-            color: #FBFBFA !important;
-        }
-    }
-    
-    /* Темная тема */
-    @media (prefers-color-scheme: dark) {
-        .readonly-cell, .column-header {
-            background-color: #FBFBFA !important;
-            color: #26272F !important;
-        }
     }
     
     .input-text-size {
