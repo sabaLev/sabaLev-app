@@ -376,13 +376,14 @@ st.markdown("""
         text-align: right;
         direction: rtl;
     }
-    .readonly-cell {
-        background-color: #F1F2F6;
+    
+    /* Общий стиль для заголовков столбцов */
+    .column-header {
         border-radius: 8px;
         padding: 8px 12px;
         text-align: center;
         font-size: 14px;
-        color: #31333F;
+        font-weight: bold;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -390,21 +391,65 @@ st.markdown("""
         margin: 1px 0;
         border: none !important;
         box-shadow: none !important;
+        transition: all 0.2s ease;
     }
+    
+    /* Инвертированные ячейки и заголовки */
+    .readonly-cell, .column-header {
+        border-radius: 8px;
+        padding: 8px 12px;
+        text-align: center;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 38px;
+        margin: 1px 0;
+        border: none !important;
+        box-shadow: none !important;
+        transition: all 0.2s ease;
+    }
+    
+    /* Светлая тема */
+    @media (prefers-color-scheme: light) {
+        .readonly-cell, .column-header {
+            background-color: #26272F !important;
+            color: #FBFBFA !important;
+        }
+    }
+    
+    /* Темная тема */
+    @media (prefers-color-scheme: dark) {
+        .readonly-cell, .column-header {
+            background-color: #FBFBFA !important;
+            color: #26272F !important;
+        }
+    }
+    
     .input-text-size {
         font-size: 16px !important;
         padding: 0.25rem 0.75rem !important;
     }
+    
     .checkbox-container {
         display: flex;
         justify-content: flex-end;
         align-items: center;
         width: 100%;
     }
+    
     .full-width-input {
         width: 100% !important;
     }
-    .stExpander div[data-testid="stNumberInput"] input {
+    
+    /* Выравнивание по центру для всех полей ввода */
+    div[data-testid="stNumberInput"] input {
+        text-align: center !important;
+    }
+    div[data-testid="stTextInput"] input {
+        text-align: center !important;
+    }
+    div[data-testid="stSelectbox"] div {
         text-align: center !important;
     }
     </style>
@@ -414,8 +459,10 @@ st.markdown("""
 with st.expander("**עומדים**", expanded=True):
     vh = st.columns(2)
     # Меняем местами колонки: сначала פאנלים, потом שורות
-    vh[0].markdown(right_label("פאנלים"), unsafe_allow_html=True)
-    vh[1].markdown(right_label("שורות"), unsafe_allow_html=True)
+    with vh[0]:
+        st.markdown('<div class="column-header">פאנלים</div>', unsafe_allow_html=True)
+    with vh[1]:
+        st.markdown('<div class="column-header">שורות</div>', unsafe_allow_html=True)
     
     vertical_rows = st.session_state.vertical_rows
     for i in range(1, vertical_rows + 1):
@@ -464,8 +511,10 @@ with st.expander("**עומדים**", expanded=True):
 with st.expander("**שוכבים**", expanded=True):
     hh = st.columns(2)
     # Меняем местами колонки: сначала פאנלים, потом שורות
-    hh[0].markdown(right_label("פאנלים"), unsafe_allow_html=True)
-    hh[1].markdown(right_label("שורות"), unsafe_allow_html=True)
+    with hh[0]:
+        st.markdown('<div class="column-header">פאנלים</div>', unsafe_allow_html=True)
+    with hh[1]:
+        st.markdown('<div class="column-header">שורות</div>', unsafe_allow_html=True)
     
     horizontal_rows = st.session_state.horizontal_rows
     for i in range(1, horizontal_rows + 1):
