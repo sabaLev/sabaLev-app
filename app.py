@@ -228,7 +228,7 @@ st.markdown(right_label("שם פרויקט"), unsafe_allow_html=True)
 project_name = st.text_input(
     "",
     value=st.session_state.project_name,
-    key="project_name_input",  # Убрал f-string чтобы был постоянный ID
+    key="project_name_input",
     label_visibility="collapsed",
 )
 st.session_state.project_name = project_name
@@ -348,7 +348,7 @@ panel_name = st.selectbox(
     "",
     panel_options,
     index=default_index,
-    key="panel_select",  # Убрал f-string для постоянства
+    key="panel_select",
     label_visibility="collapsed",
 )
 st.session_state.panel_name = panel_name
@@ -363,99 +363,71 @@ panel = panel_rows.iloc[0]
 # ---------- GROUPS ----------
 groups = []
 
-# ВОЗВРАЩАЕМ РАБОЧИЙ СКРИПТ, КОТОРЫЙ МЫ НИКОГДА НЕ ТЕСТИРОВАЛИ
+# ========== ЕДИНСТВЕННЫЙ ПРАВИЛЬНЫЙ CSS ==========
 st.markdown("""
-    <style>
-    .streamlit-expanderHeader svg {
-        transform: rotate(0deg);
-        transition: transform 0.3s;
-    }
-    .streamlit-expanderHeader[aria-expanded="true"] svg {
-        transform: rotate(-90deg);
-    }
-    .streamlit-expanderHeader {
-        text-align: right;
-        direction: rtl;
-    }
-    
-    /* Базовый класс для ячеек - ТОЛЬКО СТРУКТУРА, БЕЗ ЦВЕТОВ */
-    .preset-cell {
-        border-radius: 8px;
-        padding: 8px 12px;
-        text-align: left;
-        font-size: 16px;
-        display: flex;
-        align-items: center;
-        min-height: 38px;
-        margin: 1px 0;
-        border: none !important;
-        box-shadow: none !important;
-        width: 100%;
-        box-sizing: border-box;
-    }
-    
-    .preset-cell.header-cell {
-        font-weight: 700;
-        text-align: center;
-        justify-content: center;
-    }
-    
-    .preset-cell.number-cell {
-        font-weight: 400;
-    }
-    
-    .input-text-size {
-        font-size: 16px !important;
-        padding: 0.25rem 0.75rem !important;
-    }
-    .checkbox-container {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        width: 100%;
-    }
-    .full-width-input {
-        width: 100% !important;
-    }
-    </style>
-    
-    <script>
-    // Функция для получения цвета с поля "שם פרויקט"
-    function getInputColors() {
-        const input = document.querySelector('#project_name_input');
-        if (input) {
-            const style = window.getComputedStyle(input);
-            return {
-                backgroundColor: style.backgroundColor,
-                color: style.color
-            };
-        }
-        return null;
-    }
-    
-    // Функция для применения цветов ко всем нашим ячейкам
-    function applyColorsToCells() {
-        const colors = getInputColors();
-        if (colors) {
-            const cells = document.querySelectorAll('.preset-cell');
-            cells.forEach(cell => {
-                cell.style.backgroundColor = colors.backgroundColor;
-                cell.style.color = colors.color;
-            });
-        }
-    }
-    
-    // Применяем при загрузке
-    document.addEventListener('DOMContentLoaded', applyColorsToCells);
-    
-    // Применяем при любых изменениях в DOM
-    const observer = new MutationObserver(applyColorsToCells);
-    observer.observe(document.body, { childList: true, subtree: true, attributes: true });
-    
-    // Применяем также каждую секунду для надежности
-    setInterval(applyColorsToCells, 1000);
-    </script>
+<style>
+
+/* Expander RTL */
+.streamlit-expanderHeader svg {
+    transform: rotate(0deg);
+    transition: transform 0.3s;
+}
+.streamlit-expanderHeader[aria-expanded="true"] svg {
+    transform: rotate(-90deg);
+}
+.streamlit-expanderHeader {
+    text-align: right;
+    direction: rtl;
+}
+
+/* 🔥 НАТИВНЫЕ ЯЧЕЙКИ — используют тему Streamlit */
+.preset-cell {
+    background-color: var(--secondary-background-color);
+    color: var(--text-color);
+
+    border-radius: 8px;
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    min-height: 38px;
+    margin: 1px 0;
+    border: none !important;
+    box-shadow: none !important;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.preset-cell.header-cell {
+    font-weight: 700;
+    text-align: center;
+    justify-content: center;
+}
+
+.preset-cell.number-cell {
+    font-weight: 400;
+}
+
+.input-text-size {
+    font-size: 16px !important;
+    padding: 0.25rem 0.75rem !important;
+}
+
+.checkbox-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    width: 100%;
+}
+
+.full-width-input {
+    width: 100% !important;
+}
+
+</style>
 """, unsafe_allow_html=True)
+# ========== КОНЕЦ CSS ==========
 
 # Секция вертикальных панелей - עומדים
 with st.expander("**עומדים**", expanded=True):
