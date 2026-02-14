@@ -363,7 +363,7 @@ panel = panel_rows.iloc[0]
 # ---------- GROUPS ----------
 groups = []
 
-# ИСПРАВЛЕННЫЙ CSS С ИСПОЛЬЗОВАНИЕМ СИСТЕМНЫХ ЦВЕТОВ БРАУЗЕРА
+# ЕДИНСТВЕННОЕ РАБОЧЕЕ РЕШЕНИЕ - CSS + JavaScript
 st.markdown("""
     <style>
     .streamlit-expanderHeader svg {
@@ -378,10 +378,8 @@ st.markdown("""
         direction: rtl;
     }
     
-    /* Класс для ячеек с предустановленными значениями и заголовков */
+    /* Базовый класс для ячеек - только структура, без цвета */
     .preset-cell {
-        background-color: field;
-        color: fieldtext;
         border-radius: 8px;
         padding: 8px 12px;
         text-align: left;
@@ -394,16 +392,17 @@ st.markdown("""
         box-shadow: none !important;
         width: 100%;
         box-sizing: border-box;
+        /* Временный цвет на момент загрузки */
+        background-color: #f0f2f6;
+        color: #31333F;
     }
     
-    /* Специальный класс для заголовков - жирный шрифт и по центру */
     .preset-cell.header-cell {
         font-weight: 700;
         text-align: center;
         justify-content: center;
     }
     
-    /* Для цифр оставляем обычный вес и левое выравнивание */
     .preset-cell.number-cell {
         font-weight: 400;
     }
@@ -422,6 +421,52 @@ st.markdown("""
         width: 100% !important;
     }
     </style>
+    
+    <script>
+    // Функция для получения реального цвета фона поля ввода
+    function getInputBackgroundColor() {
+        // Находим любое поле ввода на странице
+        const input = document.querySelector('input[type="text"], input[type="number"]');
+        if (input) {
+            // Получаем реальный цвет (даже если он из родительского элемента)
+            const style = window.getComputedStyle(input);
+            return style.backgroundColor;
+        }
+        return '#f0f2f6'; // fallback цвет
+    }
+    
+    // Функция для получения реального цвета текста
+    function getInputTextColor() {
+        const input = document.querySelector('input[type="text"], input[type="number"]');
+        if (input) {
+            const style = window.getComputedStyle(input);
+            return style.color;
+        }
+        return '#31333F';
+    }
+    
+    // Функция для применения цветов ко всем нашим ячейкам
+    function applyColorsToCells() {
+        const bgColor = getInputBackgroundColor();
+        const textColor = getInputTextColor();
+        
+        const cells = document.querySelectorAll('.preset-cell');
+        cells.forEach(cell => {
+            cell.style.backgroundColor = bgColor;
+            cell.style.color = textColor;
+        });
+    }
+    
+    // Применяем при загрузке
+    document.addEventListener('DOMContentLoaded', applyColorsToCells);
+    
+    // Применяем после любых изменений в DOM
+    const observer = new MutationObserver(applyColorsToCells);
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    // Применяем также при переключении темы (каждые 2 секунды)
+    setInterval(applyColorsToCells, 2000);
+    </script>
 """, unsafe_allow_html=True)
 
 # Секция вертикальных панелей - עומדים
