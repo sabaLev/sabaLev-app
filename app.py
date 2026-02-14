@@ -363,7 +363,7 @@ panel = panel_rows.iloc[0]
 # ---------- GROUPS ----------
 groups = []
 
-# ИСПРАВЛЕННЫЙ CSS С ИСПОЛЬЗОВАНИЕМ ПЕРЕМЕННЫХ STREAMLIT
+# ИСПРАВЛЕННЫЙ CSS С ИСПОЛЬЗОВАНИЕМ СИСТЕМНЫХ ЦВЕТОВ БРАУЗЕРА
 st.markdown("""
     <style>
     .streamlit-expanderHeader svg {
@@ -380,8 +380,8 @@ st.markdown("""
     
     /* Класс для ячеек с предустановленными значениями и заголовков */
     .preset-cell {
-        background-color: var(--secondary-background-color);
-        color: var(--text-color);
+        background-color: field;
+        color: fieldtext;
         border-radius: 8px;
         padding: 8px 12px;
         text-align: left;
