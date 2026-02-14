@@ -376,33 +376,13 @@ st.markdown("""
         text-align: right;
         direction: rtl;
     }
-    
-    /* Стили для заголовков столбцов */
-    .column-header {
-        background-color: #26272F;
-        color: #F1F2F6;
-        border-radius: 8px;
-        padding: 8px 12px;
-        text-align: center;
-        font-size: 14px;
-        font-weight: bold;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 38px;
-        margin: 1px 0;
-        border: none !important;
-        box-shadow: none !important;
-    }
-    
-    /* Стили для нередактируемых ячеек */
     .readonly-cell {
-        background-color: #26272F;
-        color: #F1F2F6;
+        background-color: #F1F2F6;
         border-radius: 8px;
         padding: 8px 12px;
         text-align: center;
         font-size: 14px;
+        color: #31333F;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -411,32 +391,18 @@ st.markdown("""
         border: none !important;
         box-shadow: none !important;
     }
-    
     .input-text-size {
         font-size: 16px !important;
         padding: 0.25rem 0.75rem !important;
     }
-    
     .checkbox-container {
         display: flex;
         justify-content: flex-end;
         align-items: center;
         width: 100%;
     }
-    
     .full-width-input {
         width: 100% !important;
-    }
-    
-    /* Выравнивание по центру для всех полей ввода */
-    div[data-testid="stNumberInput"] input {
-        text-align: center !important;
-    }
-    div[data-testid="stTextInput"] input {
-        text-align: center !important;
-    }
-    div[data-testid="stSelectbox"] div {
-        text-align: center !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -445,10 +411,8 @@ st.markdown("""
 with st.expander("**עומדים**", expanded=True):
     vh = st.columns(2)
     # Меняем местами колонки: сначала פאנלים, потом שורות
-    with vh[0]:
-        st.markdown('<div class="column-header">פאנלים</div>', unsafe_allow_html=True)
-    with vh[1]:
-        st.markdown('<div class="column-header">שורות</div>', unsafe_allow_html=True)
+    vh[0].markdown(right_label("פאנלים"), unsafe_allow_html=True)
+    vh[1].markdown(right_label("שורות"), unsafe_allow_html=True)
     
     vertical_rows = st.session_state.vertical_rows
     for i in range(1, vertical_rows + 1):
@@ -497,10 +461,8 @@ with st.expander("**עומדים**", expanded=True):
 with st.expander("**שוכבים**", expanded=True):
     hh = st.columns(2)
     # Меняем местами колонки: сначала פאנלים, потом שורות
-    with hh[0]:
-        st.markdown('<div class="column-header">פאנלים</div>', unsafe_allow_html=True)
-    with hh[1]:
-        st.markdown('<div class="column-header">שורות</div>', unsafe_allow_html=True)
+    hh[0].markdown(right_label("פאנלים"), unsafe_allow_html=True)
+    hh[1].markdown(right_label("שורות"), unsafe_allow_html=True)
     
     horizontal_rows = st.session_state.horizontal_rows
     for i in range(1, horizontal_rows + 1):
