@@ -363,6 +363,7 @@ panel = panel_rows.iloc[0]
 # ---------- GROUPS ----------
 groups = []
 
+# ОБНОВЛЕННЫЙ CSS С ИСПОЛЬЗОВАНИЕМ ПЕРЕМЕННЫХ ТЕМЫ STREAMLIT
 st.markdown("""
     <style>
     .streamlit-expanderHeader svg {
@@ -376,21 +377,37 @@ st.markdown("""
         text-align: right;
         direction: rtl;
     }
-    .readonly-cell {
-        background-color: #F1F2F6;
+    
+    /* Универсальный класс для ячеек с предустановленными значениями и заголовков */
+    .preset-cell {
+        background-color: var(--secondary-background-color);
+        color: var(--text-color);
         border-radius: 8px;
         padding: 8px 12px;
-        text-align: center;
-        font-size: 14px;
-        color: #31333F;
+        text-align: left;  /* Выравнивание по левому краю с отступом */
+        font-size: 16px;
         display: flex;
         align-items: center;
-        justify-content: center;
         min-height: 38px;
         margin: 1px 0;
         border: none !important;
         box-shadow: none !important;
+        width: 100%;
+        box-sizing: border-box;
     }
+    
+    /* Специальный класс для заголовков - жирный шрифт */
+    .preset-cell.header-cell {
+        font-weight: 700;
+        text-align: center;  /* Заголовки по центру */
+        justify-content: center;
+    }
+    
+    /* Для цифр оставляем обычный вес и левое выравнивание */
+    .preset-cell.number-cell {
+        font-weight: 400;
+    }
+    
     .input-text-size {
         font-size: 16px !important;
         padding: 0.25rem 0.75rem !important;
@@ -409,14 +426,24 @@ st.markdown("""
 
 # Секция вертикальных панелей - עומדים
 with st.expander("**עומדים**", expanded=True):
-    vh = st.columns(2)
-    # Меняем местами колонки: сначала פאנלים, потом שורות
-    vh[0].markdown(right_label("פאנלים"), unsafe_allow_html=True)
-    vh[1].markdown(right_label("שורות"), unsafe_allow_html=True)
+    # Создаем контейнер для сетки заголовков и ячеек
+    header_cols = st.columns(2)
+    
+    # Заголовки в том же стиле, что и ячейки, но жирным шрифтом и по центру
+    with header_cols[0]:
+        st.markdown(
+            '<div class="preset-cell header-cell">פאנלים</div>',
+            unsafe_allow_html=True
+        )
+    with header_cols[1]:
+        st.markdown(
+            '<div class="preset-cell header-cell">שורות</div>',
+            unsafe_allow_html=True
+        )
     
     vertical_rows = st.session_state.vertical_rows
     for i in range(1, vertical_rows + 1):
-        c0, c1 = st.columns(2)
+        row_cols = st.columns(2)
         default_g = 0
         if i <= 8:
             default_n = i
@@ -424,11 +451,11 @@ with st.expander("**עומדים**", expanded=True):
             default_n = 0
         
         # Левая колонка: количество панелей (פאנלים)
-        with c0:
+        with row_cols[0]:
             if i <= 8:
-                # Предустановленные значения 1-8 - не редактируемые
+                # Предустановленные значения 1-8 - не редактируемые, с левым выравниванием
                 st.markdown(
-                    f'<div class="readonly-cell input-text-size">{i}</div>',
+                    f'<div class="preset-cell number-cell">{i}</div>',
                     unsafe_allow_html=True
                 )
                 n = i  # Сохраняем значение для расчетов
@@ -442,7 +469,7 @@ with st.expander("**עומדים**", expanded=True):
                 )
         
         # Правая колонка: количество рядов (שורות)
-        with c1:
+        with row_cols[1]:
             g = st.number_input(
                 "",
                 0, 50, default_g,
@@ -459,14 +486,24 @@ with st.expander("**עומדים**", expanded=True):
 
 # Секция горизонтальных панелей - שוכבים
 with st.expander("**שוכבים**", expanded=True):
-    hh = st.columns(2)
-    # Меняем местами колонки: сначала פאנלים, потом שורות
-    hh[0].markdown(right_label("פאנלים"), unsafe_allow_html=True)
-    hh[1].markdown(right_label("שורות"), unsafe_allow_html=True)
+    # Создаем контейнер для сетки заголовков и ячеек
+    header_cols = st.columns(2)
+    
+    # Заголовки в том же стиле, что и ячейки, но жирным шрифтом и по центру
+    with header_cols[0]:
+        st.markdown(
+            '<div class="preset-cell header-cell">פאנלים</div>',
+            unsafe_allow_html=True
+        )
+    with header_cols[1]:
+        st.markdown(
+            '<div class="preset-cell header-cell">שורות</div>',
+            unsafe_allow_html=True
+        )
     
     horizontal_rows = st.session_state.horizontal_rows
     for i in range(1, horizontal_rows + 1):
-        c0, c1 = st.columns(2)
+        row_cols = st.columns(2)
         default_g = 0
         if i <= 4:
             default_n = i
@@ -474,11 +511,11 @@ with st.expander("**שוכבים**", expanded=True):
             default_n = 0
         
         # Левая колонка: количество панелей (פאנלים)
-        with c0:
+        with row_cols[0]:
             if i <= 4:
-                # Предустановленные значения 1-4 - не редактируемые
+                # Предустановленные значения 1-4 - не редактируемые, с левым выравниванием
                 st.markdown(
-                    f'<div class="readonly-cell input-text-size">{i}</div>',
+                    f'<div class="preset-cell number-cell">{i}</div>',
                     unsafe_allow_html=True
                 )
                 n = i  # Сохраняем значение для расчетов
@@ -492,7 +529,7 @@ with st.expander("**שוכבים**", expanded=True):
                 )
         
         # Правая колонка: количество рядов (שורות)
-        with c1:
+        with row_cols[1]:
             g = st.number_input(
                 "",
                 0, 50, default_g,
