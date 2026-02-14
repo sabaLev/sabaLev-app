@@ -363,7 +363,7 @@ panel = panel_rows.iloc[0]
 # ---------- GROUPS ----------
 groups = []
 
-# CSS + JavaScript с правильным селектором
+# ФИНАЛЬНЫЙ CSS С ПРАВИЛЬНЫМИ ЦВЕТАМИ И ОТСТУПАМИ
 st.markdown("""
     <style>
     .streamlit-expanderHeader svg {
@@ -378,8 +378,10 @@ st.markdown("""
         direction: rtl;
     }
     
-    /* Базовый класс для ячеек - только структура, без цвета */
+    /* Базовый класс для всех ячеек - одинаковые отступы */
     .preset-cell {
+        background-color: #FFFFFF;
+        color: #31333F;
         border-radius: 8px;
         padding: 8px 12px;
         text-align: left;
@@ -387,22 +389,28 @@ st.markdown("""
         display: flex;
         align-items: center;
         min-height: 38px;
-        margin: 1px 0;
+        margin: 1px 0;  /* ОДИНАКОВЫЕ отступы сверху и снизу */
         border: none !important;
         box-shadow: none !important;
         width: 100%;
         box-sizing: border-box;
-        /* Временный цвет на момент загрузки */
-        background-color: #f0f2f6;
-        color: #31333F;
     }
     
+    /* Тёмная тема - переопределяем цвета */
+    .dark .preset-cell {
+        background-color: #3B3B3B;
+        color: #FAFAFA;
+    }
+    
+    /* Заголовки - жирный шрифт и по центру, но отступы ТЕ ЖЕ */
     .preset-cell.header-cell {
         font-weight: 700;
         text-align: center;
         justify-content: center;
+        margin: 1px 0;  /* ЯВНО указываем те же отступы */
     }
     
+    /* Цифры - обычный вес и левое выравнивание */
     .preset-cell.number-cell {
         font-weight: 400;
     }
@@ -421,46 +429,6 @@ st.markdown("""
         width: 100% !important;
     }
     </style>
-    
-    <script>
-    // Функция для получения цвета с поля "שם פרויקט"
-    function getInputColors() {
-        // Используем точный селектор
-        const input = document.querySelector('#text_input_3');
-        if (input) {
-            const style = window.getComputedStyle(input);
-            return {
-                backgroundColor: style.backgroundColor,
-                color: style.color
-            };
-        }
-        return {
-            backgroundColor: '#f0f2f6',
-            color: '#31333F'
-        };
-    }
-    
-    // Функция для применения цветов ко всем нашим ячейкам
-    function applyColorsToCells() {
-        const colors = getInputColors();
-        
-        const cells = document.querySelectorAll('.preset-cell');
-        cells.forEach(cell => {
-            cell.style.backgroundColor = colors.backgroundColor;
-            cell.style.color = colors.color;
-        });
-    }
-    
-    // Применяем при загрузке
-    document.addEventListener('DOMContentLoaded', applyColorsToCells);
-    
-    // Применяем после любых изменений в DOM
-    const observer = new MutationObserver(applyColorsToCells);
-    observer.observe(document.body, { childList: true, subtree: true });
-    
-    // Применяем также при переключении темы
-    setInterval(applyColorsToCells, 2000);
-    </script>
 """, unsafe_allow_html=True)
 
 # Секция вертикальных панелей - עומדים
