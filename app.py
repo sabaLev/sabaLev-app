@@ -54,6 +54,58 @@ if "report_needs_update" not in st.session_state:
 if "previous_groups_hash" not in st.session_state:
     st.session_state.previous_groups_hash = None
 
+# ---------- ФУНКЦИЯ КОПИРОВАНИЯ СТИЛЕЙ ----------
+def inject_style_copier():
+    components.html(
+        """
+        <script>
+        setTimeout(function() {
+            const nativeInput = document.querySelector('[data-baseweb="base-input"] > div');
+            
+            if (nativeInput) {
+                const styles = window.getComputedStyle(nativeInput);
+                
+                let cssString = '.preset-cell {';
+                
+                const properties = [
+                    'background-color', 'border', 'border-radius', 'padding',
+                    'height', 'line-height', 'font-size', 'color', 'box-shadow',
+                    'transition', 'box-sizing', 'outline', 'font-weight',
+                    'border-top', 'border-right', 'border-bottom', 'border-left',
+                    'padding-top', 'padding-right', 'padding-bottom', 'padding-left'
+                ];
+                
+                properties.forEach(prop => {
+                    const value = styles.getPropertyValue(prop);
+                    if (value && value !== 'none' && value !== '0px') {
+                        cssString += `${prop}: ${value};`;
+                    }
+                });
+                
+                cssString += 'display: flex; align-items: center; text-align: left;';
+                cssString += '}';
+                
+                cssString += `
+                    .preset-cell:hover {
+                        background-color: ${styles.getPropertyValue('background-color')};
+                        border-color: ${styles.getPropertyValue('border-color')};
+                    }
+                `;
+                
+                let styleTag = document.getElementById('copied-input-styles');
+                if (!styleTag) {
+                    styleTag = document.createElement('style');
+                    styleTag.id = 'copied-input-styles';
+                    document.head.appendChild(styleTag);
+                }
+                styleTag.innerHTML = cssString;
+            }
+        }, 300);
+        </script>
+        """,
+        height=0,
+    )
+
 # ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
 def right_label(text: str) -> str:
     return f'<div style="text-align:right; font-weight:bold;">{text}</div>'
@@ -363,11 +415,10 @@ panel = panel_rows.iloc[0]
 # ---------- GROUPS ----------
 groups = []
 
-# ========== ЕДИНСТВЕННЫЙ ПРАВИЛЬНЫЙ CSS ==========
+# ========== МИНИМАЛЬНЫЙ НЕОБХОДИМЫЙ CSS ==========
 st.markdown("""
 <style>
-
-/* Expander RTL */
+/* Только базовые стили для RTL */
 .streamlit-expanderHeader svg {
     transform: rotate(0deg);
     transition: transform 0.3s;
@@ -380,21 +431,11 @@ st.markdown("""
     direction: rtl;
 }
 
-/* 🔥 НАТИВНЫЕ ЯЧЕЙКИ — используют тему Streamlit */
+/* Базовый класс для ячеек - стили будут скопированы JS */
 .preset-cell {
-    background-color: var(--secondary-background-color);
-    color: var(--text-color);
-
-    border-radius: 8px;
-    padding: 8px 12px;
-    text-align: left;
-    font-size: 16px;
     display: flex;
     align-items: center;
-    min-height: 38px;
-    margin: 1px 0;
-    border: none !important;
-    box-shadow: none !important;
+    text-align: left;
     width: 100%;
     box-sizing: border-box;
 }
@@ -405,15 +446,6 @@ st.markdown("""
     justify-content: center;
 }
 
-.preset-cell.number-cell {
-    font-weight: 400;
-}
-
-.input-text-size {
-    font-size: 16px !important;
-    padding: 0.25rem 0.75rem !important;
-}
-
 .checkbox-container {
     display: flex;
     justify-content: flex-end;
@@ -421,12 +453,18 @@ st.markdown("""
     width: 100%;
 }
 
+.input-text-size {
+    font-size: 16px !important;
+}
+
 .full-width-input {
     width: 100% !important;
 }
-
 </style>
 """, unsafe_allow_html=True)
+
+# Вызываем функцию копирования стилей
+inject_style_copier()
 # ========== КОНЕЦ CSS ==========
 
 # Секция вертикальных панелей - עומדים
@@ -458,7 +496,7 @@ with st.expander("**עומדים**", expanded=True):
         # Левая колонка: количество панелей (פאנלים)
         with row_cols[0]:
             if i <= 8:
-                # Предустановленные значения 1-8 - не редактируемые, с левым выравниванием
+                # Предустановленные значения 1-8 - используют скопированные стили
                 st.markdown(
                     f'<div class="preset-cell number-cell">{i}</div>',
                     unsafe_allow_html=True
@@ -778,7 +816,7 @@ def build_html_report(calc_result, project_name, panel_name, channel_order, extr
             html += (
                 "<tr style='border:none;'>"
                 f"<td style='text-align:right; white-space:nowrap; border:none;'>{name}</td>"
-                f"<td style='text-align:left; white-space:nowrap; border:none;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{format_qty(qty)}</td>"
+                f"<td style='text-align:left; white-space:nowrap; border=none;'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{format_qty(qty)}</td>"
                 "</tr>"
             )
         html += "</tbody></table>"
