@@ -363,7 +363,7 @@ panel = panel_rows.iloc[0]
 # ---------- GROUPS ----------
 groups = []
 
-# ОБНОВЛЕННЫЙ CSS С ИСПОЛЬЗОВАНИЕМ ПЕРЕМЕННЫХ ТЕМЫ STREAMLIT
+# ИСПРАВЛЕННЫЙ CSS С ИСПОЛЬЗОВАНИЕМ ПЕРЕМЕННЫХ STREAMLIT
 st.markdown("""
     <style>
     .streamlit-expanderHeader svg {
@@ -378,13 +378,13 @@ st.markdown("""
         direction: rtl;
     }
     
-    /* Универсальный класс для ячеек с предустановленными значениями и заголовков */
+    /* Класс для ячеек с предустановленными значениями и заголовков */
     .preset-cell {
         background-color: var(--secondary-background-color);
         color: var(--text-color);
         border-radius: 8px;
         padding: 8px 12px;
-        text-align: left;  /* Выравнивание по левому краю с отступом */
+        text-align: left;
         font-size: 16px;
         display: flex;
         align-items: center;
@@ -396,10 +396,10 @@ st.markdown("""
         box-sizing: border-box;
     }
     
-    /* Специальный класс для заголовков - жирный шрифт */
+    /* Специальный класс для заголовков - жирный шрифт и по центру */
     .preset-cell.header-cell {
         font-weight: 700;
-        text-align: center;  /* Заголовки по центру */
+        text-align: center;
         justify-content: center;
     }
     
