@@ -363,7 +363,7 @@ panel = panel_rows.iloc[0]
 # ---------- GROUPS ----------
 groups = []
 
-# ЕДИНСТВЕННОЕ РАБОЧЕЕ РЕШЕНИЕ - CSS + JavaScript
+# CSS + JavaScript с правильным селектором
 st.markdown("""
     <style>
     .streamlit-expanderHeader svg {
@@ -423,37 +423,31 @@ st.markdown("""
     </style>
     
     <script>
-    // Функция для получения реального цвета фона поля ввода
-    function getInputBackgroundColor() {
-        // Находим любое поле ввода на странице
-        const input = document.querySelector('input[type="text"], input[type="number"]');
-        if (input) {
-            // Получаем реальный цвет (даже если он из родительского элемента)
-            const style = window.getComputedStyle(input);
-            return style.backgroundColor;
-        }
-        return '#f0f2f6'; // fallback цвет
-    }
-    
-    // Функция для получения реального цвета текста
-    function getInputTextColor() {
-        const input = document.querySelector('input[type="text"], input[type="number"]');
+    // Функция для получения цвета с поля "שם פרויקט"
+    function getInputColors() {
+        // Используем точный селектор
+        const input = document.querySelector('#text_input_3');
         if (input) {
             const style = window.getComputedStyle(input);
-            return style.color;
+            return {
+                backgroundColor: style.backgroundColor,
+                color: style.color
+            };
         }
-        return '#31333F';
+        return {
+            backgroundColor: '#f0f2f6',
+            color: '#31333F'
+        };
     }
     
     // Функция для применения цветов ко всем нашим ячейкам
     function applyColorsToCells() {
-        const bgColor = getInputBackgroundColor();
-        const textColor = getInputTextColor();
+        const colors = getInputColors();
         
         const cells = document.querySelectorAll('.preset-cell');
         cells.forEach(cell => {
-            cell.style.backgroundColor = bgColor;
-            cell.style.color = textColor;
+            cell.style.backgroundColor = colors.backgroundColor;
+            cell.style.color = colors.color;
         });
     }
     
@@ -464,7 +458,7 @@ st.markdown("""
     const observer = new MutationObserver(applyColorsToCells);
     observer.observe(document.body, { childList: true, subtree: true });
     
-    // Применяем также при переключении темы (каждые 2 секунды)
+    // Применяем также при переключении темы
     setInterval(applyColorsToCells, 2000);
     </script>
 """, unsafe_allow_html=True)
